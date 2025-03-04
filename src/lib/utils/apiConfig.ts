@@ -8,8 +8,8 @@ const getApiUrl = () => {
     return PROD_API_URL
 }
 
-const config = {
+const apiConfig = {
     apiUrl: getApiUrl()
 }
 
-export default config
+export default apiConfig
