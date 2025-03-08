@@ -77,8 +77,9 @@
 		}
 	];
 	let sidebarOpened: string | null = 'true';
+	let userEmail: string = '';
 
-	onMount(() => {
+	onMount(async () => {
 		email = localStorage.getItem('Email')?.toString() || '';
 		// Load existing conversations from localStorage
 		const savedConversations = localStorage.getItem('Conversations');
@@ -149,6 +150,18 @@
 			const rightButton = document.getElementById('right-button') as HTMLElement;
 			rightButton.classList.remove('hidden');
 		}
+		const request = await fetch(`${apiConfig.apiUrl}ai/chat/deepseek-r1-distill-llama-70b`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({
+				email: userEmail,
+				prompt: 'Hello, how are you?'
+			})
+		});
+		const result = await request.json();
+		console.log(result);
 	});
 	async function sendMessage() {
 		welcomeMessage.set(false);
@@ -348,7 +361,7 @@
 				<p class="text-center text-3xl">How can i help you today?</p>
 			</div>
 		{/if}
-		<div class="chat-log hidden w-screen max-w-4xl" id="chat-log">
+		<div class="chat-log hidden w-screen max-w-7xl" id="chat-log">
 			{#each messages as message}
 				{#if message.sender == 'User'}
 					<div class="user">
