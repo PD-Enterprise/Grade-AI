@@ -10,15 +10,16 @@
 		ChatSession
 	} from '@google/generative-ai';
 	import Loading from './components/loading.svelte';
+	import { writable } from 'svelte/store';
 
 	let messages: messagesType[] = [];
 	let conversations: ConversationType[] = [];
-	let modal:
+	let selectedModal = writable<
 		| 'gemini-2.0-flash_custom_trained'
 		| 'gemini-2.0-flash'
 		| 'llama-3.3-70b-versatile'
-		| 'deepseek-r1-distill-llama-70b' = 'gemini-2.0-flash_custom_trained';
-	('gemini-2.0-flash_custom_trained');
+		| 'deepseek-r1-distill-llama-70b'
+	>('gemini-2.0-flash_custom_trained');
 	const generationConfig = {
 		temperature: 1,
 		topP: 0.95,
@@ -97,6 +98,14 @@
 			if (inputAreaDiv && messages.length > 0) {
 				inputAreaDiv.classList.remove('input-area');
 				inputAreaDiv.classList.add('input-area-bottom');
+			}
+			const savedSelectedModal = localStorage.getItem('SelectedModal');
+			if (savedSelectedModal) {
+				// @ts-expect-error
+				selectedModal.set(savedSelectedModal);
+			} else {
+				// @ts-expect-error
+				selectedModal.set(modalList[0].id);
 			}
 		}
 
@@ -224,6 +233,11 @@
 			sendMessage();
 		}
 	}
+	function changeModal(modal: modalType) {
+		// @ts-expect-error
+		selectedModal.set(modal.id);
+		localStorage.setItem('SelectedModal', modal.id);
+	}
 </script>
 
 <svelte:head>
@@ -281,8 +295,8 @@
 			<div class="flex w-full items-center justify-between">
 				<div class="select-modal">
 					<div class="dropdown dropdown-top p-1">
-						<button tabindex="0" class="flex items-center" style="color: #6B7280">
-							{modal}
+						<button tabindex="0" class="flex w-96 items-center" style="color: #6B7280">
+							{$selectedModal}
 							<svg
 								width="25px"
 								height="25px"
@@ -342,7 +356,7 @@
 									{#if modal.type == 'custom'}
 										{#if $userRole == modal.roleRequirement}
 											<li>
-												<button class="btn-ghost"
+												<button class="btn-ghost" on:click={() => changeModal(modal)}
 													>{modal.name}
 													<div class="tooltip" data-tip={modal.description}>
 														<svg
@@ -391,7 +405,7 @@
 									{#if modal.type == 'direct'}
 										{#if $userRole == modal.roleRequirement}
 											<li>
-												<button class="btn-ghost"
+												<button class="btn-ghost" on:click={() => changeModal(modal)}
 													>{modal.name}
 													<div class="tooltip" data-tip={modal.description}>
 														<svg
