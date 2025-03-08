@@ -76,6 +76,7 @@
 			type: 'custom'
 		}
 	];
+	let sidebarOpened: string | null = 'true';
 
 	onMount(() => {
 		email = localStorage.getItem('Email')?.toString() || '';
@@ -137,6 +138,16 @@
 					chatLog.scrollTo(0, chatLog.scrollHeight);
 				}
 			}, 100);
+		}
+
+		sidebarOpened = localStorage.getItem('Sidebar');
+		if (sidebarOpened == 'closed') {
+			const sideBar = document.getElementById('side-bar') as HTMLElement;
+			sideBar.classList.add('hidden');
+			const leftButton = document.getElementById('left-button') as HTMLElement;
+			leftButton.classList.add('hidden');
+			const rightButton = document.getElementById('right-button') as HTMLElement;
+			rightButton.classList.remove('hidden');
 		}
 	});
 	async function sendMessage() {
@@ -259,16 +270,85 @@
 </svelte:head>
 
 <div class="main flex">
-	<div class="side-bar" id="side-bar">
+	<div class="side-bar z-10">
 		<Sidebar />
 	</div>
+
 	<div class="content">
+		<div class="control">
+			<div class="left-button" id="left-button">
+				<button
+					aria-label="close sidebar"
+					class="btn btn-ghost"
+					on:click={() => {
+						const sideBar = document.getElementById('side-bar') as HTMLElement;
+						const leftButton = document.getElementById('left-button') as HTMLElement;
+						const rightButton = document.getElementById('right-button') as HTMLElement;
+						if (sideBar && leftButton && rightButton) {
+							sideBar.classList.add('hidden');
+							leftButton.classList.add('hidden');
+							rightButton.classList.remove('hidden');
+						}
+						localStorage.setItem('Sidebar', 'closed');
+					}}
+				>
+					<svg
+						width="30px"
+						height="30px"
+						viewBox="0 0 24 24"
+						fill="none"
+						xmlns="http://www.w3.org/2000/svg"
+					>
+						<path
+							d="M15 6L9 12L15 18"
+							stroke="#6b7280"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						/>
+					</svg>
+				</button>
+			</div>
+			<div class="right-button hidden" id="right-button">
+				<button
+					aria-label="open sidebar"
+					class="btn btn-ghost"
+					on:click={() => {
+						const sideBar = document.getElementById('side-bar') as HTMLElement;
+						const leftButton = document.getElementById('left-button') as HTMLElement;
+						const rightButton = document.getElementById('right-button') as HTMLElement;
+						if (sideBar && leftButton && rightButton) {
+							sideBar.classList.remove('hidden');
+							leftButton.classList.remove('hidden');
+							rightButton.classList.add('hidden');
+						}
+						localStorage.setItem('Sidebar', 'opened');
+					}}
+				>
+					<svg
+						width="30px"
+						height="30px"
+						viewBox="0 0 24 24"
+						fill="none"
+						xmlns="http://www.w3.org/2000/svg"
+					>
+						<path
+							d="M9 6L15 12L9 18"
+							stroke="#6b7280"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						/>
+					</svg>
+				</button>
+			</div>
+		</div>
 		{#if $welcomeMessage}
 			<div class="welcome-message flex h-screen w-screen items-center justify-center">
 				<p class="text-center text-3xl">How can i help you today?</p>
 			</div>
 		{/if}
-		<div class="chat-log hidden w-screen max-w-5xl" id="chat-log">
+		<div class="chat-log hidden w-screen max-w-4xl" id="chat-log">
 			{#each messages as message}
 				{#if message.sender == 'User'}
 					<div class="user">
@@ -292,8 +372,8 @@
 									data-tip="Speak"
 								>
 									<svg
-										width="20px"
-										height="20px"
+										width="15px"
+										height="150pxpx"
 										viewBox="0 0 24 24"
 										fill="none"
 										xmlns="http://www.w3.org/2000/svg"
@@ -342,7 +422,7 @@
 			<div class="flex w-full items-center justify-between">
 				<div class="select-modal">
 					<div class="dropdown dropdown-top p-1">
-						<button tabindex="0" class="flex w-96 items-center" style="color: #6B7280">
+						<button tabindex="0" class="flex w-64 items-center" style="color: #6B7280">
 							{$selectedModal}
 							<svg
 								width="25px"
@@ -544,9 +624,9 @@
 		min-height: 10px;
 		max-height: 60px;
 		height: 45px;
-		min-width: 200px;
+		min-width: 16rem;
+		width: 69vw;
 		max-width: 75vw;
-		width: 75vw;
 		border: none;
 		padding-left: 5px;
 		padding-right: 5px;
