@@ -32,28 +32,46 @@
 	let error = '';
 	let modalList: modalType[] = [
 		{
-			id: 1,
-			name: 'gemini-2.0-flash_custom_trained',
+			name: 'Gemini 2.0 flash(Custom Trained)',
+			id: 'gemini-2.0-flash_custom_trained',
 			description: "Google's latest and greatest model, custom trained.",
-			roleRequirement: 'tier-1'
+			roleRequirement: 'tier-1',
+			type: 'custom'
 		},
 		{
-			id: 2,
-			name: 'gemini-2.0-flash',
+			name: 'Gemini 2.0 flash',
+			id: 'gemini-2.0-flash',
 			description: "Google's latest and greatest model.",
-			roleRequirement: 'tier-1'
+			roleRequirement: 'tier-1',
+			type: 'direct'
 		},
 		{
-			id: 3,
-			name: 'llama-3.3-70b-versatile',
+			name: 'Llama 3.3',
+			id: 'llama-3.3-70b-versatile',
 			description: "Meta's powerful and adaptable LLM.",
-			roleRequirement: 'tier-2'
+			roleRequirement: 'tier-2',
+			type: 'direct'
 		},
 		{
-			id: 4,
-			name: 'deepseek-r1-distill-llama-70b',
-			description: 'Distilled LLama-70B, optimized for efficiency',
-			roleRequirement: 'tier-3'
+			name: 'Llama 3.3(Custom Trained)',
+			id: 'llama-3.3-70b-versatile_custom_trained',
+			description: "Meta's powerful and adaptable LLM, custom trained.",
+			roleRequirement: 'tier-2',
+			type: 'custom'
+		},
+		{
+			name: 'Deepseek r1',
+			id: 'deepseek-r1-distill-llama-70b',
+			description: 'Distilled LLama-70B, optimized for efficiency.',
+			roleRequirement: 'tier-3',
+			type: 'direct'
+		},
+		{
+			name: 'Deepseek r1(Custom Trained)',
+			id: 'deepseek-r1-distill-llama-70b_custom_trained',
+			description: 'Distilled LLama-70B, optimized for efficiency, custom trained.',
+			roleRequirement: 'tier-3',
+			type: 'custom'
 		}
 	];
 
@@ -282,52 +300,141 @@
 								/>
 							</svg>
 						</button>
-						<div class="z-1 dropdown-content menu w-52 rounded-box bg-base-300 p-2 shadow-sm">
-							{#each modalList as modal}
-								{#if $userRole == modal.roleRequirement}
-									<li>
-										<button class="btn-ghost"
-											>{modal.name}
-											<div class="tooltip" data-tip={modal.description}>
-												<svg
-													xmlns="http://www.w3.org/2000/svg"
-													fill="none"
-													viewBox="0 0 24 24"
-													class="h-6 w-6 shrink-0 stroke-info"
-												>
-													<path
-														stroke-linecap="round"
-														stroke-linejoin="round"
-														stroke-width="2"
-														d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-													></path>
-												</svg>
-											</div>
-										</button>
-									</li>
-								{:else}
-									<li>
-										<button class="disabled btn-ghost"
-											>{modal.name}
-											<div class="tooltip" data-tip={modal.description}>
-												<svg
-													xmlns="http://www.w3.org/2000/svg"
-													fill="none"
-													viewBox="0 0 24 24"
-													class="h-6 w-6 shrink-0 stroke-info"
-												>
-													<path
-														stroke-linecap="round"
-														stroke-linejoin="round"
-														stroke-width="2"
-														d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-													></path>
-												</svg>
-											</div>
-										</button>
-									</li>
-								{/if}
-							{/each}
+						<div class="z-1 w-54 dropdown-content menu rounded-box bg-base-300 p-2 shadow-sm">
+							<ul class="tabs gap-5 p-1">
+								<li id="custom">
+									<button
+										on:click={() => {
+											const customModalList = document.getElementById(
+												'custom-modals-list'
+											) as HTMLElement;
+											const directModalList = document.getElementById(
+												'direct-modals-list'
+											) as HTMLElement;
+											if (directModalList && customModalList) {
+												customModalList.classList.remove('hidden');
+												directModalList.classList.add('hidden');
+											}
+										}}
+									>
+										Custom Trained
+									</button>
+								</li>
+								<li id="direct">
+									<button
+										on:click={() => {
+											const directModalList = document.getElementById(
+												'direct-modals-list'
+											) as HTMLElement;
+											const customModalList = document.getElementById(
+												'custom-modals-list'
+											) as HTMLElement;
+											if (customModalList) {
+												directModalList.classList.remove('hidden');
+												customModalList.classList.add('hidden');
+											}
+										}}>Direct</button
+									>
+								</li>
+							</ul>
+							<div id="custom-modals-list" class="">
+								{#each modalList as modal}
+									{#if modal.type == 'custom'}
+										{#if $userRole == modal.roleRequirement}
+											<li>
+												<button class="btn-ghost"
+													>{modal.name}
+													<div class="tooltip" data-tip={modal.description}>
+														<svg
+															xmlns="http://www.w3.org/2000/svg"
+															fill="none"
+															viewBox="0 0 24 24"
+															class="h-6 w-6 shrink-0 stroke-info"
+														>
+															<path
+																stroke-linecap="round"
+																stroke-linejoin="round"
+																stroke-width="2"
+																d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+															></path>
+														</svg>
+													</div>
+												</button>
+											</li>
+										{:else}
+											<li>
+												<button class="disabled btn-ghost"
+													>{modal.name}
+													<div class="tooltip" data-tip={modal.description}>
+														<svg
+															xmlns="http://www.w3.org/2000/svg"
+															fill="none"
+															viewBox="0 0 24 24"
+															class="h-6 w-6 shrink-0 stroke-info"
+														>
+															<path
+																stroke-linecap="round"
+																stroke-linejoin="round"
+																stroke-width="2"
+																d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+															></path>
+														</svg>
+													</div>
+												</button>
+											</li>
+										{/if}
+									{/if}
+								{/each}
+							</div>
+							<div id="direct-modals-list" class="hidden">
+								{#each modalList as modal}
+									{#if modal.type == 'direct'}
+										{#if $userRole == modal.roleRequirement}
+											<li>
+												<button class="btn-ghost"
+													>{modal.name}
+													<div class="tooltip" data-tip={modal.description}>
+														<svg
+															xmlns="http://www.w3.org/2000/svg"
+															fill="none"
+															viewBox="0 0 24 24"
+															class="h-6 w-6 shrink-0 stroke-info"
+														>
+															<path
+																stroke-linecap="round"
+																stroke-linejoin="round"
+																stroke-width="2"
+																d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+															></path>
+														</svg>
+													</div>
+												</button>
+											</li>
+										{:else}
+											<li>
+												<button class="disabled btn-ghost"
+													>{modal.name}
+													<div class="tooltip" data-tip={modal.description}>
+														<svg
+															xmlns="http://www.w3.org/2000/svg"
+															fill="none"
+															viewBox="0 0 24 24"
+															class="h-6 w-6 shrink-0 stroke-info"
+														>
+															<path
+																stroke-linecap="round"
+																stroke-linejoin="round"
+																stroke-width="2"
+																d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+															></path>
+														</svg>
+													</div>
+												</button>
+											</li>
+										{/if}
+									{/if}
+								{/each}
+							</div>
 						</div>
 					</div>
 				</div>

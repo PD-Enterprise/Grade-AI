@@ -10,10 +10,11 @@ export type ConversationType = {
 }
 
 export type modalType = {
-    id: number,
+    id: string,
     name: string,
     description: string,
-    roleRequirement: "tier-1" | "tier-2" | "tier-3" | "admin"
+    roleRequirement: "tier-1" | "tier-2" | "tier-3" | "admin",
+    type: "custom" | "direct"
 }
 
 export type messagesType = MessageType;
