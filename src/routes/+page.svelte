@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { welcomeMessage } from '$lib/stores/welcomeMessage';
-	import type { messagesType, ConversationType, MessageType } from '$lib/types/messages';
+	import { userRole, welcomeMessage } from '$lib/stores/store';
+	import type { messagesType, ConversationType, MessageType, modalType } from '$lib/types/types';
 	import apiConfig from '$lib/utils/apiConfig';
 	import { onMount } from 'svelte';
 	import {
@@ -13,7 +13,12 @@
 
 	let messages: messagesType[] = [];
 	let conversations: ConversationType[] = [];
-	let modal: '2.0-flash' = '2.0-flash';
+	let modal:
+		| 'gemini-2.0-flash_custom_trained'
+		| 'gemini-2.0-flash'
+		| 'llama-3.3-70b-versatile'
+		| 'deepseek-r1-distill-llama-70b' = 'gemini-2.0-flash_custom_trained';
+	('gemini-2.0-flash_custom_trained');
 	const generationConfig = {
 		temperature: 1,
 		topP: 0.95,
@@ -25,6 +30,32 @@
 	let loading: boolean = false;
 	let email: string = '';
 	let error = '';
+	let modalList: modalType[] = [
+		{
+			id: 1,
+			name: 'gemini-2.0-flash_custom_trained',
+			description: "Google's latest and greatest model, custom trained.",
+			roleRequirement: 'tier-1'
+		},
+		{
+			id: 2,
+			name: 'gemini-2.0-flash',
+			description: "Google's latest and greatest model.",
+			roleRequirement: 'tier-1'
+		},
+		{
+			id: 3,
+			name: 'llama-3.3-70b-versatile',
+			description: "Meta's powerful and adaptable LLM.",
+			roleRequirement: 'tier-2'
+		},
+		{
+			id: 4,
+			name: 'deepseek-r1-distill-llama-70b',
+			description: 'Distilled LLama-70B, optimized for efficiency',
+			roleRequirement: 'tier-3'
+		}
+	];
 
 	onMount(() => {
 		email = localStorage.getItem('Email')?.toString() || '';
@@ -202,7 +233,7 @@
 					<div class="gemini">
 						<div class="chat chat-start">
 							<div class="chat-header">{message.sender}</div>
-							<div class="chat-bubble">
+							<div class="chat-bubble bg-base-200">
 								{@html message.content}
 							</div>
 						</div>
@@ -213,7 +244,7 @@
 				<div class="system">
 					<div class="chat chat-start">
 						<div class="chat-header">System</div>
-						<div class="chat-bubble">
+						<div class="chat-bubble bg-base-200">
 							<Loading />
 						</div>
 					</div>
@@ -222,31 +253,103 @@
 		</div>
 		<div class="input-area flex flex-wrap" id="input-area">
 			<textarea
-				class="userInput"
+				class="userInput mb-2"
 				placeholder="Ask me anything..."
 				rows="1"
 				id="userInput"
 				on:keydown={handleKeyDown}
 				on:input={autoResize}
 			></textarea>
-			<div class="tooltip" data-tip="Send">
-				<button type="button" on:click={sendMessage} aria-label="Send" class="send-button"
-					><svg
-						width="40px"
-						height="40px"
-						viewBox="0 0 24 24"
-						fill="none"
-						xmlns="http://www.w3.org/2000/svg"
-					>
-						<path
-							d="M10.3009 13.6949L20.102 3.89742M10.5795 14.1355L12.8019 18.5804C13.339 19.6545 13.6075 20.1916 13.9458 20.3356C14.2394 20.4606 14.575 20.4379 14.8492 20.2747C15.1651 20.0866 15.3591 19.5183 15.7472 18.3818L19.9463 6.08434C20.2845 5.09409 20.4535 4.59896 20.3378 4.27142C20.2371 3.98648 20.013 3.76234 19.7281 3.66167C19.4005 3.54595 18.9054 3.71502 17.9151 4.05315L5.61763 8.2523C4.48114 8.64037 3.91289 8.83441 3.72478 9.15032C3.56153 9.42447 3.53891 9.76007 3.66389 10.0536C3.80791 10.3919 4.34498 10.6605 5.41912 11.1975L9.86397 13.42C10.041 13.5085 10.1295 13.5527 10.2061 13.6118C10.2742 13.6643 10.3352 13.7253 10.3876 13.7933C10.4468 13.87 10.491 13.9585 10.5795 14.1355Z"
-							stroke="#6B7280"
-							stroke-width="2"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-						/>
-					</svg></button
-				>
+			<div class="flex w-full items-center justify-between">
+				<div class="select-modal">
+					<div class="dropdown dropdown-top p-1">
+						<button tabindex="0" class="flex items-center" style="color: #6B7280">
+							{modal}
+							<svg
+								width="25px"
+								height="25px"
+								viewBox="0 0 24 24"
+								fill="none"
+								xmlns="http://www.w3.org/2000/svg"
+								class="mt-1"
+							>
+								<path
+									fill-rule="evenodd"
+									clip-rule="evenodd"
+									d="M12.7071 14.7071C12.3166 15.0976 11.6834 15.0976 11.2929 14.7071L6.29289 9.70711C5.90237 9.31658 5.90237 8.68342 6.29289 8.29289C6.68342 7.90237 7.31658 7.90237 7.70711 8.29289L12 12.5858L16.2929 8.29289C16.6834 7.90237 17.3166 7.90237 17.7071 8.29289C18.0976 8.68342 18.0976 9.31658 17.7071 9.70711L12.7071 14.7071Z"
+									stroke="#6B7280"
+									fill="#6B7280"
+								/>
+							</svg>
+						</button>
+						<div class="z-1 dropdown-content menu w-52 rounded-box bg-base-300 p-2 shadow-sm">
+							{#each modalList as modal}
+								{#if $userRole == modal.roleRequirement}
+									<li>
+										<button class="btn-ghost"
+											>{modal.name}
+											<div class="tooltip" data-tip={modal.description}>
+												<svg
+													xmlns="http://www.w3.org/2000/svg"
+													fill="none"
+													viewBox="0 0 24 24"
+													class="h-6 w-6 shrink-0 stroke-info"
+												>
+													<path
+														stroke-linecap="round"
+														stroke-linejoin="round"
+														stroke-width="2"
+														d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+													></path>
+												</svg>
+											</div>
+										</button>
+									</li>
+								{:else}
+									<li>
+										<button class="disabled btn-ghost"
+											>{modal.name}
+											<div class="tooltip" data-tip={modal.description}>
+												<svg
+													xmlns="http://www.w3.org/2000/svg"
+													fill="none"
+													viewBox="0 0 24 24"
+													class="h-6 w-6 shrink-0 stroke-info"
+												>
+													<path
+														stroke-linecap="round"
+														stroke-linejoin="round"
+														stroke-width="2"
+														d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+													></path>
+												</svg>
+											</div>
+										</button>
+									</li>
+								{/if}
+							{/each}
+						</div>
+					</div>
+				</div>
+				<div class="tooltip" data-tip="Send">
+					<button type="button" on:click={sendMessage} aria-label="Send" class="send-button">
+						<svg
+							width="40px"
+							height="40px"
+							viewBox="0 0 24 24"
+							fill="none"
+							xmlns="http://www.w3.org/2000/svg"
+						>
+							<path
+								d="M10.3009 13.6949L20.102 3.89742M10.5795 14.1355L12.8019 18.5804C13.339 19.6545 13.6075 20.1916 13.9458 20.3356C14.2394 20.4606 14.575 20.4379 14.8492 20.2747C15.1651 20.0866 15.3591 19.5183 15.7472 18.3818L19.9463 6.08434C20.2845 5.09409 20.4535 4.59896 20.3378 4.27142C20.2371 3.98648 20.013 3.76234 19.7281 3.66167C19.4005 3.54595 18.9054 3.71502 17.9151 4.05315L5.61763 8.2523C4.48114 8.64037 3.91289 8.83441 3.72478 9.15032C3.56153 9.42447 3.53891 9.76007 3.66389 10.0536C3.80791 10.3919 4.34498 10.6605 5.41912 11.1975L9.86397 13.42C10.041 13.5085 10.1295 13.5527 10.2061 13.6118C10.2742 13.6643 10.3352 13.7253 10.3876 13.7933C10.4468 13.87 10.491 13.9585 10.5795 14.1355Z"
+								stroke="#6B7280"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							/>
+						</svg>
+					</button>
+				</div>
 			</div>
 			<div class="input-area-bottom hidden"></div>
 		</div>
@@ -281,25 +384,34 @@
 		background-color: var(--color-base-300);
 		height: 130px;
 		padding: 10px;
-		justify-content: flex-end;
-		/* align-items: center; */
+		justify-content: flex-start;
 		position: absolute;
 		top: 50%;
 		left: 50%;
 		transform: translate(-50%, -50%);
 		border-radius: 10px;
 		gap: 5px;
+		align-items: center;
 	}
 	.input-area-bottom {
 		background-color: var(--color-base-300);
 		height: 130px;
 		padding: 10px;
-		justify-content: flex-end;
+		justify-content: flex-start;
 		position: fixed;
 		left: 50%;
 		bottom: -5px;
 		transform: translateX(-50%);
 		border-radius: 10px;
 		gap: 5px;
+		align-items: center;
+	}
+	.select-modal {
+		flex-shrink: 0;
+		border: none;
+	}
+	.disabled {
+		cursor: not-allowed;
+		color: #545c69;
 	}
 </style>
