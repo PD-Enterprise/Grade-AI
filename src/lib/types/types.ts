@@ -5,8 +5,10 @@ export type MessageType = {
 }
 
 export type ConversationType = {
-    prompt: MessageType,
-    response: MessageType
+    name: string,
+    slug: string,
+    prompt: MessageType | null,
+    response: MessageType | null
 }
 
 export type modalType = {

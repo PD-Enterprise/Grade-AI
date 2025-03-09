@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { conversationsList, isAuthenticated, userRole, welcomeMessage } from '$lib/stores/store';
+	import { conversationsList, curretnSlug, userRole, welcomeMessage } from '$lib/stores/store';
 	import type { messagesType, ConversationType, MessageType, modalType } from '$lib/types/types';
 	import apiConfig from '$lib/utils/apiConfig';
 	import { onMount } from 'svelte';
@@ -9,10 +9,10 @@
 		HarmBlockThreshold,
 		ChatSession
 	} from '@google/generative-ai';
-	import Loading from './components/loading.svelte';
+	import Loading from '../components/loading.svelte';
 	import { writable } from 'svelte/store';
 	import { generateUuid } from '$lib/utils/generateUuid';
-	import { goto } from '$app/navigation';
+	import { isAuthenticated } from '$lib/stores/store';
 
 	let messages: messagesType[] = [];
 	let conversations: ConversationType[] = [];
@@ -80,18 +80,30 @@
 	let sidebarOpened: string | null = 'true';
 	let userEmail: string = '';
 	let chatName: string = 'New Chat';
+	let slug: string = '';
 
 	onMount(async () => {
 		email = localStorage.getItem('Email')?.toString() || '';
+		const slug = location.pathname.split('/')[1];
+		curretnSlug.set(slug);
+		// Sort conversations based on prompt time
+		// conversations.sort((a, b) => {
+		// 	const timeA = new Date(a.prompt.time).getTime();
+		// 	const timeB = new Date(b.prompt.time).getTime();
+		// 	return timeA - timeB;
+		// });
+		const savedSelectedModal = localStorage.getItem('SelectedModal');
+		if (savedSelectedModal) {
+			// @ts-expect-error
+			selectedModal.set(savedSelectedModal);
+		} else {
+			// @ts-expect-error
+			selectedModal.set(modalList[0].id);
+		}
 
-		welcomeMessage.set(messages.length === 0); // Only show welcome message if no messages exist
-
-		welcomeMessage.subscribe((value) => {
-			const chatLogElement = document.getElementById('chat-log') as HTMLDivElement;
-			if (!value) {
-				chatLogElement.classList.remove('hidden');
-			}
-		});
+		const inputAreaDivElement = document.getElementById('input-area') as HTMLDivElement;
+		inputAreaDivElement.classList.remove('input-area');
+		inputAreaDivElement.classList.add('input-area-bottom');
 
 		const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
 		const modal = genAI.getGenerativeModel({
@@ -138,17 +150,28 @@
 		// const result = await request.json();
 		// console.log(result);
 	});
+	curretnSlug.subscribe((slug) => {
+		if (slug) {
+			const savedConversations = JSON.parse(localStorage.getItem('Conversations') || '[]');
+			const conversation = savedConversations.find(
+				(conversation: any) => conversation.slug == slug
+			);
+			messages = [conversation.prompt, conversation.response];
+			if (conversation) {
+				conversationsList.set([conversation]);
+			}
+		}
+	});
 	async function sendMessage() {
 		welcomeMessage.set(false);
 		const chatLogElement = document.getElementById('chat-log') as HTMLDivElement;
 		if (chatLogElement) {
 			chatLogElement.classList.remove('hidden');
 		}
-		const inputAreaDivElement = document.getElementById('input-area') as HTMLDivElement;
-		inputAreaDivElement.classList.remove('input-area');
-		inputAreaDivElement.classList.add('input-area-bottom');
+
 		const inputAreaElement = document.getElementById('userInput') as HTMLInputElement;
 		const userInput = inputAreaElement.value.trim();
+		chatName = userInput.replace(/ /g, '');
 		const userMessage: MessageType = {
 			content: userInput,
 			sender: 'User',
@@ -257,9 +280,6 @@
 				};
 				conversations = [...conversations, conversation];
 				localStorage.setItem('Conversations', JSON.stringify(conversations));
-				const newConversationList = [...$conversationsList, conversation];
-				conversationsList.set(newConversationList);
-				goto(`/${conversation.slug}`);
 			} catch (error) {
 				error = error;
 				loading = false;
@@ -303,12 +323,7 @@
 
 <div class="main flex">
 	<div class="content">
-		{#if $welcomeMessage}
-			<div class="welcome-message absolute flex h-screen w-screen items-center justify-center">
-				<p class="text-center text-3xl">How can i help you today?</p>
-			</div>
-		{/if}
-		<div class="chat-log hidden w-screen max-w-7xl" id="chat-log">
+		<div class="chat-log w-screen max-w-7xl" id="chat-log">
 			{#each messages as message}
 				{#if message.sender == 'User'}
 					<div class="user">
@@ -441,7 +456,7 @@
 							<div id="custom-modals-list" class="">
 								{#each modalList as modal}
 									{#if modal.type == 'custom'}
-										{#if localStorage.getItem('role') == modal.roleRequirement}
+										{#if $userRole == modal.roleRequirement}
 											<li>
 												<button class="btn-ghost" on:click={() => changeModal(modal)}
 													>{modal.name}
@@ -490,7 +505,7 @@
 							<div id="direct-modals-list" class="hidden">
 								{#each modalList as modal}
 									{#if modal.type == 'direct'}
-										{#if localStorage.getItem('role') == modal.roleRequirement}
+										{#if $userRole == modal.roleRequirement}
 											<li>
 												<button class="btn-ghost" on:click={() => changeModal(modal)}
 													>{modal.name}
@@ -576,10 +591,6 @@
 		transform: translate(-50%, 0%);
 		gap: 5px;
 		align-items: center;
-	}
-	.welcome-message {
-		margin-top: -100px;
-		left: 0;
 	}
 	.userInput {
 		min-height: 10px;
