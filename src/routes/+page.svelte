@@ -140,7 +140,6 @@
 				}
 			}, 100);
 		}
-
 		sidebarOpened = localStorage.getItem('Sidebar');
 		if (sidebarOpened == 'closed') {
 			const sideBar = document.getElementById('side-bar') as HTMLElement;
@@ -209,13 +208,30 @@
 			conversations = [...conversations, conversation];
 			localStorage.setItem('Conversations', JSON.stringify(conversations));
 		} else {
-			sendQueryToAI(userInput, userMessage).then(() => {
-				setTimeout(() => {
-					if (chatLog) {
-						chatLog.scrollTo(0, chatLog.scrollHeight);
-					}
-				}, 500);
-			});
+			if (messages.length <= 20) {
+				sendQueryToAI(userInput, userMessage).then(() => {
+					setTimeout(() => {
+						if (chatLog) {
+							chatLog.scrollTo(0, chatLog.scrollHeight);
+						}
+					}, 500);
+				});
+			} else {
+				const errorMessage: MessageType = {
+					content:
+						'Sorry, you have reached the limit of 20 messages. To continue with your chat and do more, please login.',
+					sender: $selectedModal,
+					time: new Date().toLocaleTimeString()
+				};
+				messages = [...messages, errorMessage];
+
+				const conversation: ConversationType = {
+					prompt: userMessage,
+					response: errorMessage
+				};
+				conversations = [...conversations, conversation];
+				localStorage.setItem('Conversations', JSON.stringify(conversations));
+			}
 			inputAreaElement.value = '';
 		}
 	}
@@ -620,7 +636,7 @@
 <style>
 	.chat-log {
 		/* background-color: red; */
-		height: calc(100vh - 150px);
+		height: calc(100vh - 165px);
 		width: 100vw;
 		overflow-y: scroll;
 		justify-content: flex-start;
