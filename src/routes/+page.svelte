@@ -150,18 +150,18 @@
 			const rightButton = document.getElementById('right-button') as HTMLElement;
 			rightButton.classList.remove('hidden');
 		}
-		const request = await fetch(`${apiConfig.apiUrl}ai/chat/deepseek-r1-distill-llama-70b`, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				email: userEmail,
-				prompt: 'Hello, how are you?'
-			})
-		});
-		const result = await request.json();
-		console.log(result);
+		// const request = await fetch(`${apiConfig.apiUrl}ai/chat/deepseek-r1-distill-llama-70b`, {
+		// 	method: 'POST',
+		// 	headers: {
+		// 		'Content-Type': 'application/json'
+		// 	},
+		// 	body: JSON.stringify({
+		// 		email: userEmail,
+		// 		prompt: 'Hello, how are you?'
+		// 	})
+		// });
+		// const result = await request.json();
+		// console.log(result);
 	});
 	async function sendMessage() {
 		welcomeMessage.set(false);
