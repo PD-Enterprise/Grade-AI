@@ -1,27 +1,18 @@
 <script lang="ts">
-	import { conversationsList, curretnSlug, userRole, welcomeMessage } from '$lib/stores/store';
+	import { conversationsList, currentSlug, userRole, welcomeMessage } from '$lib/stores/store';
 	import type { messagesType, ConversationType, MessageType, modalType } from '$lib/types/types';
 	import apiConfig from '$lib/utils/apiConfig';
 	import { onMount } from 'svelte';
-	import {
-		GoogleGenerativeAI,
-		HarmCategory,
-		HarmBlockThreshold,
-		ChatSession
-	} from '@google/generative-ai';
+	import { chatSession } from '$lib/utils/geminiModal';
 	import Loading from '../components/loading.svelte';
 	import { writable } from 'svelte/store';
 	import { generateUuid } from '$lib/utils/generateUuid';
 	import { isAuthenticated } from '$lib/stores/store';
+	import { selectedModal } from '$lib/stores/store';
+	import Selectmodal from '../components/selectModal.svelte';
 
 	let messages: messagesType[] = [];
 	let conversations: ConversationType[] = [];
-	let selectedModal = writable<
-		| 'gemini-2.0-flash_custom_trained'
-		| 'gemini-2.0-flash'
-		| 'llama-3.3-70b-versatile'
-		| 'deepseek-r1-distill-llama-70b'
-	>('gemini-2.0-flash_custom_trained');
 	const generationConfig = {
 		temperature: 1,
 		topP: 0.95,
@@ -29,7 +20,6 @@
 		maxOutputTokens: 8192,
 		responseMimeType: 'text/plain'
 	};
-	let chatSession: any;
 	let loading: boolean = false;
 	let email: string = '';
 	let error = '';
@@ -85,7 +75,7 @@
 	onMount(async () => {
 		email = localStorage.getItem('Email')?.toString() || '';
 		const slug = location.pathname.split('/')[1];
-		curretnSlug.set(slug);
+		currentSlug.set(slug);
 		// Sort conversations based on prompt time
 		// conversations.sort((a, b) => {
 		// 	const timeA = new Date(a.prompt.time).getTime();
@@ -104,20 +94,6 @@
 		const inputAreaDivElement = document.getElementById('input-area') as HTMLDivElement;
 		inputAreaDivElement.classList.remove('input-area');
 		inputAreaDivElement.classList.add('input-area-bottom');
-
-		const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
-		const modal = genAI.getGenerativeModel({
-			model: 'gemini-2.0-flash',
-			systemInstruction: `You are a Socratic Teacher. And I am your student.
-                And please try to keep your replies as brief as possible, while explaining each topic carefully.
-                Please Explain the topic in relation to the NCERT CBSE 2025 curriculum, no need to keep mentioning it.
-                Please give a starting point to get started, your job is to help the student find the answer in his/her own way.
-                Also please return your answer in HTML format, with proper tags, only send inside the <body> tags, no need for the boilerplate or <body> tag.
-                always return strictly in the following json syntax: {summary: "[a short summary in a few words of the prompt"]", thinking: "[thinking text]", content: "[your response]"}`
-		});
-		chatSession = modal.startChat({
-			generationConfig
-		});
 
 		// Scroll to bottom of chat log if messages exist
 		if (messages.length > 0) {
@@ -150,7 +126,7 @@
 		// const result = await request.json();
 		// console.log(result);
 	});
-	curretnSlug.subscribe((slug) => {
+	currentSlug.subscribe((slug) => {
 		if (slug) {
 			const savedConversations = JSON.parse(localStorage.getItem('Conversations') || '[]');
 			const conversation = savedConversations.find(
@@ -297,11 +273,6 @@
 			sendMessage();
 		}
 	}
-	function changeModal(modal: modalType) {
-		// @ts-expect-error
-		selectedModal.set(modal.id);
-		localStorage.setItem('SelectedModal', modal.id);
-	}
 	function speak(messageContent: string) {
 		const formattedContent = messageContent
 			.replace(/<p>/g, '')
@@ -396,163 +367,7 @@
 			></textarea>
 			<div class="flex w-full items-center justify-between">
 				<div class="select-modal">
-					<div class="dropdown dropdown-top p-1">
-						<button tabindex="0" class="flex w-64 items-center" style="color: #6B7280">
-							{$selectedModal}
-							<svg
-								width="25px"
-								height="25px"
-								viewBox="0 0 24 24"
-								fill="none"
-								xmlns="http://www.w3.org/2000/svg"
-								class="mt-1"
-							>
-								<path
-									fill-rule="evenodd"
-									clip-rule="evenodd"
-									d="M12.7071 14.7071C12.3166 15.0976 11.6834 15.0976 11.2929 14.7071L6.29289 9.70711C5.90237 9.31658 5.90237 8.68342 6.29289 8.29289C6.68342 7.90237 7.31658 7.90237 7.70711 8.29289L12 12.5858L16.2929 8.29289C16.6834 7.90237 17.3166 7.90237 17.7071 8.29289C18.0976 8.68342 18.0976 9.31658 17.7071 9.70711L12.7071 14.7071Z"
-									stroke="#6B7280"
-									fill="#6B7280"
-								/>
-							</svg>
-						</button>
-						<div class="z-1 w-54 dropdown-content menu rounded-box bg-base-300 p-2 shadow-sm">
-							<ul class="tabs gap-5 p-1">
-								<li id="custom">
-									<button
-										on:click={() => {
-											const customModalList = document.getElementById(
-												'custom-modals-list'
-											) as HTMLElement;
-											const directModalList = document.getElementById(
-												'direct-modals-list'
-											) as HTMLElement;
-											if (directModalList && customModalList) {
-												customModalList.classList.remove('hidden');
-												directModalList.classList.add('hidden');
-											}
-										}}
-									>
-										Custom Trained
-									</button>
-								</li>
-								<li id="direct">
-									<button
-										on:click={() => {
-											const directModalList = document.getElementById(
-												'direct-modals-list'
-											) as HTMLElement;
-											const customModalList = document.getElementById(
-												'custom-modals-list'
-											) as HTMLElement;
-											if (customModalList) {
-												directModalList.classList.remove('hidden');
-												customModalList.classList.add('hidden');
-											}
-										}}>Direct</button
-									>
-								</li>
-							</ul>
-							<div id="custom-modals-list" class="">
-								{#each modalList as modal}
-									{#if modal.type == 'custom'}
-										{#if $userRole == modal.roleRequirement}
-											<li>
-												<button class="btn-ghost" on:click={() => changeModal(modal)}
-													>{modal.name}
-													<div class="tooltip" data-tip={modal.description}>
-														<svg
-															xmlns="http://www.w3.org/2000/svg"
-															fill="none"
-															viewBox="0 0 24 24"
-															class="h-6 w-6 shrink-0 stroke-info"
-														>
-															<path
-																stroke-linecap="round"
-																stroke-linejoin="round"
-																stroke-width="2"
-																d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-															></path>
-														</svg>
-													</div>
-												</button>
-											</li>
-										{:else}
-											<li>
-												<button class="disabled btn-ghost"
-													>{modal.name}
-													<div class="tooltip" data-tip={modal.description}>
-														<svg
-															xmlns="http://www.w3.org/2000/svg"
-															fill="none"
-															viewBox="0 0 24 24"
-															class="h-6 w-6 shrink-0 stroke-info"
-														>
-															<path
-																stroke-linecap="round"
-																stroke-linejoin="round"
-																stroke-width="2"
-																d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-															></path>
-														</svg>
-													</div>
-												</button>
-											</li>
-										{/if}
-									{/if}
-								{/each}
-							</div>
-							<div id="direct-modals-list" class="hidden">
-								{#each modalList as modal}
-									{#if modal.type == 'direct'}
-										{#if $userRole == modal.roleRequirement}
-											<li>
-												<button class="btn-ghost" on:click={() => changeModal(modal)}
-													>{modal.name}
-													<div class="tooltip" data-tip={modal.description}>
-														<svg
-															xmlns="http://www.w3.org/2000/svg"
-															fill="none"
-															viewBox="0 0 24 24"
-															class="h-6 w-6 shrink-0 stroke-info"
-														>
-															<path
-																stroke-linecap="round"
-																stroke-linejoin="round"
-																stroke-width="2"
-																d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-															></path>
-														</svg>
-													</div>
-												</button>
-											</li>
-										{:else}
-											<li>
-												<button class="disabled btn-ghost"
-													>{modal.name}
-													<div class="tooltip" data-tip={modal.description}>
-														<svg
-															xmlns="http://www.w3.org/2000/svg"
-															fill="none"
-															viewBox="0 0 24 24"
-															class="h-6 w-6 shrink-0 stroke-info"
-														>
-															<path
-																stroke-linecap="round"
-																stroke-linejoin="round"
-																stroke-width="2"
-																d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-															></path>
-														</svg>
-													</div>
-												</button>
-											</li>
-										{/if}
-									{/if}
-								{/each}
-							</div>
-						</div>
-					</div>
+					<Selectmodal />
 				</div>
 				<div class="tooltip" data-tip="Send">
 					<button type="button" on:click={sendMessage} aria-label="Send" class="send-button">

@@ -7,24 +7,17 @@
 		modalType,
 		UserRole
 	} from '$lib/types/types';
-	import apiConfig from '$lib/utils/apiConfig';
 	import { onMount } from 'svelte';
-	import { chatSession } from '$lib/utils/customGeminiModal';
+	import { customChatSession } from '$lib/utils/customGeminiModal';
 	import Loading from './components/loading.svelte';
-	import { writable } from 'svelte/store';
 	import { generateUuid } from '$lib/utils/generateUuid';
 	import { goto } from '$app/navigation';
-	import { modalList } from '$lib/utils/modalList';
-	import { User } from '@auth0/auth0-spa-js';
+	import { chatSession } from '$lib/utils/geminiModal';
+	import { selectedModal } from '$lib/stores/store';
+	import SelectModal from './components/selectModal.svelte';
 
 	let messages: messagesType[] = [];
 	let conversations: ConversationType[] = [];
-	let selectedModal = writable<
-		| 'gemini-2.0-flash_custom_trained'
-		| 'gemini-2.0-flash'
-		| 'llama-3.3-70b-versatile'
-		| 'deepseek-r1-distill-llama-70b'
-	>('gemini-2.0-flash_custom_trained');
 	let loading: boolean = false;
 	let email: string = '';
 	let error = '';
@@ -43,37 +36,7 @@
 				chatLogElement.classList.remove('hidden');
 			}
 		});
-
-		// Scroll to bottom of chat log if messages exist
-		if (messages.length > 0) {
-			setTimeout(() => {
-				const chatLog = document.getElementById('chat-log');
-				if (chatLog) {
-					chatLog.scrollTo(0, chatLog.scrollHeight);
-				}
-			}, 100);
-		}
-		sidebarOpened = localStorage.getItem('Sidebar');
-		if (sidebarOpened == 'closed') {
-			const sideBar = document.getElementById('side-bar') as HTMLElement;
-			sideBar.classList.add('hidden');
-			const leftButton = document.getElementById('left-button') as HTMLElement;
-			leftButton.classList.add('hidden');
-			const rightButton = document.getElementById('right-button') as HTMLElement;
-			rightButton.classList.remove('hidden');
-		}
-		// const request = await fetch(`${apiConfig.apiUrl}ai/chat/deepseek-r1-distill-llama-70b`, {
-		// 	method: 'POST',
-		// 	headers: {
-		// 		'Content-Type': 'application/json'
-		// 	},
-		// 	body: JSON.stringify({
-		// 		email: userEmail,
-		// 		prompt: 'Hello, how are you?'
-		// 	})
-		// });
-		// const result = await request.json();
-		// console.log(result);
+		welcomeMessage.set(true);
 	});
 	async function sendMessage() {
 		welcomeMessage.set(false);
@@ -114,57 +77,122 @@
 				time: new Date().toLocaleTimeString()
 			};
 			messages = [...messages, errorMessage];
-
-			const conversation: ConversationType = {
-				name: chatName,
-				slug: await generateUuid(chatName),
-				prompt: userMessage,
-				response: errorMessage
-			};
-			conversations = [...conversations, conversation];
-			localStorage.setItem('Conversations', JSON.stringify(conversations));
 		} else {
-			if (!$isAuthenticated) {
-				if (messages.length <= 20) {
-					sendQueryToAI(userInput, userMessage).then(() => {
-						setTimeout(() => {
-							if (chatLog) {
-								chatLog.scrollTo(0, chatLog.scrollHeight);
-							}
-						}, 500);
-					});
-				} else {
-					const errorMessage: MessageType = {
-						content:
-							'Sorry, you have reached the limit of 20 messages. To continue with your chat and do more, please login.',
-						sender: $selectedModal,
-						time: new Date().toLocaleTimeString()
-					};
-					messages = [...messages, errorMessage];
+			if ($selectedModal == 'gemini-2.0-flash_custom_trained' || 'gemini-2.0-flash') {
+				if (!$isAuthenticated) {
+					if (messages.length <= 20) {
+						sendQueryToAI(userInput, userMessage, $selectedModal);
+					} else {
+						const errorMessage: MessageType = {
+							content:
+								'<p>Sorry, you have reached the limit of 20 messages. To continue with your chat and do more, please login.</p>',
+							sender: $selectedModal,
+							time: new Date().toLocaleTimeString()
+						};
+						messages = [...messages, errorMessage];
 
-					const conversation: ConversationType = {
-						name: chatName,
-						slug: await generateUuid(chatName),
-						prompt: userMessage,
-						response: errorMessage
-					};
-					conversations = [...conversations, conversation];
-					localStorage.setItem('Conversations', JSON.stringify(conversations));
+						const conversation: ConversationType = {
+							name: chatName,
+							slug: await generateUuid(chatName),
+							prompt: userMessage,
+							response: errorMessage
+						};
+						conversations = [...conversations, conversation];
+						localStorage.setItem('Conversations', JSON.stringify(conversations));
+					}
+				} else {
+					sendQueryToAI(userInput, userMessage, $selectedModal);
 				}
 			} else {
-				sendQueryToAI(userInput, userMessage).then(() => {
-					setTimeout(() => {
-						if (chatLog) {
-							chatLog.scrollTo(0, chatLog.scrollHeight);
-						}
-					}, 500);
-				});
+				if (!$isAuthenticated) {
+					if (messages.length <= 20) {
+						const response = await fetch(``, {
+							method: 'POST',
+							headers: {
+								'Content-Type': 'application/json'
+							},
+							body: JSON.stringify({
+								email: userEmail,
+								prompt: userInput
+							})
+						});
+						const result = await response.json();
+						console.log(result);
+					} else {
+						const errorMessage: MessageType = {
+							content:
+								'<p>Sorry, you have reached the limit of 20 messages. To continue with your chat and do more, please login.</p>',
+							sender: $selectedModal,
+							time: new Date().toLocaleTimeString()
+						};
+						messages = [...messages, errorMessage];
+
+						const conversation: ConversationType = {
+							name: chatName,
+							slug: await generateUuid(chatName),
+							prompt: userMessage,
+							response: errorMessage
+						};
+						conversations = [...conversations, conversation];
+						localStorage.setItem('Conversations', JSON.stringify(conversations));
+					}
+				} else {
+					const response = await fetch(``, {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json'
+						},
+						body: JSON.stringify({
+							email: userEmail,
+							prompt: userInput
+						})
+					});
+					const result = await response.json();
+					console.log(result);
+				}
 			}
 			inputAreaElement.value = '';
 		}
 	}
-	async function sendQueryToAI(prompt: string, userMessage: MessageType) {
-		if (!email) {
+	async function sendQueryToAI(prompt: string, userMessage: MessageType, selectedModal: string) {
+		if (selectedModal == 'gemini-2.0-flash_custom_trained') {
+			try {
+				loading = true;
+				const result = await customChatSession.sendMessage(prompt);
+				const jsonResult = result.response.text().replace(/json/, '').replace(/`/g, '');
+				const summary = JSON.parse(jsonResult).summary;
+				chatName = summary;
+				const text = JSON.parse(jsonResult).content.replace(/`/g, '');
+				// console.log(result.response.text());
+				// console.log(JSON.parse(jsonResult));
+				// console.log('summary', summary);
+				// console.log('content', text);
+				loading = false;
+
+				const aiMessage: MessageType = {
+					content: text,
+					sender: selectedModal,
+					time: new Date().toLocaleTimeString()
+				};
+
+				messages = [...messages, aiMessage];
+
+				const conversation: ConversationType = {
+					name: chatName,
+					slug: await generateUuid(chatName),
+					prompt: userMessage,
+					response: aiMessage
+				};
+				conversations = [...conversations, conversation];
+				localStorage.setItem('Conversations', JSON.stringify(conversations));
+				const newConversationList = [...$conversationsList, conversation];
+				conversationsList.set(newConversationList);
+				goto(`/${conversation.slug}`);
+			} catch (error) {
+				error = error;
+				loading = false;
+			}
+		} else {
 			try {
 				loading = true;
 				const result = await chatSession.sendMessage(prompt);
@@ -180,7 +208,7 @@
 
 				const aiMessage: MessageType = {
 					content: text,
-					sender: $selectedModal,
+					sender: selectedModal,
 					time: new Date().toLocaleTimeString()
 				};
 
@@ -213,11 +241,6 @@
 			event.preventDefault();
 			sendMessage();
 		}
-	}
-	function changeModal(modal: modalType) {
-		// @ts-expect-error
-		selectedModal.set(modal.id);
-		localStorage.setItem('SelectedModal', modal.id);
 	}
 </script>
 
@@ -274,163 +297,7 @@
 			></textarea>
 			<div class="flex w-full items-center justify-between">
 				<div class="select-modal">
-					<div class="dropdown dropdown-top p-1">
-						<button tabindex="0" class="flex w-64 items-center" style="color: #6B7280">
-							{$selectedModal}
-							<svg
-								width="25px"
-								height="25px"
-								viewBox="0 0 24 24"
-								fill="none"
-								xmlns="http://www.w3.org/2000/svg"
-								class="mt-1"
-							>
-								<path
-									fill-rule="evenodd"
-									clip-rule="evenodd"
-									d="M12.7071 14.7071C12.3166 15.0976 11.6834 15.0976 11.2929 14.7071L6.29289 9.70711C5.90237 9.31658 5.90237 8.68342 6.29289 8.29289C6.68342 7.90237 7.31658 7.90237 7.70711 8.29289L12 12.5858L16.2929 8.29289C16.6834 7.90237 17.3166 7.90237 17.7071 8.29289C18.0976 8.68342 18.0976 9.31658 17.7071 9.70711L12.7071 14.7071Z"
-									stroke="#6B7280"
-									fill="#6B7280"
-								/>
-							</svg>
-						</button>
-						<div class="z-1 w-54 dropdown-content menu rounded-box bg-base-300 p-2 shadow-sm">
-							<ul class="tabs gap-5 p-1">
-								<li id="custom">
-									<button
-										on:click={() => {
-											const customModalList = document.getElementById(
-												'custom-modals-list'
-											) as HTMLElement;
-											const directModalList = document.getElementById(
-												'direct-modals-list'
-											) as HTMLElement;
-											if (directModalList && customModalList) {
-												customModalList.classList.remove('hidden');
-												directModalList.classList.add('hidden');
-											}
-										}}
-									>
-										Custom Trained
-									</button>
-								</li>
-								<li id="direct">
-									<button
-										on:click={() => {
-											const directModalList = document.getElementById(
-												'direct-modals-list'
-											) as HTMLElement;
-											const customModalList = document.getElementById(
-												'custom-modals-list'
-											) as HTMLElement;
-											if (customModalList) {
-												directModalList.classList.remove('hidden');
-												customModalList.classList.add('hidden');
-											}
-										}}>Direct</button
-									>
-								</li>
-							</ul>
-							<div id="custom-modals-list" class="">
-								{#each modalList as modal}
-									{#if modal.type == 'custom'}
-										{#if modal.roleRequirement.includes($userRole as UserRole)}
-											<li>
-												<button class="btn-ghost" on:click={() => changeModal(modal)}
-													>{modal.name}
-													<div class="tooltip" data-tip={modal.description}>
-														<svg
-															xmlns="http://www.w3.org/2000/svg"
-															fill="none"
-															viewBox="0 0 24 24"
-															class="h-6 w-6 shrink-0 stroke-info"
-														>
-															<path
-																stroke-linecap="round"
-																stroke-linejoin="round"
-																stroke-width="2"
-																d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-															></path>
-														</svg>
-													</div>
-												</button>
-											</li>
-										{:else}
-											<li>
-												<button class="disabled btn-ghost"
-													>{modal.name}
-													<div class="tooltip" data-tip={modal.description}>
-														<svg
-															xmlns="http://www.w3.org/2000/svg"
-															fill="none"
-															viewBox="0 0 24 24"
-															class="h-6 w-6 shrink-0 stroke-info"
-														>
-															<path
-																stroke-linecap="round"
-																stroke-linejoin="round"
-																stroke-width="2"
-																d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-															></path>
-														</svg>
-													</div>
-												</button>
-											</li>
-										{/if}
-									{/if}
-								{/each}
-							</div>
-							<div id="direct-modals-list" class="hidden">
-								{#each modalList as modal}
-									{#if modal.type == 'direct'}
-										{#if modal.roleRequirement.includes($userRole as UserRole)}
-											<li>
-												<button class="btn-ghost" on:click={() => changeModal(modal)}
-													>{modal.name}
-													<div class="tooltip" data-tip={modal.description}>
-														<svg
-															xmlns="http://www.w3.org/2000/svg"
-															fill="none"
-															viewBox="0 0 24 24"
-															class="h-6 w-6 shrink-0 stroke-info"
-														>
-															<path
-																stroke-linecap="round"
-																stroke-linejoin="round"
-																stroke-width="2"
-																d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-															></path>
-														</svg>
-													</div>
-												</button>
-											</li>
-										{:else}
-											<li>
-												<button class="disabled btn-ghost"
-													>{modal.name}
-													<div class="tooltip" data-tip={modal.description}>
-														<svg
-															xmlns="http://www.w3.org/2000/svg"
-															fill="none"
-															viewBox="0 0 24 24"
-															class="h-6 w-6 shrink-0 stroke-info"
-														>
-															<path
-																stroke-linecap="round"
-																stroke-linejoin="round"
-																stroke-width="2"
-																d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-															></path>
-														</svg>
-													</div>
-												</button>
-											</li>
-										{/if}
-									{/if}
-								{/each}
-							</div>
-						</div>
-					</div>
+					<SelectModal />
 				</div>
 				<div class="tooltip" data-tip="Send">
 					<button type="button" on:click={sendMessage} aria-label="Send" class="send-button">
@@ -517,9 +384,5 @@
 	.select-modal {
 		flex-shrink: 0;
 		border: none;
-	}
-	.disabled {
-		cursor: not-allowed;
-		color: #545c69;
 	}
 </style>

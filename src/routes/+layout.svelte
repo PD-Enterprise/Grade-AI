@@ -28,6 +28,25 @@
 		const result = await request.json();
 		localStorage.setItem('role', result.data);
 		userRole.set(result.data);
+
+		const sidebarStatus = localStorage.getItem('Sidebar');
+		const sideBar = document.getElementById('side-bar') as HTMLElement;
+		const leftButton = document.getElementById('left-button') as HTMLElement;
+		const rightButton = document.getElementById('right-button') as HTMLElement;
+		if (sidebarStatus == 'closed') {
+			if (sideBar && leftButton && rightButton) {
+				sideBar.classList.add('hidden');
+				leftButton.classList.add('hidden');
+				rightButton.classList.remove('hidden');
+			}
+			localStorage.setItem('Sidebar', 'closed');
+		} else {
+			if (sideBar && leftButton && rightButton) {
+				sideBar.classList.remove('hidden');
+				leftButton.classList.remove('hidden');
+				rightButton.classList.add('hidden');
+			}
+		}
 	});
 </script>
 

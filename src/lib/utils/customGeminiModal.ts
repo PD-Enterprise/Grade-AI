@@ -18,6 +18,6 @@ const modal = genAI.getGenerativeModel({
         Also please return your answer in HTML format, with proper tags, only send inside the <body> tags, no need for the boilerplate or <body> tag.
         always return strictly in the following json syntax: {summary: "[a short summary in a few words of the prompt"]", thinking: "[thinking text]", content: "[your response]"}`
 });
-export const chatSession = modal.startChat({
+export const customChatSession = modal.startChat({
     generationConfig
 });

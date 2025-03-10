@@ -5,12 +5,6 @@ export let welcomeMessage = writable(true)
 export let userRole = writable<UserRole>('tier-1')
 export let conversationsList = writable<ConversationType[]>([
     {
-        name: "Conversation 1",
-        slug: "conversation-1",
-        prompt: null,
-        response: null
-    },
-    {
         name: "Welcome to Grade AI",
         slug: "welcome-to-grade-ai",
         prompt: {
@@ -39,7 +33,15 @@ export let conversationsList = writable<ConversationType[]>([
             time: "2023-03-30T10:00:00.000Z"
         }
     }])
-export const curretnSlug = writable('');
+export const currentSlug = writable('');
+export const selectedModal = writable<
+    | 'gemini-2.0-flash_custom_trained'
+    | 'gemini-2.0-flash'
+    | 'llama-3.3-70b-versatile'
+    | 'llama-3.3-70b-versatile_custom_trained'
+    | 'deepseek-r1-distill-llama-70b'
+    | 'deepseek-r1-distill-llama-70b_custom_trained'
+>('gemini-2.0-flash_custom_trained');
 
 // Auth
 export const auth0Client = writable(null);
