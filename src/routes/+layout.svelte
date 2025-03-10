@@ -5,6 +5,7 @@
 	import { auth0Client, isAuthenticated, user, userRole } from '$lib/stores/store';
 	import apiConfig from '$lib/utils/apiConfig';
 	import Sidebar from './components/sidebar.svelte';
+
 	let { children } = $props();
 
 	onMount(async () => {
@@ -30,11 +31,10 @@
 		localStorage.setItem('role', result.data);
 		userRole.set(result.data);
 		// SIDEBAR
-		const sidebarStatus = localStorage.getItem('Sidebar');
 		const sideBar = document.getElementById('side-bar') as HTMLElement;
 		const leftButton = document.getElementById('left-button') as HTMLElement;
 		const rightButton = document.getElementById('right-button') as HTMLElement;
-		if (sidebarStatus == 'closed' && sideBar && leftButton && rightButton) {
+		if (localStorage.getItem('Sidebar') == 'closed') {
 			sideBar.classList.add('hidden');
 			leftButton.classList.add('hidden');
 			rightButton.classList.remove('hidden');
@@ -112,7 +112,7 @@
 			</button>
 		</div>
 	</div>
-	<div class="main-content">
+	<div class="main-content w-32">
 		{@render children()}
 	</div>
 </div>

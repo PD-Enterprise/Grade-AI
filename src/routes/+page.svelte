@@ -81,14 +81,6 @@
 							time: new Date().toLocaleTimeString()
 						};
 						messages = [...messages, errorMessage];
-
-						const conversation: ConversationType = {
-							name: chatName,
-							slug: chatName.toLowerCase().replaceAll(' ', '-'),
-							prompt: userMessage,
-							response: errorMessage
-						};
-						localStorage.setItem('Conversations', JSON.stringify($conversationsList));
 					}
 				} else {
 					sendQueryToAI(userInput, userMessage, $selectedModal);
@@ -116,14 +108,6 @@
 							time: new Date().toLocaleTimeString()
 						};
 						messages = [...messages, errorMessage];
-
-						const conversation: ConversationType = {
-							name: chatName,
-							slug: chatName.toLowerCase().replaceAll(' ', '-'),
-							prompt: userMessage,
-							response: errorMessage
-						};
-						localStorage.setItem('Conversations', JSON.stringify($conversationsList));
 					}
 				} else {
 					const response = await fetch(``, {
@@ -169,18 +153,17 @@
 				const conversation: ConversationType = {
 					name: chatName,
 					slug: chatName.toLowerCase().replaceAll(' ', '-'),
-					prompt: userMessage,
-					response: aiMessage
+					content: [{ prompt: userMessage, response: aiMessage }]
 				};
 				const newConversationList = [...$conversationsList, conversation];
 				localStorage.setItem('Conversations', JSON.stringify(newConversationList));
 				conversationsList.set(newConversationList);
-				// goto(`/${conversation.slug}`);
+				goto(`/${conversation.slug}`);
 			} catch (error) {
 				error = error;
 				loading = false;
 			}
-		} else {
+		} else if (selectedModal == 'gemini-2.0-flash') {
 			try {
 				loading = true;
 				const result = await chatSession.sendMessage(prompt);
@@ -199,19 +182,22 @@
 					sender: selectedModal,
 					time: new Date().toLocaleTimeString()
 				};
-
 				messages = [...messages, aiMessage];
 
-				const conversation: ConversationType = {
+				const newConversation: ConversationType = {
 					name: chatName,
 					slug: chatName.toLowerCase().replaceAll(' ', '-'),
-					prompt: userMessage,
-					response: aiMessage
+					content: [
+						{
+							prompt: userMessage,
+							response: aiMessage
+						}
+					]
 				};
-				const newConversationList = [...$conversationsList, conversation];
-				localStorage.setItem('Conversations', JSON.stringify($conversationsList));
+				const newConversationList = [...$conversationsList, newConversation];
+				localStorage.setItem('Conversations', JSON.stringify(newConversationList));
 				conversationsList.set(newConversationList);
-				// goto(`/${conversation.slug}`);
+				goto(`/${newConversation.slug}`);
 			} catch (error) {
 				error = error;
 				loading = false;

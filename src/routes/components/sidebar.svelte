@@ -23,15 +23,31 @@
 				userName = value.name;
 			}
 		});
-		const storedConversations = JSON.parse(localStorage.getItem('Conversations') || '[]');
-		conversationsList.set(storedConversations);
+		if (!localStorage.getItem('Conversations')) {
+			// localStorage.setItem('Conversations', JSON.stringify($conversationsList));
+		} else {
+			const storedConversations = JSON.parse(localStorage.getItem('Conversations') || '[]');
+			if (storedConversations) {
+				conversationsList.set(storedConversations);
+			}
+		}
 	});
 
 	function login() {
 		auth.loginWithPopup($auth0Client, {});
 	}
 	function deleteChat(conversation: ConversationType) {
-		console.log(conversation);
+		const conversationSlug = conversation.slug;
+		if (conversationSlug != $currentSlug || conversationSlug != 'welcome-to-grade-ai') {
+			const conversationIndex = $conversationsList.findIndex(
+				(conversation: any) => conversation.slug == conversationSlug
+			);
+			conversationsList.update((conversations: any) => {
+				conversations.splice(conversationIndex, 1);
+				return conversations;
+			});
+			localStorage.setItem('Conversations', JSON.stringify($conversationsList));
+		}
 	}
 </script>
 
@@ -44,6 +60,7 @@
 					aria-label="Add New Conversation"
 					class="btn btn-ghost"
 					on:click={() => {
+						localStorage.setItem('Sidebar', 'closed');
 						goto('/');
 					}}
 				>
@@ -158,7 +175,7 @@
 		height: 100vh;
 		background-color: var(--base-300);
 		border-right: 1px solid #6b7280;
-		backdrop-filter: blur(30px);
+		backdrop-filter: blur(15px);
 	}
 	.conversations {
 		height: calc(100vh - 100px);

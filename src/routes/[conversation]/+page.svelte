@@ -12,13 +12,16 @@
 	import { goto } from '$app/navigation';
 	import { autoResize } from '$lib/utils/autoResize';
 	import { customChatSession } from '$lib/utils/customGeminiModal';
+	import { updated } from '$app/state';
 
 	let messages: messagesType[] = [];
-	let conversation: ConversationType[] = [];
+	let conversation: any = [];
 	let loading: boolean = false;
 	let email: string = '';
 	let userEmail: string = '';
 	let chatName: string = 'New Chat';
+	let savedConversations;
+	let result: any;
 
 	onMount(async () => {
 		email = localStorage.getItem('Email')?.toString() || '';
@@ -45,16 +48,24 @@
 		}
 		console.log('Conv currentslug: ', $currentSlug);
 		currentSlug.subscribe((value) => {
-			console.log('Conversation:', value);
+			// console.log('Conversation:', value);
 			if (value) {
-				const savedConversations = JSON.parse(localStorage.getItem('Conversations') || '[]');
-				const conversation = savedConversations.find(
-					(conversation: any) => conversation.slug == value
-				);
+				savedConversations = JSON.parse(localStorage.getItem('Conversations') || '[]');
+				// console.log('savedConversations:', savedConversations);
+				for (let i = 0; i < savedConversations.length; i++) {
+					// console.log(savedConversations[i]);
+					if (savedConversations[i].slug == value) {
+						// console.log(savedConversations[i].content);
+						conversation = savedConversations[i].content;
+						break;
+					}
+				}
+				// console.log(conversation);
 				if (!conversation) {
 					goto('/');
 				} else {
-					messages = [conversation.prompt, conversation.response];
+					messages = [conversation[0].prompt, conversation[0].response];
+					// console.log(messages);
 				}
 			}
 		});
@@ -105,14 +116,6 @@
 							time: new Date().toLocaleTimeString()
 						};
 						messages = [...messages, errorMessage];
-
-						const conversation: ConversationType = {
-							name: chatName,
-							slug: chatName.toLowerCase().replaceAll(' ', '-'),
-							prompt: userMessage,
-							response: errorMessage
-						};
-						localStorage.setItem('Conversations', JSON.stringify($conversationsList));
 					}
 				} else {
 					sendQueryToAI(userInput, userMessage, $selectedModal);
@@ -140,14 +143,6 @@
 							time: new Date().toLocaleTimeString()
 						};
 						messages = [...messages, errorMessage];
-
-						const conversation: ConversationType = {
-							name: chatName,
-							slug: chatName.toLowerCase().replaceAll(' ', '-'),
-							prompt: userMessage,
-							response: errorMessage
-						};
-						localStorage.setItem('Conversations', JSON.stringify($conversationsList));
 					}
 				} else {
 					const response = await fetch(``, {
@@ -168,78 +163,47 @@
 		}
 	}
 	async function sendQueryToAI(prompt: string, userMessage: MessageType, selectedModal: string) {
-		if (selectedModal == 'gemini-2.0-flash_custom_trained') {
-			try {
-				loading = true;
-				const result = await customChatSession.sendMessage(prompt);
-				const jsonResult = result.response.text().replace(/json/, '').replace(/`/g, '');
-				const summary = JSON.parse(jsonResult).summary;
-				chatName = summary;
-				const text = JSON.parse(jsonResult).content.replace(/`/g, '');
-				// console.log(result.response.text());
-				// console.log(JSON.parse(jsonResult));
-				// console.log('summary', summary);
-				// console.log('content', text);
-				loading = false;
-
-				const aiMessage: MessageType = {
-					content: text,
-					sender: selectedModal,
-					time: new Date().toLocaleTimeString()
-				};
-
-				messages = [...messages, aiMessage];
-
-				const conversation: ConversationType = {
-					name: chatName,
-					slug: chatName.toLowerCase().replaceAll(' ', '-'),
-					prompt: userMessage,
-					response: aiMessage
-				};
-				const newConversationList = [...$conversationsList, conversation];
-				localStorage.setItem('Conversations', JSON.stringify(newConversationList));
-				conversationsList.set(newConversationList);
-				goto(`/${conversation.slug}`);
-			} catch (error) {
-				error = error;
-				loading = false;
+		try {
+			loading = true;
+			switch (selectedModal) {
+				case 'gemini-2.0-flash':
+					result = await chatSession.sendMessage(prompt);
+					break;
+				case 'gemini-2.0-flash_custom_trained':
+					result = await customChatSession.sendMessage(prompt);
+					break;
 			}
-		} else {
-			try {
-				loading = true;
-				const result = await chatSession.sendMessage(prompt);
-				const jsonResult = result.response.text().replace(/json/, '').replace(/`/g, '');
-				const summary = JSON.parse(jsonResult).summary;
-				chatName = summary;
-				const text = JSON.parse(jsonResult).content.replace(/`/g, '');
-				// console.log(result.response.text());
-				// console.log(JSON.parse(jsonResult));
-				// console.log('summary', summary);
-				// console.log('content', text);
-				loading = false;
+			const jsonResult = result.response.text().replace(/json/, '').replace(/`/g, '');
+			const summary = JSON.parse(jsonResult).summary;
+			chatName = summary;
+			const text = JSON.parse(jsonResult).content.replace(/`/g, '');
+			// console.log(result.response.text());
+			// console.log(JSON.parse(jsonResult));
+			// console.log('summary', summary);
+			// console.log('content', text);
+			loading = false;
 
-				const aiMessage: MessageType = {
-					content: text,
-					sender: selectedModal,
-					time: new Date().toLocaleTimeString()
-				};
+			const aiMessage: MessageType = {
+				content: text,
+				sender: selectedModal,
+				time: new Date().toLocaleTimeString()
+			};
 
-				messages = [...messages, aiMessage];
+			messages = [...messages, aiMessage];
 
-				const conversation: ConversationType = {
-					name: chatName,
-					slug: chatName.toLowerCase().replaceAll(' ', '-'),
-					prompt: userMessage,
-					response: aiMessage
-				};
-				const newConversationList = [...$conversationsList, conversation];
-				localStorage.setItem('Conversations', JSON.stringify($conversationsList));
-				conversationsList.set(newConversationList);
-				goto(`/${conversation.slug}`);
-			} catch (error) {
-				error = error;
-				loading = false;
-			}
+			const updatedConversation = {
+				prompt: userMessage,
+				response: aiMessage
+			};
+			console.log(conversation);
+			const newConversation = [...conversation, updatedConversation];
+			console.log(newConversation);
+			const newConversationList = [...$conversationsList, newConversation];
+			console.log(newConversationList);
+			localStorage.setItem('Conversations', JSON.stringify(newConversationList));
+		} catch (error) {
+			error = error;
+			loading = false;
 		}
 	}
 	function handleKeyDown(event: any) {
@@ -250,6 +214,8 @@
 	}
 	function speak(messageContent: string) {
 		const formattedContent = messageContent
+			.replace(/<h1>/g, '')
+			.replace(/<\/h1>/g, '')
 			.replace(/<p>/g, '')
 			.replace(/<\/p>/g, '')
 			.replace(/<b>/g, '')
@@ -371,7 +337,6 @@
 
 <style>
 	.chat-log {
-		/* background-color: red; */
 		height: calc(100vh - 165px);
 		width: 100vw;
 		overflow-y: scroll;

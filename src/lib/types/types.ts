@@ -7,8 +7,10 @@ export type MessageType = {
 export type ConversationType = {
     name: string,
     slug: string,
-    prompt: MessageType | null,
-    response: MessageType | null
+    content: Array<{
+        prompt: MessageType | null,
+        response: MessageType | null
+    }>
 }
 
 export type modalType = {
