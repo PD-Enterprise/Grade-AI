@@ -8,6 +8,7 @@
 	let { children } = $props();
 
 	onMount(async () => {
+		// AUTH
 		const client = await auth.createClient();
 		// @ts-expect-error
 		auth0Client.set(client);
@@ -28,26 +29,43 @@
 		const result = await request.json();
 		localStorage.setItem('role', result.data);
 		userRole.set(result.data);
-
+		// SIDEBAR
 		const sidebarStatus = localStorage.getItem('Sidebar');
 		const sideBar = document.getElementById('side-bar') as HTMLElement;
 		const leftButton = document.getElementById('left-button') as HTMLElement;
 		const rightButton = document.getElementById('right-button') as HTMLElement;
-		if (sidebarStatus == 'closed') {
-			if (sideBar && leftButton && rightButton) {
-				sideBar.classList.add('hidden');
-				leftButton.classList.add('hidden');
-				rightButton.classList.remove('hidden');
-			}
-			localStorage.setItem('Sidebar', 'closed');
+		if (sidebarStatus == 'closed' && sideBar && leftButton && rightButton) {
+			sideBar.classList.add('hidden');
+			leftButton.classList.add('hidden');
+			rightButton.classList.remove('hidden');
 		} else {
-			if (sideBar && leftButton && rightButton) {
-				sideBar.classList.remove('hidden');
-				leftButton.classList.remove('hidden');
-				rightButton.classList.add('hidden');
-			}
+			sideBar.classList.remove('hidden');
+			leftButton.classList.remove('hidden');
+			rightButton.classList.add('hidden');
 		}
 	});
+	function openSidebar() {
+		const sideBar = document.getElementById('side-bar') as HTMLElement;
+		const leftButton = document.getElementById('left-button') as HTMLElement;
+		const rightButton = document.getElementById('right-button') as HTMLElement;
+		if (sideBar && leftButton && rightButton) {
+			sideBar.classList.remove('hidden');
+			leftButton.classList.remove('hidden');
+			rightButton.classList.add('hidden');
+		}
+		localStorage.setItem('Sidebar', 'opened');
+	}
+	function closeSidebar() {
+		const sideBar = document.getElementById('side-bar') as HTMLElement;
+		const leftButton = document.getElementById('left-button') as HTMLElement;
+		const rightButton = document.getElementById('right-button') as HTMLElement;
+		if (sideBar && leftButton && rightButton) {
+			sideBar.classList.add('hidden');
+			leftButton.classList.add('hidden');
+			rightButton.classList.remove('hidden');
+		}
+		localStorage.setItem('Sidebar', 'closed');
+	}
 </script>
 
 <div class="main flex">
@@ -56,21 +74,7 @@
 	</div>
 	<div class="control z-10">
 		<div class="left-button" id="left-button">
-			<button
-				aria-label="close sidebar"
-				class="btn btn-ghost"
-				on:click={() => {
-					const sideBar = document.getElementById('side-bar') as HTMLElement;
-					const leftButton = document.getElementById('left-button') as HTMLElement;
-					const rightButton = document.getElementById('right-button') as HTMLElement;
-					if (sideBar && leftButton && rightButton) {
-						sideBar.classList.add('hidden');
-						leftButton.classList.add('hidden');
-						rightButton.classList.remove('hidden');
-					}
-					localStorage.setItem('Sidebar', 'closed');
-				}}
-			>
+			<button aria-label="close sidebar" class="btn btn-ghost" onclick={closeSidebar}>
 				<svg
 					width="30px"
 					height="30px"
@@ -89,21 +93,7 @@
 			</button>
 		</div>
 		<div class="right-button hidden" id="right-button">
-			<button
-				aria-label="open sidebar"
-				class="btn btn-ghost"
-				on:click={() => {
-					const sideBar = document.getElementById('side-bar') as HTMLElement;
-					const leftButton = document.getElementById('left-button') as HTMLElement;
-					const rightButton = document.getElementById('right-button') as HTMLElement;
-					if (sideBar && leftButton && rightButton) {
-						sideBar.classList.remove('hidden');
-						leftButton.classList.remove('hidden');
-						rightButton.classList.add('hidden');
-					}
-					localStorage.setItem('Sidebar', 'opened');
-				}}
-			>
+			<button aria-label="open sidebar" class="btn btn-ghost" onclick={openSidebar}>
 				<svg
 					width="30px"
 					height="30px"
@@ -122,5 +112,7 @@
 			</button>
 		</div>
 	</div>
-	{@render children()}
+	<div class="main-content">
+		{@render children()}
+	</div>
 </div>

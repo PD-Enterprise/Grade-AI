@@ -6,67 +6,18 @@
 	import { chatSession } from '$lib/utils/geminiModal';
 	import Loading from '../components/loading.svelte';
 	import { writable } from 'svelte/store';
-	import { generateUuid } from '$lib/utils/generateUuid';
 	import { isAuthenticated } from '$lib/stores/store';
 	import { selectedModal } from '$lib/stores/store';
 	import Selectmodal from '../components/selectModal.svelte';
+	import { modalList } from '$lib/utils/modalList';
+	import { goto } from '$app/navigation';
+	import { autoResize } from '$lib/utils/autoResize';
 
 	let messages: messagesType[] = [];
 	let conversations: ConversationType[] = [];
-	const generationConfig = {
-		temperature: 1,
-		topP: 0.95,
-		topK: 40,
-		maxOutputTokens: 8192,
-		responseMimeType: 'text/plain'
-	};
 	let loading: boolean = false;
 	let email: string = '';
 	let error = '';
-	let modalList: modalType[] = [
-		{
-			name: 'Gemini 2.0 flash(Custom Trained)',
-			id: 'gemini-2.0-flash_custom_trained',
-			description: "Google's latest and greatest model, custom trained.",
-			roleRequirement: 'tier-1',
-			type: 'custom'
-		},
-		{
-			name: 'Gemini 2.0 flash',
-			id: 'gemini-2.0-flash',
-			description: "Google's latest and greatest model.",
-			roleRequirement: 'tier-1',
-			type: 'direct'
-		},
-		{
-			name: 'Llama 3.3',
-			id: 'llama-3.3-70b-versatile',
-			description: "Meta's powerful and adaptable LLM.",
-			roleRequirement: 'tier-2',
-			type: 'direct'
-		},
-		{
-			name: 'Llama 3.3(Custom Trained)',
-			id: 'llama-3.3-70b-versatile_custom_trained',
-			description: "Meta's powerful and adaptable LLM, custom trained.",
-			roleRequirement: 'tier-2',
-			type: 'custom'
-		},
-		{
-			name: 'Deepseek r1',
-			id: 'deepseek-r1-distill-llama-70b',
-			description: 'Distilled LLama-70B, optimized for efficiency.',
-			roleRequirement: 'tier-3',
-			type: 'direct'
-		},
-		{
-			name: 'Deepseek r1(Custom Trained)',
-			id: 'deepseek-r1-distill-llama-70b_custom_trained',
-			description: 'Distilled LLama-70B, optimized for efficiency, custom trained.',
-			roleRequirement: 'tier-3',
-			type: 'custom'
-		}
-	];
 	let sidebarOpened: string | null = 'true';
 	let userEmail: string = '';
 	let chatName: string = 'New Chat';
@@ -76,24 +27,13 @@
 		email = localStorage.getItem('Email')?.toString() || '';
 		const slug = location.pathname.split('/')[1];
 		currentSlug.set(slug);
-		// Sort conversations based on prompt time
-		// conversations.sort((a, b) => {
-		// 	const timeA = new Date(a.prompt.time).getTime();
-		// 	const timeB = new Date(b.prompt.time).getTime();
-		// 	return timeA - timeB;
-		// });
 		const savedSelectedModal = localStorage.getItem('SelectedModal');
 		if (savedSelectedModal) {
 			// @ts-expect-error
 			selectedModal.set(savedSelectedModal);
 		} else {
-			// @ts-expect-error
 			selectedModal.set(modalList[0].id);
 		}
-
-		const inputAreaDivElement = document.getElementById('input-area') as HTMLDivElement;
-		inputAreaDivElement.classList.remove('input-area');
-		inputAreaDivElement.classList.add('input-area-bottom');
 
 		// Scroll to bottom of chat log if messages exist
 		if (messages.length > 0) {
@@ -104,36 +44,18 @@
 				}
 			}, 100);
 		}
-		sidebarOpened = localStorage.getItem('Sidebar');
-		if (sidebarOpened == 'closed') {
-			const sideBar = document.getElementById('side-bar') as HTMLElement;
-			sideBar.classList.add('hidden');
-			const leftButton = document.getElementById('left-button') as HTMLElement;
-			leftButton.classList.add('hidden');
-			const rightButton = document.getElementById('right-button') as HTMLElement;
-			rightButton.classList.remove('hidden');
-		}
-		// const request = await fetch(`${apiConfig.apiUrl}ai/chat/deepseek-r1-distill-llama-70b`, {
-		// 	method: 'POST',
-		// 	headers: {
-		// 		'Content-Type': 'application/json'
-		// 	},
-		// 	body: JSON.stringify({
-		// 		email: userEmail,
-		// 		prompt: 'Hello, how are you?'
-		// 	})
-		// });
-		// const result = await request.json();
-		// console.log(result);
 	});
 	currentSlug.subscribe((slug) => {
 		if (slug) {
 			const savedConversations = JSON.parse(localStorage.getItem('Conversations') || '[]');
+
 			const conversation = savedConversations.find(
 				(conversation: any) => conversation.slug == slug
 			);
-			messages = [conversation.prompt, conversation.response];
-			if (conversation) {
+			if (!conversation) {
+				goto('/');
+			} else {
+				messages = [conversation.prompt, conversation.response];
 				conversationsList.set([conversation]);
 			}
 		}
@@ -179,7 +101,7 @@
 
 			const conversation: ConversationType = {
 				name: chatName,
-				slug: await generateUuid(chatName),
+				slug: chatName.toLowerCase().replaceAll(' ', '-'),
 				prompt: userMessage,
 				response: errorMessage
 			};
@@ -206,7 +128,7 @@
 
 					const conversation: ConversationType = {
 						name: chatName,
-						slug: await generateUuid(chatName),
+						slug: chatName.toLowerCase().replaceAll(' ', '-'),
 						prompt: userMessage,
 						response: errorMessage
 					};
@@ -250,22 +172,16 @@
 
 				const conversation: ConversationType = {
 					name: chatName,
-					slug: await generateUuid(chatName),
+					slug: chatName.toLowerCase().replaceAll(' ', '-'),
 					prompt: userMessage,
 					response: aiMessage
 				};
-				conversations = [...conversations, conversation];
-				localStorage.setItem('Conversations', JSON.stringify(conversations));
+				localStorage.setItem('Conversations', JSON.stringify($conversationsList));
 			} catch (error) {
 				error = error;
 				loading = false;
 			}
 		}
-	}
-	function autoResize(event: Event) {
-		const textarea = event.target as HTMLTextAreaElement;
-		textarea.style.height = 'auto';
-		textarea.style.height = textarea.scrollHeight + 'px';
 	}
 	function handleKeyDown(event: any) {
 		if (event.key === 'Enter' && !event.shiftKey) {
@@ -356,7 +272,7 @@
 				</div>
 			{/if}
 		</div>
-		<div class="input-area flex flex-wrap" id="input-area">
+		<div class="input-area-bottom flex flex-wrap" id="input-area">
 			<textarea
 				class="userInput mb-2"
 				placeholder="Ask me anything..."
@@ -421,19 +337,6 @@
 		overflow-y: auto;
 		background-color: transparent;
 	}
-	.input-area {
-		background-color: var(--color-base-300);
-		height: 130px;
-		padding: 10px;
-		justify-content: flex-start;
-		position: absolute;
-		top: 50%;
-		left: 50%;
-		transform: translate(-50%, -50%);
-		border-radius: 10px;
-		gap: 5px;
-		align-items: center;
-	}
 	.input-area-bottom {
 		background-color: var(--color-base-300);
 		height: 130px;
@@ -450,9 +353,5 @@
 	.select-modal {
 		flex-shrink: 0;
 		border: none;
-	}
-	.disabled {
-		cursor: not-allowed;
-		color: #545c69;
 	}
 </style>

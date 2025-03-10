@@ -1,27 +1,18 @@
 <script lang="ts">
-	import { conversationsList, isAuthenticated, userRole, welcomeMessage } from '$lib/stores/store';
-	import type {
-		messagesType,
-		ConversationType,
-		MessageType,
-		modalType,
-		UserRole
-	} from '$lib/types/types';
+	import { conversationsList, isAuthenticated, welcomeMessage } from '$lib/stores/store';
+	import type { messagesType, ConversationType, MessageType } from '$lib/types/types';
 	import { onMount } from 'svelte';
 	import { customChatSession } from '$lib/utils/customGeminiModal';
 	import Loading from './components/loading.svelte';
-	import { generateUuid } from '$lib/utils/generateUuid';
 	import { goto } from '$app/navigation';
 	import { chatSession } from '$lib/utils/geminiModal';
 	import { selectedModal } from '$lib/stores/store';
 	import SelectModal from './components/selectModal.svelte';
+	import { autoResize } from '$lib/utils/autoResize';
 
 	let messages: messagesType[] = [];
-	let conversations: ConversationType[] = [];
 	let loading: boolean = false;
 	let email: string = '';
-	let error = '';
-	let sidebarOpened: string | null = 'true';
 	let userEmail: string = '';
 	let chatName: string = 'New Chat';
 
@@ -93,12 +84,11 @@
 
 						const conversation: ConversationType = {
 							name: chatName,
-							slug: await generateUuid(chatName),
+							slug: chatName.toLowerCase().replaceAll(' ', '-'),
 							prompt: userMessage,
 							response: errorMessage
 						};
-						conversations = [...conversations, conversation];
-						localStorage.setItem('Conversations', JSON.stringify(conversations));
+						localStorage.setItem('Conversations', JSON.stringify($conversationsList));
 					}
 				} else {
 					sendQueryToAI(userInput, userMessage, $selectedModal);
@@ -129,12 +119,11 @@
 
 						const conversation: ConversationType = {
 							name: chatName,
-							slug: await generateUuid(chatName),
+							slug: chatName.toLowerCase().replaceAll(' ', '-'),
 							prompt: userMessage,
 							response: errorMessage
 						};
-						conversations = [...conversations, conversation];
-						localStorage.setItem('Conversations', JSON.stringify(conversations));
+						localStorage.setItem('Conversations', JSON.stringify($conversationsList));
 					}
 				} else {
 					const response = await fetch(``, {
@@ -179,13 +168,12 @@
 
 				const conversation: ConversationType = {
 					name: chatName,
-					slug: await generateUuid(chatName),
+					slug: chatName.toLowerCase().replaceAll(' ', '-'),
 					prompt: userMessage,
 					response: aiMessage
 				};
-				conversations = [...conversations, conversation];
-				localStorage.setItem('Conversations', JSON.stringify(conversations));
 				const newConversationList = [...$conversationsList, conversation];
+				localStorage.setItem('Conversations', JSON.stringify(newConversationList));
 				conversationsList.set(newConversationList);
 				goto(`/${conversation.slug}`);
 			} catch (error) {
@@ -216,13 +204,12 @@
 
 				const conversation: ConversationType = {
 					name: chatName,
-					slug: await generateUuid(chatName),
+					slug: chatName.toLowerCase().replaceAll(' ', '-'),
 					prompt: userMessage,
 					response: aiMessage
 				};
-				conversations = [...conversations, conversation];
-				localStorage.setItem('Conversations', JSON.stringify(conversations));
 				const newConversationList = [...$conversationsList, conversation];
+				localStorage.setItem('Conversations', JSON.stringify($conversationsList));
 				conversationsList.set(newConversationList);
 				goto(`/${conversation.slug}`);
 			} catch (error) {
@@ -230,11 +217,6 @@
 				loading = false;
 			}
 		}
-	}
-	function autoResize(event: Event) {
-		const textarea = event.target as HTMLTextAreaElement;
-		textarea.style.height = 'auto';
-		textarea.style.height = textarea.scrollHeight + 'px';
 	}
 	function handleKeyDown(event: any) {
 		if (event.key === 'Enter' && !event.shiftKey) {

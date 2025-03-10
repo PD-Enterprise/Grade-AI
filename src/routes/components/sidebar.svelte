@@ -3,7 +3,6 @@
 	import { user, auth0Client, isAuthenticated, conversationsList } from '$lib/stores/store';
 	import { onMount } from 'svelte';
 	import type { ConversationType } from '$lib/types/types';
-	import { generateUuid } from '$lib/utils/generateUuid';
 	import { goto } from '$app/navigation';
 
 	let userPictureUrl: string;
@@ -20,7 +19,6 @@
 			}
 		});
 		// console.log($isAuthenticated);
-		conversations = [];
 		conversationsList.subscribe((value) => {
 			conversations = value;
 			localStorage.setItem('Conversations', JSON.stringify(conversations));
