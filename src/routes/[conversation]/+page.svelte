@@ -1,32 +1,31 @@
 <script lang="ts">
-	import { conversationsList, currentSlug, userRole, welcomeMessage } from '$lib/stores/store';
-	import type { messagesType, ConversationType, MessageType, modalType } from '$lib/types/types';
+	import { conversationsList, currentSlug } from '$lib/stores/store';
+	import type { messagesType, ConversationType, MessageType } from '$lib/types/types';
 	import apiConfig from '$lib/utils/apiConfig';
 	import { onMount } from 'svelte';
 	import { chatSession } from '$lib/utils/geminiModal';
 	import Loading from '../components/loading.svelte';
-	import { writable } from 'svelte/store';
 	import { isAuthenticated } from '$lib/stores/store';
 	import { selectedModal } from '$lib/stores/store';
 	import Selectmodal from '../components/selectModal.svelte';
 	import { modalList } from '$lib/utils/modalList';
 	import { goto } from '$app/navigation';
 	import { autoResize } from '$lib/utils/autoResize';
+	import { customChatSession } from '$lib/utils/customGeminiModal';
 
 	let messages: messagesType[] = [];
-	let conversations: ConversationType[] = [];
+	let conversation: ConversationType[] = [];
 	let loading: boolean = false;
 	let email: string = '';
-	let error = '';
-	let sidebarOpened: string | null = 'true';
 	let userEmail: string = '';
 	let chatName: string = 'New Chat';
-	let slug: string = '';
 
 	onMount(async () => {
 		email = localStorage.getItem('Email')?.toString() || '';
+		// SLUG
 		const slug = location.pathname.split('/')[1];
 		currentSlug.set(slug);
+		// SELECTED MODAL
 		const savedSelectedModal = localStorage.getItem('SelectedModal');
 		if (savedSelectedModal) {
 			// @ts-expect-error
@@ -44,38 +43,33 @@
 				}
 			}, 100);
 		}
-	});
-	currentSlug.subscribe((slug) => {
-		if (slug) {
-			const savedConversations = JSON.parse(localStorage.getItem('Conversations') || '[]');
-
-			const conversation = savedConversations.find(
-				(conversation: any) => conversation.slug == slug
-			);
-			if (!conversation) {
-				goto('/');
-			} else {
-				messages = [conversation.prompt, conversation.response];
-				conversationsList.set([conversation]);
+		console.log('Conv currentslug: ', $currentSlug);
+		currentSlug.subscribe((value) => {
+			console.log('Conversation:', value);
+			if (value) {
+				const savedConversations = JSON.parse(localStorage.getItem('Conversations') || '[]');
+				const conversation = savedConversations.find(
+					(conversation: any) => conversation.slug == value
+				);
+				if (!conversation) {
+					goto('/');
+				} else {
+					messages = [conversation.prompt, conversation.response];
+				}
 			}
-		}
+		});
 	});
 	async function sendMessage() {
-		welcomeMessage.set(false);
-		const chatLogElement = document.getElementById('chat-log') as HTMLDivElement;
-		if (chatLogElement) {
-			chatLogElement.classList.remove('hidden');
-		}
-
 		const inputAreaElement = document.getElementById('userInput') as HTMLInputElement;
 		const userInput = inputAreaElement.value.trim();
+
 		chatName = userInput.replace(/ /g, '');
+
 		const userMessage: MessageType = {
 			content: userInput,
 			sender: 'User',
 			time: new Date().toLocaleTimeString()
 		};
-
 		messages = [...messages, userMessage];
 
 		const chatLog = document.getElementById('chat-log');
@@ -98,57 +92,119 @@
 				time: new Date().toLocaleTimeString()
 			};
 			messages = [...messages, errorMessage];
-
-			const conversation: ConversationType = {
-				name: chatName,
-				slug: chatName.toLowerCase().replaceAll(' ', '-'),
-				prompt: userMessage,
-				response: errorMessage
-			};
-			conversations = [...conversations, conversation];
-			localStorage.setItem('Conversations', JSON.stringify(conversations));
 		} else {
-			if (!$isAuthenticated) {
-				if (messages.length <= 20) {
-					sendQueryToAI(userInput, userMessage).then(() => {
-						setTimeout(() => {
-							if (chatLog) {
-								chatLog.scrollTo(0, chatLog.scrollHeight);
-							}
-						}, 500);
-					});
-				} else {
-					const errorMessage: MessageType = {
-						content:
-							'Sorry, you have reached the limit of 20 messages. To continue with your chat and do more, please login.',
-						sender: $selectedModal,
-						time: new Date().toLocaleTimeString()
-					};
-					messages = [...messages, errorMessage];
+			if ($selectedModal == 'gemini-2.0-flash_custom_trained' || 'gemini-2.0-flash') {
+				if (!$isAuthenticated) {
+					if (messages.length <= 20) {
+						sendQueryToAI(userInput, userMessage, $selectedModal);
+					} else {
+						const errorMessage: MessageType = {
+							content:
+								'<p>Sorry, you have reached the limit of 20 messages. To continue with your chat and do more, please login.</p>',
+							sender: $selectedModal,
+							time: new Date().toLocaleTimeString()
+						};
+						messages = [...messages, errorMessage];
 
-					const conversation: ConversationType = {
-						name: chatName,
-						slug: chatName.toLowerCase().replaceAll(' ', '-'),
-						prompt: userMessage,
-						response: errorMessage
-					};
-					conversations = [...conversations, conversation];
-					localStorage.setItem('Conversations', JSON.stringify(conversations));
+						const conversation: ConversationType = {
+							name: chatName,
+							slug: chatName.toLowerCase().replaceAll(' ', '-'),
+							prompt: userMessage,
+							response: errorMessage
+						};
+						localStorage.setItem('Conversations', JSON.stringify($conversationsList));
+					}
+				} else {
+					sendQueryToAI(userInput, userMessage, $selectedModal);
 				}
 			} else {
-				sendQueryToAI(userInput, userMessage).then(() => {
-					setTimeout(() => {
-						if (chatLog) {
-							chatLog.scrollTo(0, chatLog.scrollHeight);
-						}
-					}, 500);
-				});
+				if (!$isAuthenticated) {
+					if (messages.length <= 20) {
+						const response = await fetch(``, {
+							method: 'POST',
+							headers: {
+								'Content-Type': 'application/json'
+							},
+							body: JSON.stringify({
+								email: userEmail,
+								prompt: userInput
+							})
+						});
+						const result = await response.json();
+						console.log(result);
+					} else {
+						const errorMessage: MessageType = {
+							content:
+								'<p>Sorry, you have reached the limit of 20 messages. To continue with your chat and do more, please login.</p>',
+							sender: $selectedModal,
+							time: new Date().toLocaleTimeString()
+						};
+						messages = [...messages, errorMessage];
+
+						const conversation: ConversationType = {
+							name: chatName,
+							slug: chatName.toLowerCase().replaceAll(' ', '-'),
+							prompt: userMessage,
+							response: errorMessage
+						};
+						localStorage.setItem('Conversations', JSON.stringify($conversationsList));
+					}
+				} else {
+					const response = await fetch(``, {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json'
+						},
+						body: JSON.stringify({
+							email: userEmail,
+							prompt: userInput
+						})
+					});
+					const result = await response.json();
+					console.log(result);
+				}
 			}
 			inputAreaElement.value = '';
 		}
 	}
-	async function sendQueryToAI(prompt: string, userMessage: MessageType) {
-		if (!email) {
+	async function sendQueryToAI(prompt: string, userMessage: MessageType, selectedModal: string) {
+		if (selectedModal == 'gemini-2.0-flash_custom_trained') {
+			try {
+				loading = true;
+				const result = await customChatSession.sendMessage(prompt);
+				const jsonResult = result.response.text().replace(/json/, '').replace(/`/g, '');
+				const summary = JSON.parse(jsonResult).summary;
+				chatName = summary;
+				const text = JSON.parse(jsonResult).content.replace(/`/g, '');
+				// console.log(result.response.text());
+				// console.log(JSON.parse(jsonResult));
+				// console.log('summary', summary);
+				// console.log('content', text);
+				loading = false;
+
+				const aiMessage: MessageType = {
+					content: text,
+					sender: selectedModal,
+					time: new Date().toLocaleTimeString()
+				};
+
+				messages = [...messages, aiMessage];
+
+				const conversation: ConversationType = {
+					name: chatName,
+					slug: chatName.toLowerCase().replaceAll(' ', '-'),
+					prompt: userMessage,
+					response: aiMessage
+				};
+				const newConversationList = [...$conversationsList, conversation];
+				localStorage.setItem('Conversations', JSON.stringify(newConversationList));
+				conversationsList.set(newConversationList);
+				goto(`/${conversation.slug}`);
+			} catch (error) {
+				error = error;
+				loading = false;
+			}
+		} else {
 			try {
 				loading = true;
 				const result = await chatSession.sendMessage(prompt);
@@ -164,7 +220,7 @@
 
 				const aiMessage: MessageType = {
 					content: text,
-					sender: $selectedModal,
+					sender: selectedModal,
 					time: new Date().toLocaleTimeString()
 				};
 
@@ -176,7 +232,10 @@
 					prompt: userMessage,
 					response: aiMessage
 				};
+				const newConversationList = [...$conversationsList, conversation];
 				localStorage.setItem('Conversations', JSON.stringify($conversationsList));
+				conversationsList.set(newConversationList);
+				goto(`/${conversation.slug}`);
 			} catch (error) {
 				error = error;
 				loading = false;

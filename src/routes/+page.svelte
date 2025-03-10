@@ -175,7 +175,7 @@
 				const newConversationList = [...$conversationsList, conversation];
 				localStorage.setItem('Conversations', JSON.stringify(newConversationList));
 				conversationsList.set(newConversationList);
-				goto(`/${conversation.slug}`);
+				// goto(`/${conversation.slug}`);
 			} catch (error) {
 				error = error;
 				loading = false;
@@ -211,7 +211,7 @@
 				const newConversationList = [...$conversationsList, conversation];
 				localStorage.setItem('Conversations', JSON.stringify($conversationsList));
 				conversationsList.set(newConversationList);
-				goto(`/${conversation.slug}`);
+				// goto(`/${conversation.slug}`);
 			} catch (error) {
 				error = error;
 				loading = false;

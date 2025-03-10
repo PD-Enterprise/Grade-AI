@@ -1,13 +1,18 @@
 <script lang="ts">
 	import auth from '$lib/utils/authService';
-	import { user, auth0Client, isAuthenticated, conversationsList } from '$lib/stores/store';
+	import {
+		user,
+		auth0Client,
+		isAuthenticated,
+		conversationsList,
+		currentSlug
+	} from '$lib/stores/store';
 	import { onMount } from 'svelte';
 	import type { ConversationType } from '$lib/types/types';
 	import { goto } from '$app/navigation';
 
 	let userPictureUrl: string;
 	let userName: string;
-	let conversations: any = [];
 
 	onMount(async () => {
 		user.subscribe((value) => {
@@ -18,12 +23,8 @@
 				userName = value.name;
 			}
 		});
-		// console.log($isAuthenticated);
-		conversationsList.subscribe((value) => {
-			conversations = value;
-			localStorage.setItem('Conversations', JSON.stringify(conversations));
-			// console.log(value);
-		});
+		const storedConversations = JSON.parse(localStorage.getItem('Conversations') || '[]');
+		conversationsList.set(storedConversations);
 	});
 
 	function login() {
@@ -71,6 +72,11 @@
 			{#each $conversationsList as conversation}
 				<a
 					class="conversation btn btn-ghost flex w-full overflow-hidden border-r-4 p-1"
+					on:click={() => {
+						console.log('Sidebar:', conversation.slug);
+						currentSlug.set(conversation.slug);
+						console.log('sidebar currentslug:', $currentSlug);
+					}}
 					href="/{conversation.name.toLowerCase().replaceAll(' ', '-')}"
 				>
 					<svg
