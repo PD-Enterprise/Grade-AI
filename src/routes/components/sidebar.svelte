@@ -24,7 +24,7 @@
 			}
 		});
 		if (!localStorage.getItem('Conversations')) {
-			// localStorage.setItem('Conversations', JSON.stringify($conversationsList));
+			localStorage.setItem('Conversations', JSON.stringify($conversationsList));
 		} else {
 			const storedConversations = JSON.parse(localStorage.getItem('Conversations') || '[]');
 			if (storedConversations) {

@@ -14,13 +14,13 @@
 	import { customChatSession } from '$lib/utils/customGeminiModal';
 	import { updated } from '$app/state';
 
-	let messages: messagesType[] = [];
+	let messages: any = [];
 	let conversation: any = [];
 	let loading: boolean = false;
 	let email: string = '';
 	let userEmail: string = '';
 	let chatName: string = 'New Chat';
-	let savedConversations;
+	let savedConversations: any;
 	let result: any;
 
 	onMount(async () => {
@@ -56,7 +56,7 @@
 					// console.log(savedConversations[i]);
 					if (savedConversations[i].slug == value) {
 						// console.log(savedConversations[i].content);
-						conversation = savedConversations[i].content;
+						conversation = savedConversations[i];
 						break;
 					}
 				}
@@ -64,8 +64,7 @@
 				if (!conversation) {
 					goto('/');
 				} else {
-					messages = [conversation[0].prompt, conversation[0].response];
-					// console.log(messages);
+					messages = [conversation.content];
 				}
 			}
 		});
@@ -195,11 +194,22 @@
 				prompt: userMessage,
 				response: aiMessage
 			};
-			console.log(conversation);
-			const newConversation = [...conversation, updatedConversation];
-			console.log(newConversation);
-			const newConversationList = [...$conversationsList, newConversation];
-			console.log(newConversationList);
+			// console.log('Old conv', savedConversations);
+			const newConversation = {
+				name: conversation.name,
+				slug: conversation.slug,
+				content: [...conversation.content, updatedConversation]
+			};
+			// console.log('New conv', newConversation);
+			const conversationListWithoutCurrentConversation = $conversationsList.filter(
+				(conv) => conv.slug !== conversation.slug
+			);
+			// console.log(
+			// 	'conversationListWithoutCurrentConversation',
+			// 	conversationListWithoutCurrentConversation
+			// );
+			const newConversationList = [...conversationListWithoutCurrentConversation, newConversation];
+			// console.log(newConversationList);
 			localStorage.setItem('Conversations', JSON.stringify(newConversationList));
 		} catch (error) {
 			error = error;
@@ -237,19 +247,18 @@
 	<div class="content">
 		<div class="chat-log w-screen max-w-7xl" id="chat-log">
 			{#each messages as message}
-				{#if message.sender == 'User'}
+				{#each message as individualMessage}
 					<div class="user">
 						<div class="chat chat-end">
-							<div class="chat-header">{message.sender}</div>
-							<div class="chat-bubble">{message.content}</div>
+							<div class="chat-header">{individualMessage.prompt.sender}</div>
+							<div class="chat-bubble">{individualMessage.prompt.content}</div>
 						</div>
 					</div>
-				{:else}
 					<div class="gemini">
 						<div class="chat chat-start">
-							<div class="chat-header">{message.sender}</div>
+							<div class="chat-header">{individualMessage.response.sender}</div>
 							<div class="chat-bubble bg-base-200">
-								{@html message.content}
+								{@html individualMessage.response.content}
 								<button
 									aria-label="Speak"
 									on:click={() => {
@@ -284,7 +293,7 @@
 							</div>
 						</div>
 					</div>
-				{/if}
+				{/each}
 			{/each}
 			{#if loading}
 				<div class="system">
