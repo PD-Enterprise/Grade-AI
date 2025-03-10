@@ -1,18 +1,21 @@
 <script lang="ts">
 	import { conversationsList, isAuthenticated, userRole, welcomeMessage } from '$lib/stores/store';
-	import type { messagesType, ConversationType, MessageType, modalType } from '$lib/types/types';
+	import type {
+		messagesType,
+		ConversationType,
+		MessageType,
+		modalType,
+		UserRole
+	} from '$lib/types/types';
 	import apiConfig from '$lib/utils/apiConfig';
 	import { onMount } from 'svelte';
-	import {
-		GoogleGenerativeAI,
-		HarmCategory,
-		HarmBlockThreshold,
-		ChatSession
-	} from '@google/generative-ai';
+	import { chatSession } from '$lib/utils/customGeminiModal';
 	import Loading from './components/loading.svelte';
 	import { writable } from 'svelte/store';
 	import { generateUuid } from '$lib/utils/generateUuid';
 	import { goto } from '$app/navigation';
+	import { modalList } from '$lib/utils/modalList';
+	import { User } from '@auth0/auth0-spa-js';
 
 	let messages: messagesType[] = [];
 	let conversations: ConversationType[] = [];
@@ -22,61 +25,9 @@
 		| 'llama-3.3-70b-versatile'
 		| 'deepseek-r1-distill-llama-70b'
 	>('gemini-2.0-flash_custom_trained');
-	const generationConfig = {
-		temperature: 1,
-		topP: 0.95,
-		topK: 40,
-		maxOutputTokens: 8192,
-		responseMimeType: 'text/plain'
-	};
-	let chatSession: any;
 	let loading: boolean = false;
 	let email: string = '';
 	let error = '';
-	let modalList: modalType[] = [
-		{
-			name: 'Gemini 2.0 flash(Custom Trained)',
-			id: 'gemini-2.0-flash_custom_trained',
-			description: "Google's latest and greatest model, custom trained.",
-			roleRequirement: 'tier-1',
-			type: 'custom'
-		},
-		{
-			name: 'Gemini 2.0 flash',
-			id: 'gemini-2.0-flash',
-			description: "Google's latest and greatest model.",
-			roleRequirement: 'tier-1',
-			type: 'direct'
-		},
-		{
-			name: 'Llama 3.3',
-			id: 'llama-3.3-70b-versatile',
-			description: "Meta's powerful and adaptable LLM.",
-			roleRequirement: 'tier-2',
-			type: 'direct'
-		},
-		{
-			name: 'Llama 3.3(Custom Trained)',
-			id: 'llama-3.3-70b-versatile_custom_trained',
-			description: "Meta's powerful and adaptable LLM, custom trained.",
-			roleRequirement: 'tier-2',
-			type: 'custom'
-		},
-		{
-			name: 'Deepseek r1',
-			id: 'deepseek-r1-distill-llama-70b',
-			description: 'Distilled LLama-70B, optimized for efficiency.',
-			roleRequirement: 'tier-3',
-			type: 'direct'
-		},
-		{
-			name: 'Deepseek r1(Custom Trained)',
-			id: 'deepseek-r1-distill-llama-70b_custom_trained',
-			description: 'Distilled LLama-70B, optimized for efficiency, custom trained.',
-			roleRequirement: 'tier-3',
-			type: 'custom'
-		}
-	];
 	let sidebarOpened: string | null = 'true';
 	let userEmail: string = '';
 	let chatName: string = 'New Chat';
@@ -91,20 +42,6 @@
 			if (!value) {
 				chatLogElement.classList.remove('hidden');
 			}
-		});
-
-		const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
-		const modal = genAI.getGenerativeModel({
-			model: 'gemini-2.0-flash',
-			systemInstruction: `You are a Socratic Teacher. And I am your student.
-                And please try to keep your replies as brief as possible, while explaining each topic carefully.
-                Please Explain the topic in relation to the NCERT CBSE 2025 curriculum, no need to keep mentioning it.
-                Please give a starting point to get started, your job is to help the student find the answer in his/her own way.
-                Also please return your answer in HTML format, with proper tags, only send inside the <body> tags, no need for the boilerplate or <body> tag.
-                always return strictly in the following json syntax: {summary: "[a short summary in a few words of the prompt"]", thinking: "[thinking text]", content: "[your response]"}`
-		});
-		chatSession = modal.startChat({
-			generationConfig
 		});
 
 		// Scroll to bottom of chat log if messages exist
@@ -282,19 +219,6 @@
 		selectedModal.set(modal.id);
 		localStorage.setItem('SelectedModal', modal.id);
 	}
-	function speak(messageContent: string) {
-		const formattedContent = messageContent
-			.replace(/<p>/g, '')
-			.replace(/<\/p>/g, '')
-			.replace(/<b>/g, '')
-			.replace(/<\/b>/g, '');
-		const utterance = new SpeechSynthesisUtterance(formattedContent);
-
-		const voices = speechSynthesis.getVoices();
-		utterance.voice = voices[0]; // Use the first voice
-
-		speechSynthesis.speak(utterance);
-	}
 </script>
 
 <svelte:head>
@@ -323,37 +247,6 @@
 							<div class="chat-header">{message.sender}</div>
 							<div class="chat-bubble bg-base-200">
 								{@html message.content}
-								<button
-									aria-label="Speak"
-									on:click={() => {
-										speak(message.content);
-									}}
-									class="tooltip btn btn-ghost"
-									data-tip="Speak"
-								>
-									<svg
-										width="15px"
-										height="150pxpx"
-										viewBox="0 0 24 24"
-										fill="none"
-										xmlns="http://www.w3.org/2000/svg"
-									>
-										<path
-											fill-rule="evenodd"
-											clip-rule="evenodd"
-											d="M10.4 1.8C11.5532 0.262376 14 1.07799 14 3.00001V21.1214C14 23.0539 11.5313 23.8627 10.3878 22.3049L6.49356 17H4C2.34315 17 1 15.6569 1 14V10C1 8.34315 2.34315 7 4 7H6.5L10.4 1.8ZM12 3L8.1 8.2C7.72229 8.70361 7.12951 9 6.5 9H4C3.44772 9 3 9.44772 3 10V14C3 14.5523 3.44772 15 4 15H6.49356C7.13031 15 7.72901 15.3032 8.10581 15.8165L12 21.1214V3Z"
-											fill="#6B7280"
-										/>
-										<path
-											d="M16.2137 4.17445C16.1094 3.56451 16.5773 3 17.1961 3C17.6635 3 18.0648 3.328 18.1464 3.78824C18.4242 5.35347 19 8.96465 19 12C19 15.0353 18.4242 18.6465 18.1464 20.2118C18.0648 20.672 17.6635 21 17.1961 21C16.5773 21 16.1094 20.4355 16.2137 19.8256C16.5074 18.1073 17 14.8074 17 12C17 9.19264 16.5074 5.8927 16.2137 4.17445Z"
-											fill="#6B7280"
-										/>
-										<path
-											d="M21.41 5C20.7346 5 20.2402 5.69397 20.3966 6.35098C20.6758 7.52413 21 9.4379 21 12C21 14.5621 20.6758 16.4759 20.3966 17.649C20.2402 18.306 20.7346 19 21.41 19C21.7716 19 22.0974 18.7944 22.2101 18.4509C22.5034 17.5569 23 15.5233 23 12C23 8.47672 22.5034 6.44306 22.2101 5.54913C22.0974 5.20556 21.7716 5 21.41 5Z"
-											fill="#6B7280"
-										/>
-									</svg>
-								</button>
 							</div>
 						</div>
 					</div>
@@ -441,7 +334,7 @@
 							<div id="custom-modals-list" class="">
 								{#each modalList as modal}
 									{#if modal.type == 'custom'}
-										{#if localStorage.getItem('role') == modal.roleRequirement}
+										{#if modal.roleRequirement.includes($userRole as UserRole)}
 											<li>
 												<button class="btn-ghost" on:click={() => changeModal(modal)}
 													>{modal.name}
@@ -490,7 +383,7 @@
 							<div id="direct-modals-list" class="hidden">
 								{#each modalList as modal}
 									{#if modal.type == 'direct'}
-										{#if localStorage.getItem('role') == modal.roleRequirement}
+										{#if modal.roleRequirement.includes($userRole as UserRole)}
 											<li>
 												<button class="btn-ghost" on:click={() => changeModal(modal)}
 													>{modal.name}

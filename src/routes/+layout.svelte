@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import '../app.css';
 	import auth from '$lib/utils/authService';
-	import { auth0Client, isAuthenticated, user } from '$lib/stores/store';
+	import { auth0Client, isAuthenticated, user, userRole } from '$lib/stores/store';
 	import apiConfig from '$lib/utils/apiConfig';
 	import Sidebar from './components/sidebar.svelte';
 	let { children } = $props();
@@ -27,6 +27,7 @@
 		});
 		const result = await request.json();
 		localStorage.setItem('role', result.data);
+		userRole.set(result.data);
 	});
 </script>
 

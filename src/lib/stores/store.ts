@@ -1,8 +1,8 @@
-import type { ConversationType } from "$lib/types/types";
+import type { UserRole, ConversationType } from "$lib/types/types";
 import { writable } from "svelte/store";
 
 export let welcomeMessage = writable(true)
-export let userRole = writable('tier-1')
+export let userRole = writable<UserRole>('tier-1')
 export let conversationsList = writable<ConversationType[]>([
     {
         name: "Conversation 1",

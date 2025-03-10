@@ -20,8 +20,9 @@ export type modalType = {
     | 'deepseek-r1-distill-llama-70b_custom_trained',
     name: string,
     description: string,
-    roleRequirement: "tier-1" | "tier-2" | "tier-3" | "admin",
+    roleRequirement: Array<"tier-1" | "tier-2" | "tier-3" | "admin">,
     type: "custom" | "direct"
 }
+export type UserRole = "tier-1" | "tier-2" | "tier-3" | "admin";
 
 export type messagesType = MessageType;
