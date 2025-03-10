@@ -90,9 +90,7 @@
 				<a
 					class="conversation btn btn-ghost flex w-full overflow-hidden border-r-4 p-1"
 					on:click={() => {
-						console.log('Sidebar:', conversation.slug);
 						currentSlug.set(conversation.slug);
-						console.log('sidebar currentslug:', $currentSlug);
 					}}
 					href="/{conversation.name.toLowerCase().replaceAll(' ', '-')}"
 				>

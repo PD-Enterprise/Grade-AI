@@ -12,16 +12,16 @@
 	import { goto } from '$app/navigation';
 	import { autoResize } from '$lib/utils/autoResize';
 	import { customChatSession } from '$lib/utils/customGeminiModal';
-	import { updated } from '$app/state';
 
-	let messages: any = [];
+	let messages: messagesType[] = [];
 	let conversation: any = [];
 	let loading: boolean = false;
 	let email: string = '';
 	let userEmail: string = '';
 	let chatName: string = 'New Chat';
-	let savedConversations: any;
+	let savedConversations: ConversationType[];
 	let result: any;
+	let displayMessages: any = [];
 
 	onMount(async () => {
 		email = localStorage.getItem('Email')?.toString() || '';
@@ -36,17 +36,7 @@
 		} else {
 			selectedModal.set(modalList[0].id);
 		}
-
-		// Scroll to bottom of chat log if messages exist
-		if (messages.length > 0) {
-			setTimeout(() => {
-				const chatLog = document.getElementById('chat-log');
-				if (chatLog) {
-					chatLog.scrollTo(0, chatLog.scrollHeight);
-				}
-			}, 100);
-		}
-		console.log('Conv currentslug: ', $currentSlug);
+		// console.log('Conv currentslug: ', $currentSlug);
 		currentSlug.subscribe((value) => {
 			// console.log('Conversation:', value);
 			if (value) {
@@ -64,7 +54,12 @@
 				if (!conversation) {
 					goto('/');
 				} else {
-					messages = [conversation.content];
+					const conversationContent = conversation.content;
+					messages = conversationContent.flatMap(({ prompt, response }) => {
+						const promptMessage = prompt ? { ...prompt } : null;
+						const responseMessage = response ? { ...response } : null;
+						return [promptMessage, responseMessage].filter(Boolean) as messagesType[];
+					});
 				}
 			}
 		});
@@ -247,18 +242,19 @@
 	<div class="content">
 		<div class="chat-log w-screen max-w-7xl" id="chat-log">
 			{#each messages as message}
-				{#each message as individualMessage}
+				{#if message.sender === 'User'}
 					<div class="user">
 						<div class="chat chat-end">
-							<div class="chat-header">{individualMessage.prompt.sender}</div>
-							<div class="chat-bubble">{individualMessage.prompt.content}</div>
+							<div class="chat-header">{message.sender}</div>
+							<div class="chat-bubble">{message.content}</div>
 						</div>
 					</div>
+				{:else}
 					<div class="gemini">
 						<div class="chat chat-start">
-							<div class="chat-header">{individualMessage.response.sender}</div>
+							<div class="chat-header">{message.sender}</div>
 							<div class="chat-bubble bg-base-200">
-								{@html individualMessage.response.content}
+								{@html message.content}
 								<button
 									aria-label="Speak"
 									on:click={() => {
@@ -293,7 +289,7 @@
 							</div>
 						</div>
 					</div>
-				{/each}
+				{/if}
 			{/each}
 			{#if loading}
 				<div class="system">
