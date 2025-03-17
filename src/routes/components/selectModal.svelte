@@ -6,7 +6,13 @@
 
 	onMount(async () => {
 		const storedModal = localStorage.getItem('SelectedModal');
-		selectedModal.set(storedModal as modalType['id']);
+		if (!storedModal) {
+			localStorage.setItem('SelectedModal', $selectedModal);
+		} else {
+			selectedModal.set(storedModal as modalType['id']);
+		}
+		console.log(storedModal);
+		console.log($selectedModal);
 	});
 	function changeModal(modal: modalType) {
 		selectedModal.set(modal.id);

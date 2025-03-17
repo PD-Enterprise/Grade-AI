@@ -55,6 +55,7 @@
 					goto('/');
 				} else {
 					const conversationContent = conversation.content;
+					// @ts-expect-error
 					messages = conversationContent.flatMap(({ prompt, response }) => {
 						const promptMessage = prompt ? { ...prompt } : null;
 						const responseMessage = response ? { ...response } : null;
@@ -98,7 +99,11 @@
 			};
 			messages = [...messages, errorMessage];
 		} else {
-			if ($selectedModal == 'gemini-2.0-flash_custom_trained' || 'gemini-2.0-flash') {
+			console.log($selectedModal);
+			if (
+				$selectedModal == 'gemini-2.0-flash_custom_trained' ||
+				$selectedModal == 'gemini-2.0-flash'
+			) {
 				if (!$isAuthenticated) {
 					if (messages.length <= 20) {
 						sendQueryToAI(userInput, userMessage, $selectedModal);
@@ -115,9 +120,10 @@
 					sendQueryToAI(userInput, userMessage, $selectedModal);
 				}
 			} else {
+				console.log('asd');
 				if (!$isAuthenticated) {
 					if (messages.length <= 20) {
-						const response = await fetch(``, {
+						const response = await fetch(`${apiConfig.apiUrl}`, {
 							method: 'POST',
 							headers: {
 								'Content-Type': 'application/json'
@@ -139,18 +145,21 @@
 						messages = [...messages, errorMessage];
 					}
 				} else {
-					const response = await fetch(``, {
+					const response = await fetch(`${apiConfig.apiUrl}ai/chat/${$selectedModal}`, {
 						method: 'POST',
 						headers: {
 							'Content-Type': 'application/json'
 						},
 						body: JSON.stringify({
 							email: userEmail,
-							prompt: userInput
+							prompt: userInput,
+							modalParams: {
+								type: $selectedModal.endsWith('_custom_trained') ? 'custom' : 'direct'
+							}
 						})
 					});
 					const result = await response.json();
-					console.log(result);
+					console.log(result.data);
 				}
 			}
 			inputAreaElement.value = '';
