@@ -10,6 +10,8 @@
 	import { onMount } from 'svelte';
 	import type { ConversationType } from '$lib/types/types';
 	import { goto } from '$app/navigation';
+	import { db } from '$lib/db/db';
+	import { liveQuery } from 'dexie';
 
 	let userPictureUrl: string;
 	let userName: string;
@@ -23,20 +25,57 @@
 				userName = value.name;
 			}
 		});
-		if (!localStorage.getItem('Conversations')) {
-			localStorage.setItem('Conversations', JSON.stringify($conversationsList));
-		} else {
-			const storedConversations = JSON.parse(localStorage.getItem('Conversations') || '[]');
-			if (storedConversations) {
-				conversationsList.set(storedConversations);
-			}
+		try {
+			// Welcome Message
+			const storeConversations = liveQuery(() => db.conversations.toArray());
+			storeConversations.subscribe(async (value) => {
+				console.log(value);
+				// Check if a conversation with the id "welcome-message" exists
+				const exists = value.some((conversation) => conversation.id === 'welcome-message');
+				if (exists) {
+					console.log('Welcome message conversation exists.');
+					conversationsList.set(value);
+				} else {
+					console.log('Welcome message conversation does not exist.');
+					const addConversation = await db.conversations.add({
+						id: 'welcome-message',
+						name: 'Welcome to Grade AI',
+						slug: 'welcome-to-grade-ai',
+						content: [
+							{
+								prompt: {
+									content: 'What is Grade AI?',
+									sender: 'User',
+									time: '2023-03-30T10:00:00.000Z'
+								},
+								response: {
+									content: `<h1 class="text-4xl"><b>Grade AI is the best AI Chat for students ever made.</b></h1><br>
+																<h2 class="text-2xl">1. We're optimized for students.</h2>
+																<p>We have optimized each of our models for students, with custom prompting and much more to not only provide the answer, but to teach it.</p><br>
+																<h2 class="text-2xl">2. We have multiple models, not just one.</h2>
+																<p>Want to use Claude for code? We got you. DeepSeek r1 for math? Of course. ChatGPT 4o for picture analysis? Why not.
+																When new models come out, we make them available within hours of release. </p><br>
+																<h2 class="text-2xl">3. We're cheap. (10rs/month)</h2>
+																<p>We're way cheaper than the price of ChatGPT or Claude.</p><br>
+																<h2 class="text-2xl">What are you waiting for?</h2>
+																Reply here to get started, or head over to conversation 1 to start a new chat.`,
+									sender: 'Gemini',
+									time: '2023-03-30T10:00:00.000Z'
+								}
+							}
+						]
+					});
+				}
+			});
+		} catch (error) {
+			console.log(error);
 		}
 	});
 
 	function login() {
 		auth.loginWithPopup($auth0Client, {});
 	}
-	function deleteChat(conversation: ConversationType) {
+	async function deleteChat(conversation: ConversationType) {
 		const conversationSlug = conversation.slug;
 		if (conversationSlug != $currentSlug || conversationSlug != 'welcome-to-grade-ai') {
 			const conversationIndex = $conversationsList.findIndex(
@@ -46,7 +85,7 @@
 				conversations.splice(conversationIndex, 1);
 				return conversations;
 			});
-			localStorage.setItem('Conversations', JSON.stringify($conversationsList));
+			const deleteConversation = await db.conversations.delete(conversation.id);
 		}
 	}
 </script>

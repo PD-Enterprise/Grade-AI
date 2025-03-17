@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import '../app.css';
 	import auth from '$lib/utils/authService';
-	import { auth0Client, isAuthenticated, user, userRole } from '$lib/stores/store';
+	import { auth0Client, isAuthenticated, user, userRole, sidebarStatus } from '$lib/stores/store';
 	import apiConfig from '$lib/utils/apiConfig';
 	import Sidebar from './components/sidebar.svelte';
 
@@ -17,29 +17,38 @@
 		isAuthenticated.set(await $auth0Client.isAuthenticated());
 		// @ts-expect-error
 		user.set(await $auth0Client.getUser());
-		const request = await fetch(`${apiConfig.apiUrl}users/roles/get-role`, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
+		// console.log($user);
+		if ($user) {
+			if (!localStorage.getItem('Email')) {
 				// @ts-expect-error
-				email: $user.email
-			})
-		});
-		const result = await request.json();
-		// console.log(result);
-		localStorage.setItem('role', result.data);
-		userRole.set(result.data);
+				localStorage.setItem('Email', $user.email);
+			}
+			const request = await fetch(`${apiConfig.apiUrl}users/roles/get-role`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					// @ts-expect-error
+					email: $user.email
+				})
+			});
+			const result = await request.json();
+			// console.log(result);
+			localStorage.setItem('role', result.data);
+			userRole.set(result.data);
+		}
 		// SIDEBAR
 		const sideBar = document.getElementById('side-bar') as HTMLElement;
 		const leftButton = document.getElementById('left-button') as HTMLElement;
 		const rightButton = document.getElementById('right-button') as HTMLElement;
 		if (localStorage.getItem('Sidebar') == 'closed') {
+			sidebarStatus.set('closed');
 			sideBar.classList.add('hidden');
 			leftButton.classList.add('hidden');
 			rightButton.classList.remove('hidden');
 		} else {
+			sidebarStatus.set('opened');
 			sideBar.classList.remove('hidden');
 			leftButton.classList.remove('hidden');
 			rightButton.classList.add('hidden');
@@ -55,6 +64,7 @@
 			rightButton.classList.add('hidden');
 		}
 		localStorage.setItem('Sidebar', 'opened');
+		sidebarStatus.set('opened');
 	}
 	function closeSidebar() {
 		const sideBar = document.getElementById('side-bar') as HTMLElement;
@@ -66,15 +76,16 @@
 			rightButton.classList.remove('hidden');
 		}
 		localStorage.setItem('Sidebar', 'closed');
+		sidebarStatus.set('closed');
 	}
 </script>
 
-<div class="main flex">
+<div class="main flex overflow-hidden">
 	<div class="side-bar z-10">
 		<Sidebar />
 	</div>
 	<div class="control z-10">
-		<div class="left-button" id="left-button">
+		<div class="left-button absolute left-56" id="left-button">
 			<button aria-label="close sidebar" class="btn btn-ghost" onclick={closeSidebar}>
 				<svg
 					width="30px"

@@ -4,7 +4,8 @@ export type MessageType = {
     time: string
 }
 
-export type ConversationType = {
+export interface ConversationType {
+    id: string,
     name: string,
     slug: string,
     content: Array<{
