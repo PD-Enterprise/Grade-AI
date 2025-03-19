@@ -218,8 +218,35 @@
 <div class="main flex">
 	<div class="content">
 		{#if $welcomeMessage}
-			<div class="welcome-message absolute flex h-screen w-screen items-center justify-center">
-				<p class="text-center text-3xl">How can i help you today?</p>
+			<div class="welcome-message absolute flex h-screen w-screen items-center justify-center bg-gradient-to-b from-base-300 to-base-200">
+				<div class="text-center">
+					<h1 class="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent mb-4">Welcome to Grade AI</h1>
+					<p class="text-2xl text-base-content opacity-80 mb-8">How can I help you today?</p>
+					<div class="flex flex-col gap-4 items-center">
+						<div class="suggestion-chips flex gap-2 flex-wrap justify-center max-w-2xl">
+							<button class="chip" on:click={() => {
+								const input = document.getElementById('userInput') as HTMLInputElement;
+								input.value = "Help me with my homework";
+								sendMessage();
+							}}>Help me with my homework</button>
+							<button class="chip" on:click={() => {
+								const input = document.getElementById('userInput') as HTMLInputElement;
+								input.value = "Explain a concept";
+								sendMessage();
+							}}>Explain a concept</button>
+							<button class="chip" on:click={() => {
+								const input = document.getElementById('userInput') as HTMLInputElement;
+								input.value = "Solve a math problem";
+								sendMessage();
+							}}>Solve a math problem</button>
+							<button class="chip" on:click={() => {
+								const input = document.getElementById('userInput') as HTMLInputElement;
+								input.value = "Help with coding";
+								sendMessage();
+							}}>Help with coding</button>
+						</div>
+					</div>
+				</div>
 			</div>
 		{/if}
 		<div class="chat-log hidden w-screen max-w-7xl" id="chat-log">
@@ -227,17 +254,19 @@
 				{#if message.sender == 'User'}
 					<div class="user">
 						<div class="chat chat-end">
-							<div class="chat-header">{message.sender}</div>
-							<div class="chat-bubble">{message.content}</div>
+							<div class="chat-header text-sm text-base-content opacity-70">{message.sender}</div>
+							<div class="chat-bubble bg-primary text-primary-content shadow-lg">{message.content}</div>
+							<div class="chat-footer text-xs text-base-content opacity-50">{message.time}</div>
 						</div>
 					</div>
 				{:else}
 					<div class="gemini">
 						<div class="chat chat-start">
-							<div class="chat-header">{message.sender}</div>
-							<div class="chat-bubble bg-base-200">
+							<div class="chat-header text-sm text-base-content opacity-70">{message.sender}</div>
+							<div class="chat-bubble bg-base-200 shadow-lg prose max-w-none">
 								{@html message.content}
 							</div>
+							<div class="chat-footer text-xs text-base-content opacity-50">{message.time}</div>
 						</div>
 					</div>
 				{/if}
@@ -245,111 +274,91 @@
 			{#if loading}
 				<div class="system">
 					<div class="chat chat-start">
-						<div class="chat-header">System</div>
-						<div class="chat-bubble bg-base-200">
+						<div class="chat-header text-sm text-base-content opacity-70">System</div>
+						<div class="chat-bubble bg-base-200 shadow-lg">
 							<Loading />
 						</div>
 					</div>
 				</div>
 			{/if}
 		</div>
-		<div class="input-area flex flex-wrap" id="input-area">
-			<textarea
-				class="userInput mb-2"
-				placeholder="Ask me anything..."
-				rows="1"
-				id="userInput"
-				on:keydown={handleKeyDown}
-				on:input={autoResize}
-			></textarea>
-			<div class="flex w-full items-center justify-between">
-				<div class="select-modal">
-					<SelectModal />
+		<div class="input-area fixed bottom-0 left-0 right-0 p-4 bg-base-300 bg-opacity-80 backdrop-blur-sm border-t border-base-content border-opacity-10">
+			<div class="flex gap-4 items-end max-w-7xl mx-auto">
+				<SelectModal />
+				<div class="flex-1">
+					<textarea
+						id="userInput"
+						class="textarea textarea-bordered w-full min-h-[60px] max-h-[200px] resize-none bg-base-200 focus:bg-base-100 transition-colors duration-200"
+						placeholder="Type your message here..."
+						on:keydown={handleKeyDown}
+					></textarea>
 				</div>
-				<div class="tooltip" data-tip="Send">
-					<button type="button" on:click={sendMessage} aria-label="Send" class="send-button">
-						<svg
-							width="40px"
-							height="40px"
-							viewBox="0 0 24 24"
-							fill="none"
-							xmlns="http://www.w3.org/2000/svg"
-						>
-							<path
-								d="M10.3009 13.6949L20.102 3.89742M10.5795 14.1355L12.8019 18.5804C13.339 19.6545 13.6075 20.1916 13.9458 20.3356C14.2394 20.4606 14.575 20.4379 14.8492 20.2747C15.1651 20.0866 15.3591 19.5183 15.7472 18.3818L19.9463 6.08434C20.2845 5.09409 20.4535 4.59896 20.3378 4.27142C20.2371 3.98648 20.013 3.76234 19.7281 3.66167C19.4005 3.54595 18.9054 3.71502 17.9151 4.05315L5.61763 8.2523C4.48114 8.64037 3.91289 8.83441 3.72478 9.15032C3.56153 9.42447 3.53891 9.76007 3.66389 10.0536C3.80791 10.3919 4.34498 10.6605 5.41912 11.1975L9.86397 13.42C10.041 13.5085 10.1295 13.5527 10.2061 13.6118C10.2742 13.6643 10.3352 13.7253 10.3876 13.7933C10.4468 13.87 10.491 13.9585 10.5795 14.1355Z"
-								stroke="#6B7280"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-							/>
-						</svg>
-					</button>
-				</div>
+				<button
+					class="btn btn-primary h-[60px] min-h-[60px] px-6"
+					on:click={sendMessage}
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="h-6 w-6"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+						/>
+					</svg>
+				</button>
 			</div>
-			<div class="input-area-bottom hidden"></div>
 		</div>
 	</div>
 </div>
 
 <style>
-	.chat-log {
-		/* background-color: red; */
-		height: calc(100vh - 165px);
-		width: 100vw;
-		overflow-y: scroll;
-		justify-content: flex-start;
-		position: absolute;
-		left: 50%;
-		transform: translate(-50%, 0%);
-		gap: 5px;
-		align-items: center;
+	.chip {
+		@apply px-4 py-2 rounded-full bg-base-200 hover:bg-base-300 text-base-content opacity-80 hover:text-base-content transition-all duration-200 shadow-sm hover:shadow-md;
 	}
-	.welcome-message {
-		margin-top: -100px;
-		left: 0;
+
+	.chat-bubble {
+		@apply rounded-2xl p-4;
 	}
-	.userInput {
-		min-height: 10px;
-		max-height: 60px;
-		height: 45px;
-		min-width: 16rem;
-		width: 69vw;
-		max-width: 75vw;
-		border: none;
-		padding-left: 5px;
-		padding-right: 5px;
-		resize: none;
-		overflow-y: auto;
-		background-color: transparent;
+
+	.chat {
+		@apply mb-4;
 	}
+
+	.chat-header {
+		@apply mb-1;
+	}
+
+	.chat-footer {
+		@apply mt-1;
+	}
+
 	.input-area {
-		background-color: var(--color-base-300);
-		height: 130px;
-		padding: 10px;
-		justify-content: flex-start;
-		position: absolute;
-		top: 50%;
-		left: 50%;
-		transform: translate(-50%, -50%);
-		border-radius: 10px;
-		gap: 5px;
-		align-items: center;
+		transition: all 0.3s ease-in-out;
 	}
+
 	.input-area-bottom {
-		background-color: var(--color-base-300);
-		height: 130px;
-		padding: 10px;
-		justify-content: flex-start;
-		position: fixed;
-		left: 50%;
-		bottom: -5px;
-		transform: translateX(-50%);
-		border-radius: 10px;
-		gap: 5px;
-		align-items: center;
+		@apply bottom-0;
 	}
-	.select-modal {
-		flex-shrink: 0;
-		border: none;
+
+	/* Add smooth transitions for messages */
+	.user, .gemini {
+		animation: slideIn 0.3s ease-out;
+	}
+
+	@keyframes slideIn {
+		from {
+			opacity: 0;
+			transform: translateY(10px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
 	}
 </style>
