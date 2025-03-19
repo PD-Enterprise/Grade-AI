@@ -77,6 +77,7 @@
 	}
 	async function deleteChat(conversation: ConversationType) {
 		const conversationSlug = conversation.slug;
+		console.log(conversationSlug);
 		if (conversationSlug != $currentSlug || conversationSlug != 'welcome-to-grade-ai') {
 			const conversationIndex = $conversationsList.findIndex(
 				(conversation: any) => conversation.slug == conversationSlug
@@ -190,7 +191,7 @@
 							src={userPictureUrl}
 							alt="profile"
 							title={userName}
-							class="w-15 h-10 cursor-pointer rounded-full"
+							class="h-10 w-10 cursor-pointer rounded-full"
 						/>
 						<p class="ml-2 mt-2 text-sm">{userName}</p>
 					</a>
