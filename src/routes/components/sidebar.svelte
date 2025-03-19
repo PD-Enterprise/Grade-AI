@@ -29,14 +29,14 @@
 			// Welcome Message
 			const storeConversations = liveQuery(() => db.conversations.toArray());
 			storeConversations.subscribe(async (value) => {
-				console.log(value);
+				// console.log(value);
 				// Check if a conversation with the id "welcome-message" exists
 				const exists = value.some((conversation) => conversation.id === 'welcome-message');
 				if (exists) {
-					console.log('Welcome message conversation exists.');
+					// console.log('Welcome message conversation exists.');
 					conversationsList.set(value);
 				} else {
-					console.log('Welcome message conversation does not exist.');
+					// console.log('Welcome message conversation does not exist.');
 					const addConversation = await db.conversations.add({
 						id: 'welcome-message',
 						name: 'Welcome to Grade AI',

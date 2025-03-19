@@ -20,16 +20,6 @@
 
 	onMount(async () => {
 		email = localStorage.getItem('Email')?.toString() || '';
-
-		welcomeMessage.set(messages.length === 0); // Only show welcome message if no messages exist
-
-		welcomeMessage.subscribe((value) => {
-			const chatLogElement = document.getElementById('chat-log') as HTMLDivElement;
-			if (!value) {
-				chatLogElement.classList.remove('hidden');
-			}
-		});
-		welcomeMessage.set(true);
 	});
 	async function sendMessage() {
 		welcomeMessage.set(false);
@@ -42,6 +32,7 @@
 		inputAreaDivElement.classList.add('input-area-bottom');
 		const inputAreaElement = document.getElementById('userInput') as HTMLInputElement;
 		const userInput = inputAreaElement.value.trim();
+
 		const userMessage: MessageType = {
 			content: userInput,
 			sender: 'User',
@@ -130,78 +121,69 @@
 		}
 	}
 	async function sendQueryToAI(prompt: string, userMessage: MessageType, selectedModal: string) {
-		// if (selectedModal == 'gemini-2.0-flash_custom_trained') {
-		// 	try {
-		// 		loading = true;
-		// 		const result = await customChatSession.sendMessage(prompt);
-		// 		const jsonResult = result.response.text().replace(/json/, '').replace(/`/g, '');
-		// 		const summary = JSON.parse(jsonResult).summary;
-		// 		chatName = summary;
-		// 		const text = JSON.parse(jsonResult).content.replace(/`/g, '');
-		// 		// console.log(result.response.text());
-		// 		// console.log(JSON.parse(jsonResult));
-		// 		// console.log('summary', summary);
-		// 		// console.log('content', text);
-		// 		loading = false;
-		// 		const aiMessage: MessageType = {
-		// 			content: text,
-		// 			sender: selectedModal,
-		// 			time: new Date().toLocaleTimeString()
-		// 		};
-		// 		messages = [...messages, aiMessage];
-		// 		const conversation: ConversationType = {
-		// 			id: chatName.replace(' ', '-').toLowerCase(),
-		// 			name: chatName,
-		// 			slug: chatName.toLowerCase().replaceAll(' ', '-'),
-		// 			content: [{ prompt: userMessage, response: aiMessage }]
-		// 		};
-		// 		const newConversationList = [...$conversationsList, conversation];
-		// 		localStorage.setItem('Conversations', JSON.stringify(newConversationList));
-		// 		conversationsList.set(newConversationList);
-		// 		goto(`/${conversation.slug}`);
-		// 	} catch (error) {
-		// 		error = error;
-		// 		loading = false;
-		// 	}
-		// } else if (selectedModal == 'gemini-2.0-flash') {
-		// 	try {
-		// 		loading = true;
-		// 		const result = await chatSession.sendMessage(prompt);
-		// 		const jsonResult = result.response.text().replace(/json/, '').replace(/`/g, '');
-		// 		const summary = JSON.parse(jsonResult).summary;
-		// 		chatName = summary;
-		// 		const text = JSON.parse(jsonResult).content.replace(/`/g, '');
-		// 		// console.log(result.response.text());
-		// 		// console.log(JSON.parse(jsonResult));
-		// 		// console.log('summary', summary);
-		// 		// console.log('content', text);
-		// 		loading = false;
-		// 		const aiMessage: MessageType = {
-		// 			content: text,
-		// 			sender: selectedModal,
-		// 			time: new Date().toLocaleTimeString()
-		// 		};
-		// 		messages = [...messages, aiMessage];
-		// 		const newConversation: ConversationType = {
-		// 			id: chatName.replace(' ', '-').toLowerCase(),
-		// 			name: chatName,
-		// 			slug: chatName.toLowerCase().replaceAll(' ', '-'),
-		// 			content: [
-		// 				{
-		// 					prompt: userMessage,
-		// 					response: aiMessage
-		// 				}
-		// 			]
-		// 		};
-		// 		const newConversationList = [...$conversationsList, newConversation];
-		// 		localStorage.setItem('Conversations', JSON.stringify(newConversationList));
-		// 		conversationsList.set(newConversationList);
-		// 		goto(`/${newConversation.slug}`);
-		// 	} catch (error) {
-		// 		error = error;
-		// 		loading = false;
-		// 	}
-		// }
+		if (selectedModal == 'gemini-2.0-flash_custom_trained') {
+			try {
+				loading = true;
+				const result = await customChatSession.sendMessage(prompt);
+				const jsonResult = result.response.text().replace(/json/, '').replace(/`/g, '');
+				const summary = JSON.parse(jsonResult).summary;
+				chatName = summary;
+				const text = JSON.parse(jsonResult).content.replace(/`/g, '');
+				// console.log(result.response.text());
+				// console.log(JSON.parse(jsonResult));
+				// console.log('summary', summary);
+				// console.log('content', text);
+				loading = false;
+				const aiMessage: MessageType = {
+					content: text,
+					sender: selectedModal,
+					time: new Date().toLocaleTimeString()
+				};
+				messages = [...messages, aiMessage];
+				const addConversation = await db.conversations.add({
+					id: chatName.replace(/ /g, '-').toLowerCase(),
+					name: chatName,
+					slug: chatName.toLowerCase().replaceAll(' ', '-'),
+					content: [{ prompt: userMessage, response: aiMessage }]
+				});
+				goto(`/${chatName.toLowerCase().replaceAll(' ', '-')}`);
+			} catch (error) {
+				error = error;
+			} finally {
+				loading = false;
+			}
+		} else if (selectedModal == 'gemini-2.0-flash') {
+			try {
+				loading = true;
+				const result = await chatSession.sendMessage(prompt);
+				const jsonResult = result.response.text().replace(/json/, '').replace(/`/g, '');
+				const summary = JSON.parse(jsonResult).summary;
+				chatName = summary;
+				const text = JSON.parse(jsonResult).content.replace(/`/g, '');
+				// console.log(result.response.text());
+				// console.log(JSON.parse(jsonResult));
+				// console.log('summary', summary);
+				// console.log('content', text);
+				loading = false;
+				const aiMessage: MessageType = {
+					content: text,
+					sender: selectedModal,
+					time: new Date().toLocaleTimeString()
+				};
+				messages = [...messages, aiMessage];
+				const addConversation = await db.conversations.add({
+					id: chatName.replace(/ /g, '-').toLowerCase(),
+					name: chatName,
+					slug: chatName.toLowerCase().replaceAll(' ', '-'),
+					content: [{ prompt: userMessage, response: aiMessage }]
+				});
+				goto(`/${chatName.toLowerCase().replaceAll(' ', '-')}`);
+			} catch (error) {
+				error = error;
+			} finally {
+				loading = false;
+			}
+		}
 	}
 	function handleKeyDown(event: any) {
 		if (event.key === 'Enter' && !event.shiftKey) {
