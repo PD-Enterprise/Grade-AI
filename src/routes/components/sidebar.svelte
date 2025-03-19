@@ -132,7 +132,7 @@
 					on:click={() => {
 						currentSlug.set(conversation.slug);
 					}}
-					href="/{conversation.name.toLowerCase().replaceAll(' ', '-')}"
+					href="/{conversation.slug}"
 				>
 					<svg
 						width="20px"

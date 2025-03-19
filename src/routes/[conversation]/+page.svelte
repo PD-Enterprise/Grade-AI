@@ -41,8 +41,9 @@
 		}
 		// console.log('Conv currentslug: ', $currentSlug);
 		currentSlug.subscribe(async (value) => {
-			// console.log('Conversation:', value);
+			console.log('Conversation:', value);
 			if (value) {
+				slug = value;
 				try {
 					const storedConversations = liveQuery(() => db.conversations.toArray());
 					storedConversations.subscribe((value: any) => {
@@ -50,9 +51,12 @@
 						for (let i = 0; i < value.length; i++) {
 							if (value[i].slug == slug) {
 								// console.log(value[i].content);
-								messages = [...messages, value[i].content];
+								conversation = value[i];
 								break;
 							}
+						}
+						if (conversation) {
+							messages = [conversation.content];
 						}
 					});
 				} catch (error) {

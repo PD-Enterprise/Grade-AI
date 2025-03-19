@@ -215,7 +215,10 @@
 				</div>
 			{/if}
 		</div>
-		<div class="mid sideBarOpenWidth flex h-screen flex-col items-center justify-center" id="mid">
+		<div
+			class="mid sideBarOpenWidth flex h-screen flex-col items-center justify-center gap-4"
+			id="mid"
+		>
 			{#if $welcomeMessage}
 				<div class="welcome-message">
 					<p class="text-center text-3xl">How can i help you today?</p>
