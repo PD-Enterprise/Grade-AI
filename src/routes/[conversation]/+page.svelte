@@ -14,6 +14,7 @@
 	import { customChatSession } from '$lib/utils/customGeminiModal';
 	import { db } from '$lib/db/db';
 	import { liveQuery } from 'dexie';
+	import SelectModal from '../components/selectModal.svelte';
 
 	let messages: any = [];
 	let conversation: any = [];
@@ -63,9 +64,15 @@
 			if (value == 'opened') {
 				document.getElementById('chat-log')?.classList.remove('sideBarClosedWidth');
 				document.getElementById('chat-log')?.classList.add('sideBarOpenWidth');
+
+				document.getElementById('input-area')?.classList.remove('sideBarClosedWidthInput');
+				document.getElementById('input-area')?.classList.add('sideBarOpenWidthInput');
 			} else {
 				document.getElementById('chat-log')?.classList.remove('sideBarOpenWidth');
 				document.getElementById('chat-log')?.classList.add('sideBarClosedWidth');
+
+				document.getElementById('input-area')?.classList.remove('sideBarOpenWidthInput');
+				document.getElementById('input-area')?.classList.add('sideBarClosedWidthInput');
 			}
 		});
 	});
@@ -253,7 +260,7 @@
 
 <div class="main flex h-screen w-screen">
 	<div class="content h-screen w-full">
-		<div class="chat-log sideBarOpenWidth bg-blue-500" id="chat-log">
+		<div class="chat-log sideBarOpenWidth" id="chat-log">
 			{#each messages[0] as message}
 				<div class="user">
 					<div class="chat chat-end">
@@ -287,10 +294,40 @@
 				</div>
 			{/if}
 		</div>
+		<div class="flex h-screen w-full">
+			<div class="input-area-bottom sideBarOpenWidthInput bg-base-300 p-2" id="input-area">
+				<textarea class="userInput mb-2" rows="1" id="userInput" placeholder="Ask me anything..."
+				></textarea>
+				<div class="flex w-full items-center justify-between">
+					<div class="select-modal">
+						<SelectModal />
+					</div>
+					<div class="tootltip" data-tip="Send">
+						<button type="button" on:click={sendMessage} aria-label="Send" class="send-button">
+							<svg
+								width="40px"
+								height="40px"
+								viewBox="0 0 24 24"
+								fill="none"
+								xmlns="http://www.w3.org/2000/svg"
+							>
+								<path
+									d="M10.3009 13.6949L20.102 3.89742M10.5795 14.1355L12.8019 18.5804C13.339 19.6545 13.6075 20.1916 13.9458 20.3356C14.2394 20.4606 14.575 20.4379 14.8492 20.2747C15.1651 20.0866 15.3591 19.5183 15.7472 18.3818L19.9463 6.08434C20.2845 5.09409 20.4535 4.59896 20.3378 4.27142C20.2371 3.98648 20.013 3.76234 19.7281 3.66167C19.4005 3.54595 18.9054 3.71502 17.9151 4.05315L5.61763 8.2523C4.48114 8.64037 3.91289 8.83441 3.72478 9.15032C3.56153 9.42447 3.53891 9.76007 3.66389 10.0536C3.80791 10.3919 4.34498 10.6605 5.41912 11.1975L9.86397 13.42C10.041 13.5085 10.1295 13.5527 10.2061 13.6118C10.2742 13.6643 10.3352 13.7253 10.3876 13.7933C10.4468 13.87 10.491 13.9585 10.5795 14.1355Z"
+									stroke="#6B7280"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+								/>
+							</svg>
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
 	</div>
 </div>
 
-<div class="sideBarClosedWidth hidden"></div>
+<div class="sideBarClosedWidth sideBarClosedWidthInput hidden"></div>
 
 <style>
 	.sideBarOpenWidth {
@@ -320,29 +357,20 @@
 		overflow-y: auto;
 		background-color: transparent;
 	}
-	.input-area {
-		background-color: var(--color-base-300);
-		height: 130px;
-		padding: 10px;
-		justify-content: flex-start;
-		position: absolute;
-		top: 50%;
-		left: 50%;
-		transform: translate(-50%, -50%);
-		border-radius: 10px;
-		gap: 5px;
-		align-items: center;
+	.sideBarOpenWidthInput {
+		transform: translateX(8%);
+	}
+	.sideBarClosedWidthInput {
+		left: 11%;
 	}
 	.input-area-bottom {
-		background-color: var(--color-base-300);
 		height: 130px;
 		padding: 10px;
-		justify-content: flex-start;
+		max-width: 69vw;
 		position: fixed;
-		left: 50%;
 		bottom: -5px;
-		transform: translateX(-50%);
 		border-radius: 10px;
+		transform: translateX(8%);
 		gap: 5px;
 		align-items: center;
 	}
