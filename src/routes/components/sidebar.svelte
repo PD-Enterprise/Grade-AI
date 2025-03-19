@@ -29,14 +29,14 @@
 			// Welcome Message
 			const storeConversations = liveQuery(() => db.conversations.toArray());
 			storeConversations.subscribe(async (value) => {
-				console.log(value);
+				// console.log(value);
 				// Check if a conversation with the id "welcome-message" exists
 				const exists = value.some((conversation) => conversation.id === 'welcome-message');
 				if (exists) {
-					console.log('Welcome message conversation exists.');
+					// console.log('Welcome message conversation exists.');
 					conversationsList.set(value);
 				} else {
-					console.log('Welcome message conversation does not exist.');
+					// console.log('Welcome message conversation does not exist.');
 					const addConversation = await db.conversations.add({
 						id: 'welcome-message',
 						name: 'Welcome to Grade AI',
@@ -77,6 +77,7 @@
 	}
 	async function deleteChat(conversation: ConversationType) {
 		const conversationSlug = conversation.slug;
+		console.log(conversationSlug);
 		if (conversationSlug != $currentSlug || conversationSlug != 'welcome-to-grade-ai') {
 			const conversationIndex = $conversationsList.findIndex(
 				(conversation: any) => conversation.slug == conversationSlug
@@ -131,7 +132,7 @@
 					on:click={() => {
 						currentSlug.set(conversation.slug);
 					}}
-					href="/{conversation.name.toLowerCase().replaceAll(' ', '-')}"
+					href="/{conversation.slug}"
 				>
 					<svg
 						width="20px"
@@ -190,7 +191,7 @@
 							src={userPictureUrl}
 							alt="profile"
 							title={userName}
-							class="w-15 h-10 cursor-pointer rounded-full"
+							class="h-10 w-10 cursor-pointer rounded-full"
 						/>
 						<p class="ml-2 mt-2 text-sm">{userName}</p>
 					</a>

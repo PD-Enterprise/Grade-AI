@@ -81,10 +81,10 @@
 </script>
 
 <div class="main flex overflow-hidden">
-	<div class="side-bar z-10">
+	<div class="side-bar z-10" id="side-bar">
 		<Sidebar />
 	</div>
-	<div class="control z-10">
+	<div class="control absolute z-10">
 		<div class="left-button absolute left-56" id="left-button">
 			<button aria-label="close sidebar" class="btn btn-ghost" onclick={closeSidebar}>
 				<svg
@@ -124,7 +124,7 @@
 			</button>
 		</div>
 	</div>
-	<div class="main-content w-32">
+	<div class="main-content h-screen w-screen">
 		{@render children()}
 	</div>
 </div>
