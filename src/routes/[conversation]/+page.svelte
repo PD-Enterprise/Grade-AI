@@ -80,8 +80,6 @@
 		const inputAreaElement = document.getElementById('userInput') as HTMLInputElement;
 		const userInput = inputAreaElement.value.trim();
 
-		chatName = userInput.replace(/ /g, '');
-
 		const userMessage: MessageType = {
 			content: userInput,
 			sender: 'User',
@@ -110,7 +108,6 @@
 			};
 			messages = [...messages, errorMessage];
 		} else {
-			console.log($selectedModal);
 			if (
 				$selectedModal == 'gemini-2.0-flash_custom_trained' ||
 				$selectedModal == 'gemini-2.0-flash'
@@ -131,7 +128,6 @@
 					sendQueryToAI(userInput, userMessage, $selectedModal);
 				}
 			} else {
-				console.log('asd');
 				if (!$isAuthenticated) {
 					if (messages.length <= 20) {
 						const response = await fetch(`${apiConfig.apiUrl}`, {
@@ -202,32 +198,10 @@
 				sender: selectedModal,
 				time: new Date().toLocaleTimeString()
 			};
-
 			messages = [...messages, aiMessage];
-
-			const updatedConversation = {
-				prompt: userMessage,
-				response: aiMessage
-			};
-			// console.log('Old conv', savedConversations);
-			const newConversation = {
-				name: conversation.name,
-				slug: conversation.slug,
-				content: [...conversation.content, updatedConversation]
-			};
-			// console.log('New conv', newConversation);
-			const conversationListWithoutCurrentConversation = $conversationsList.filter(
-				(conv) => conv.slug !== conversation.slug
-			);
-			// console.log(
-			// 	'conversationListWithoutCurrentConversation',
-			// 	conversationListWithoutCurrentConversation
-			// );
-			const newConversationList = [...conversationListWithoutCurrentConversation, newConversation];
-			// console.log(newConversationList);
-			localStorage.setItem('Conversations', JSON.stringify(newConversationList));
 		} catch (error) {
 			error = error;
+		} finally {
 			loading = false;
 		}
 	}
@@ -260,7 +234,7 @@
 
 <div class="main flex h-screen w-screen">
 	<div class="content h-screen w-full">
-		<div class="chat-log sideBarOpenWidth" id="chat-log">
+		<div class="chat-log sideBarOpenWidth p-4" id="chat-log">
 			{#each messages[0] as message}
 				<div class="user">
 					<div class="chat chat-end">
@@ -296,7 +270,13 @@
 		</div>
 		<div class="flex h-screen w-full">
 			<div class="input-area-bottom sideBarOpenWidthInput bg-base-300 p-2" id="input-area">
-				<textarea class="userInput mb-2" rows="1" id="userInput" placeholder="Ask me anything..."
+				<textarea
+					class="userInput mb-2"
+					rows="1"
+					id="userInput"
+					placeholder="Ask me anything..."
+					on:keydown={handleKeyDown}
+					on:input={autoResize}
 				></textarea>
 				<div class="flex w-full items-center justify-between">
 					<div class="select-modal">
