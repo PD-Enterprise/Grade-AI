@@ -25,6 +25,10 @@
 	let result: any;
 	let displayMessages: any = [];
 	let slug: string = '';
+	let SpeechRecognition;
+	let SpeechGrammarList;
+	let SpeechRecognitionEvent;
+	let recognition: any;
 
 	onMount(async () => {
 		email = localStorage.getItem('Email')?.toString() || '';
@@ -83,6 +87,10 @@
 				document.getElementById('chat-log')?.classList.add('absolute');
 			}
 		});
+		// @ts-expect-error
+		SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+		recognition = new SpeechRecognition();
 	});
 	async function sendMessage() {
 		const inputAreaElement = document.getElementById('userInput') as HTMLInputElement;
@@ -224,6 +232,10 @@
 	}
 	function speak(messageContent: string) {
 		const formattedContent = messageContent
+			.replace(/<html>/g, '')
+			.replace(/<\/html>/g, '')
+			.replace(/<body>/g, '')
+			.replace(/<\/body>/g, '')
 			.replace(/<h1>/g, '')
 			.replace(/<\/h1>/g, '')
 			.replace(/<p>/g, '')
@@ -236,6 +248,25 @@
 		utterance.voice = voices[0]; // Use the first voice
 
 		speechSynthesis.speak(utterance);
+	}
+	async function microphone() {
+		recognition.start();
+		console.log('Listening...');
+		recognition.onresult = async function (event: any) {
+			const transcript = event.results[0][0].transcript;
+			console.log(transcript.split(' '));
+			if (transcript.split(' ').includes('Hey') || transcript.split(' ').includes('hey')) {
+				result = await chatSession.sendMessage(transcript);
+				const jsonResult = result.response.text().replace(/json/, '').replace(/`/g, '');
+				const summary = JSON.parse(jsonResult).summary;
+				const text = JSON.parse(jsonResult).content.replace(/`/g, '');
+				console.log(result.response.text());
+				console.log(JSON.parse(jsonResult));
+				console.log('summary:', summary);
+				console.log('content:', text);
+				speak(text);
+			}
+		};
 	}
 </script>
 
@@ -296,32 +327,32 @@
 						<SelectModal />
 					</div>
 					<div class="buttons flex gap-3">
-						<div class="tootltip ml-auto" data-tip="Speak">
-							<button
-								type="button"
-								aria-label="Send"
-								class="microphone-button"
-								on:click={() => {
-									alert('Coming Soon...');
-								}}
-							>
-								<svg
-									width="40px"
-									height="40px"
-									viewBox="0 0 24 24"
-									fill="none"
-									xmlns="http://www.w3.org/2000/svg"
+						{#if isAuthenticated}
+							<div class="tootltip ml-auto" data-tip="Speak">
+								<button
+									type="button"
+									aria-label="Send"
+									class="microphone-button"
+									on:click={microphone}
 								>
-									<path
-										d="M19 10V12C19 15.866 15.866 19 12 19M5 10V12C5 15.866 8.13401 19 12 19M12 19V22M8 22H16M15 6H13M15 10H13M12 15C10.3431 15 9 13.6569 9 12V5C9 3.34315 10.3431 2 12 2C13.6569 2 15 3.34315 15 5V12C15 13.6569 13.6569 15 12 15Z"
-										stroke="#6B7280"
-										stroke-width="2"
-										stroke-linecap="round"
-										stroke-linejoin="round"
-									/>
-								</svg>
-							</button>
-						</div>
+									<svg
+										width="40px"
+										height="40px"
+										viewBox="0 0 24 24"
+										fill="none"
+										xmlns="http://www.w3.org/2000/svg"
+									>
+										<path
+											d="M19 10V12C19 15.866 15.866 19 12 19M5 10V12C5 15.866 8.13401 19 12 19M12 19V22M8 22H16M15 6H13M15 10H13M12 15C10.3431 15 9 13.6569 9 12V5C9 3.34315 10.3431 2 12 2C13.6569 2 15 3.34315 15 5V12C15 13.6569 13.6569 15 12 15Z"
+											stroke="#6B7280"
+											stroke-width="2"
+											stroke-linecap="round"
+											stroke-linejoin="round"
+										/>
+									</svg>
+								</button>
+							</div>
+						{/if}
 						<div class="tootltip" data-tip="Send">
 							<button type="button" on:click={sendMessage} aria-label="Send" class="send-button">
 								<svg

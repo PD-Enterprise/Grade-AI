@@ -40,8 +40,8 @@
 			/>
 		</svg>
 	</button>
-	<div class="z-1 w-54 dropdown-content menu rounded-box bg-base-300 p-2 shadow-sm">
-		<ul class="tabs gap-5 p-1">
+	<div class="z-1 w-58 dropdown-content menu rounded-box bg-base-300 p-2 shadow-sm">
+		<ul class="tabs gap-2 p-1">
 			<li id="custom">
 				<button
 					on:click={() => {
