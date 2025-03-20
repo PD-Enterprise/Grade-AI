@@ -97,7 +97,7 @@
 <div class="side-bar flex resize-x overflow-hidden" id="side-bar">
 	<div class="content h-screen w-full p-1">
 		<div class="title flex justify-between p-1">
-			<p class="text-2xl">Grade AI</p>
+			<p class="ml-14 text-2xl">Grade AI</p>
 			{#if $isAuthenticated}
 				<button
 					aria-label="Add New Conversation"
@@ -220,7 +220,7 @@
 	}
 	.conversations {
 		height: calc(100vh - 100px);
-		width: 90%;
+		width: 100%;
 	}
 	.login-button {
 		position: absolute;
