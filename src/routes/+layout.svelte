@@ -61,6 +61,7 @@
 		const rightButton = document.getElementById('right-button') as HTMLElement;
 		if (sideBar && leftButton && rightButton) {
 			sideBar.classList.remove('hidden');
+			sideBar.classList.remove('fade-out-left');
 			leftButton.classList.remove('hidden');
 			rightButton.classList.add('hidden');
 		}
@@ -72,7 +73,7 @@
 		const leftButton = document.getElementById('left-button') as HTMLElement;
 		const rightButton = document.getElementById('right-button') as HTMLElement;
 		if (sideBar && leftButton && rightButton) {
-			sideBar.classList.add('hidden');
+			sideBar.classList.add('fade-out-left');
 			leftButton.classList.add('hidden');
 			rightButton.classList.remove('hidden');
 		}
@@ -123,7 +124,7 @@
 			{#if $isAuthenticated}
 				<button
 					aria-label="Add New Conversation"
-					class="btn btn-ghost w-14"
+					class="fade-in-left btn btn-ghost w-14"
 					onclick={() => {
 						localStorage.setItem('Sidebar', 'closed');
 						goto('/');
@@ -151,10 +152,41 @@
 			{/if}
 		</div>
 	</div>
-	<div class="side-bar" id="side-bar">
+	<div class="side-bar fade-in-left" id="side-bar">
 		<Sidebar />
 	</div>
 	<div class="main-content h-screen w-screen">
 		{@render children()}
 	</div>
 </div>
+
+<div class="fade-out-left hidden"></div>
+
+<style>
+	.fade-in-left {
+		animation: fade-in-left 0.5s ease forwards;
+	}
+	.fade-out-left {
+		animation: fade-out-left 0.5s ease forwards;
+	}
+	@keyframes fade-in-left {
+		0% {
+			transform: translateX(-100%);
+			opacity: 0;
+		}
+		100% {
+			transform: translateX(0);
+			opacity: 1;
+		}
+	}
+	@keyframes fade-out-left {
+		0% {
+			transform: translateX(0);
+			opacity: 1;
+		}
+		100% {
+			transform: translateX(-100%);
+			opacity: 0;
+		}
+	}
+</style>
