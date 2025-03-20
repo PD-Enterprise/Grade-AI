@@ -283,6 +283,9 @@
 ></div>
 
 <style>
+	.main {
+		background: linear-gradient(135deg, var(--color-base-100), var(--color-base-200));
+	}
 	.sideBarOpenWidth {
 		width: calc(100vw - 220px);
 	}

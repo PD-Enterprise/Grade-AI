@@ -245,7 +245,7 @@
 
 <div class="main flex h-screen w-screen">
 	<div class="content h-screen w-full">
-		<div class="chat-log sideBarOpenWidth absolute left-0 right-0 p-4" id="chat-log">
+		<div class="chat-log sideBarOpenWidth absolute left-0 right-0 p-1 pr-10" id="chat-log">
 			{#each messages as eachMessage}
 				{#each eachMessage as individualMessage}
 					<div class="user">
@@ -323,6 +323,9 @@
 <div class="sideBarClosedWidth sideBarClosedWidthInput hidden"></div>
 
 <style>
+	.main {
+		background: linear-gradient(135deg, var(--color-base-100), var(--color-base-200));
+	}
 	.sideBarOpenWidth {
 		width: calc(100vw - 220px);
 	}
