@@ -29,12 +29,18 @@
 
 				document.getElementById('input-area')?.classList.remove('sideBarClosedWidthInput');
 				document.getElementById('input-area')?.classList.add('sideBarOpenWidthInput');
+
+				document.getElementById('welcome-message')?.classList.remove('absolute');
+				document.getElementById('chat-log')?.classList.remove('absolute');
 			} else {
-				document.getElementById('mid')?.classList.remove('sideBarOpenWidth');
-				document.getElementById('mid')?.classList.add('sideBarClosedWidth');
+				document.getElementById('mid')?.classList.add('sideBarOpenWidth');
+				document.getElementById('mid')?.classList.remove('sideBarClosedWidth');
 
 				document.getElementById('input-area')?.classList.remove('sideBarOpenWidthInput');
 				document.getElementById('input-area')?.classList.add('sideBarClosedWidthInput');
+
+				document.getElementById('welcome-message')?.classList.add('absolute');
+				document.getElementById('chat-log')?.classList.add('absolute');
 			}
 		});
 	});
@@ -191,7 +197,10 @@
 
 <div class="main flex w-screen">
 	<div class="content w-full">
-		<div class="chat-log sideBarOpenWidth hidden w-screen max-w-7xl" id="chat-log">
+		<div
+			class="chat-log sideBarOpenWidth absolute left-0 right-0 hidden w-screen max-w-7xl"
+			id="chat-log"
+		>
 			{#each messages as message}
 				{#if message.sender == 'User'}
 					<div class="user">
@@ -227,11 +236,11 @@
 			id="mid"
 		>
 			{#if $welcomeMessage}
-				<div class="welcome-message">
+				<div class="welcome-message absolute left-0 right-0" id="welcome-message">
 					<p class="text-center text-3xl">How can i help you today?</p>
 				</div>
 			{/if}
-			<div class="input-area" id="input-area">
+			<div class="input-area-bottom" id="input-area">
 				<textarea
 					class="userInput mb-2"
 					placeholder="Ask me anything..."
@@ -269,7 +278,9 @@
 	</div>
 </div>
 
-<div class="sideBarClosedWidth input-area-bottom sideBarClosedWidthInput hidden"></div>
+<div
+	class="sideBarClosedWidth input-area-bottom sideBarClosedWidthInput sideBarClosedWidthWelcome hidden"
+></div>
 
 <style>
 	.sideBarOpenWidth {
@@ -279,7 +290,6 @@
 		width: 100vw;
 	}
 	.chat-log {
-		/* background-color: red; */
 		height: calc(100vh - 165px);
 		width: 100vw;
 		overflow-y: scroll;
@@ -295,7 +305,7 @@
 		max-height: 60px;
 		height: 45px;
 		min-width: 16rem;
-		width: 69vw;
+		width: 67vw;
 		max-width: 75vw;
 		border: none;
 		padding-left: 5px;
@@ -304,17 +314,8 @@
 		overflow-y: auto;
 		background-color: transparent;
 	}
-	.input-area {
-		background-color: var(--color-base-300);
-		height: 130px;
-		padding: 10px;
-		justify-content: flex-start;
-		width: 69vw;
-		border-radius: 10px;
-		gap: 5px;
-		align-items: center;
-	}
 	.sideBarClosedWidthInput {
+		transform: translateX(8%);
 		left: 11%;
 	}
 	.input-area-bottom {
@@ -324,7 +325,6 @@
 		justify-content: flex-start;
 		position: fixed;
 		bottom: -5px;
-		transform: translateX(8%);
 		border-radius: 10px;
 		gap: 5px;
 		align-items: center;

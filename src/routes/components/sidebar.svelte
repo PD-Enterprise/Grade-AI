@@ -94,7 +94,7 @@
 	}
 </script>
 
-<div class="side-bar flex resize-x overflow-hidden bg-base-200" id="side-bar">
+<div class="side-bar flex resize-x overflow-hidden" id="side-bar">
 	<div class="content h-screen w-full p-1">
 		<div class="title flex items-center justify-between p-1">
 			<p class="text-1xl ml-14">Grade AI</p>
@@ -187,7 +187,7 @@
 			{/each}
 		</div>
 		{#if $isAuthenticated}
-			<div class="user-profile w-full p-1">
+			<div class="user-profile w-full bg-base-300 p-1">
 				<li class="list-none">
 					<a href="/setting/user" title="Admin Dashboard" class="flex items-center">
 						<img
@@ -215,6 +215,7 @@
 		max-width: 17rem;
 		height: 100vh;
 		border-right: 1px solid #6b7280;
+		background: linear-gradient(135deg, var(--color-base-100), var(--color-base-300));
 	}
 	.conversations {
 		height: calc(100vh - 110px);
