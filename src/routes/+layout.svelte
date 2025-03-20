@@ -61,6 +61,7 @@
 		const rightButton = document.getElementById('right-button') as HTMLElement;
 		if (sideBar && leftButton && rightButton) {
 			sideBar.classList.remove('hidden');
+			sideBar.classList.remove('fade-out-left');
 			leftButton.classList.remove('hidden');
 			rightButton.classList.add('hidden');
 		}
@@ -72,7 +73,8 @@
 		const leftButton = document.getElementById('left-button') as HTMLElement;
 		const rightButton = document.getElementById('right-button') as HTMLElement;
 		if (sideBar && leftButton && rightButton) {
-			sideBar.classList.add('hidden');
+			sideBar.classList.remove('hidden');
+			sideBar.classList.add('fade-out-left');
 			leftButton.classList.add('hidden');
 			rightButton.classList.remove('hidden');
 		}
@@ -82,7 +84,7 @@
 </script>
 
 <div class="main flex overflow-hidden">
-	<div class="control absolute z-10 pt-2">
+	<div class="control absolute z-30 pt-2">
 		<div class="left-button" id="left-button">
 			<button aria-label="close sidebar" class="btn btn-ghost w-12" onclick={closeSidebar}>
 				<svg
@@ -102,8 +104,8 @@
 				</svg>
 			</button>
 		</div>
-		<div class="right-button hidden" id="right-button">
-			<button aria-label="open sidebar" class="btn btn-ghost w-12" onclick={openSidebar}>
+		<div class="right-button absolute ml-1 hidden rounded-md bg-base-200 p-1" id="right-button">
+			<button aria-label="open sidebar " class="btn btn-ghost w-12" onclick={openSidebar}>
 				<svg
 					width="20px"
 					height="20px"
@@ -123,15 +125,15 @@
 			{#if $isAuthenticated}
 				<button
 					aria-label="Add New Conversation"
-					class="btn btn-ghost w-14"
+					class="fade-in-top btn btn-ghost w-12 p-0"
 					onclick={() => {
 						localStorage.setItem('Sidebar', 'closed');
 						goto('/');
 					}}
 				>
 					<svg
-						width="30px"
-						height="30px"
+						width="20px"
+						height="20px"
 						viewBox="0 0 24 24"
 						fill="none"
 						xmlns="http://www.w3.org/2000/svg"
@@ -151,10 +153,54 @@
 			{/if}
 		</div>
 	</div>
-	<div class="side-bar" id="side-bar">
+	<div class="side-bar fade-in-left z-20" id="side-bar">
 		<Sidebar />
 	</div>
 	<div class="main-content h-screen w-screen">
 		{@render children()}
 	</div>
 </div>
+
+<div class="fade-out-left hidden"></div>
+
+<style>
+	.fade-in-left {
+		animation: fade-in-left 0.5s ease forwards;
+	}
+	.fade-in-top {
+		animation: fade-in-top 0.6s ease forwards;
+	}
+	.fade-out-left {
+		animation: fade-out-left 0.5s ease forwards;
+	}
+	@keyframes fade-in-left {
+		0% {
+			transform: translateX(-100%);
+			opacity: 0;
+		}
+		100% {
+			transform: translateX(0);
+			opacity: 1;
+		}
+	}
+	@keyframes fade-in-top {
+		0% {
+			transform: translateY(-100%);
+			opacity: 0;
+		}
+		100% {
+			transform: translateY(0);
+			opacity: 1;
+		}
+	}
+	@keyframes fade-out-left {
+		0% {
+			transform: translateX(0);
+			opacity: 1;
+		}
+		100% {
+			transform: translateX(-100%);
+			opacity: 0;
+		}
+	}
+</style>

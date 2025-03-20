@@ -13,6 +13,6 @@ export default {
 
 	plugins: [typography, forms, containerQueries, daisyui],
 	daisyui: {
-		themes: ["sunset"]
+		themes: ["light", "dark"]
 	}
 } satisfies Config;

@@ -20,8 +20,8 @@
 	}
 </script>
 
-<div class="dropdown dropdown-top p-1">
-	<button tabindex="0" class="flex w-64 items-center" style="color: #6B7280">
+<div class="select-modal dropdown dropdown-top p-1">
+	<button tabindex="0" class="flex max-h-5 w-auto max-w-48 items-center" style="color: #6B7280">
 		{$selectedModal}
 		<svg
 			width="25px"

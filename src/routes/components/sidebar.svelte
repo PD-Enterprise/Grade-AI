@@ -96,8 +96,8 @@
 
 <div class="side-bar flex resize-x overflow-hidden" id="side-bar">
 	<div class="content h-screen w-full p-1">
-		<div class="title flex justify-between p-1">
-			<p class="ml-14 text-2xl">Grade AI</p>
+		<div class="title flex items-center justify-between p-1">
+			<p class="text-1xl ml-14">Grade AI</p>
 			{#if $isAuthenticated}
 				<button
 					aria-label="Add New Conversation"
@@ -187,9 +187,9 @@
 			{/each}
 		</div>
 		{#if $isAuthenticated}
-			<div class="user-profile w-full p-1">
+			<div class="user-profile w-full bg-base-300 p-1">
 				<li class="list-none">
-					<a href="/setting/user" title="Admin Dashboard" class="flex">
+					<a href="/setting/user" title="Admin Dashboard" class="flex items-center">
 						<img
 							src={$userPictureUrl}
 							alt="profile"
@@ -210,16 +210,15 @@
 
 <style>
 	.side-bar {
-		min-width: 180px;
-		width: 18vw;
+		min-width: 200px;
+		width: 19vw;
 		max-width: 17rem;
 		height: 100vh;
-		background-color: var(--base-300);
 		border-right: 1px solid #6b7280;
-		backdrop-filter: blur(15px);
+		background: linear-gradient(135deg, var(--color-base-100), var(--color-base-300));
 	}
 	.conversations {
-		height: calc(100vh - 100px);
+		height: calc(100vh - 110px);
 		width: 100%;
 	}
 	.login-button {

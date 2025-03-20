@@ -71,12 +71,16 @@
 
 				document.getElementById('input-area')?.classList.remove('sideBarClosedWidthInput');
 				document.getElementById('input-area')?.classList.add('sideBarOpenWidthInput');
+
+				document.getElementById('chat-log')?.classList.remove('absolute');
 			} else {
 				document.getElementById('chat-log')?.classList.remove('sideBarOpenWidth');
 				document.getElementById('chat-log')?.classList.add('sideBarClosedWidth');
 
 				document.getElementById('input-area')?.classList.remove('sideBarOpenWidthInput');
 				document.getElementById('input-area')?.classList.add('sideBarClosedWidthInput');
+
+				document.getElementById('chat-log')?.classList.add('absolute');
 			}
 		});
 	});
@@ -241,7 +245,7 @@
 
 <div class="main flex h-screen w-screen">
 	<div class="content h-screen w-full">
-		<div class="chat-log sideBarOpenWidth p-4" id="chat-log">
+		<div class="chat-log sideBarOpenWidth absolute left-0 right-0 p-1 pr-10" id="chat-log">
 			{#each messages as eachMessage}
 				{#each eachMessage as individualMessage}
 					<div class="user">
@@ -319,6 +323,9 @@
 <div class="sideBarClosedWidth sideBarClosedWidthInput hidden"></div>
 
 <style>
+	.main {
+		background: linear-gradient(135deg, var(--color-base-100), var(--color-base-200));
+	}
 	.sideBarOpenWidth {
 		width: calc(100vw - 220px);
 	}
@@ -326,7 +333,8 @@
 		width: 100vw;
 	}
 	.chat-log {
-		height: calc(100vh - 165px);
+		height: 100vh;
+		padding-bottom: 130px;
 		overflow-y: scroll;
 		justify-content: flex-start;
 		gap: 5px;
@@ -337,7 +345,7 @@
 		max-height: 60px;
 		height: 45px;
 		min-width: 16rem;
-		width: 69vw;
+		width: 65vw;
 		max-width: 75vw;
 		border: none;
 		padding-left: 5px;
@@ -354,14 +362,27 @@
 	}
 	.input-area-bottom {
 		height: 130px;
-		padding: 10px;
-		max-width: 69vw;
+		padding: 20px;
+		justify-content: flex-start;
 		position: fixed;
 		bottom: -5px;
-		border-radius: 10px;
+		border-radius: 15px;
 		transform: translateX(8%);
 		gap: 5px;
 		align-items: center;
+		background-color: var(--base-300);
+		backdrop-filter: blur(15px);
+	}
+	@media (max-width: 450px) {
+		.input-area-bottom {
+			width: 100vw;
+			transform: translateX(0%);
+			left: 0%;
+		}
+		.send-button svg {
+			width: 30px;
+			height: 30px;
+		}
 	}
 	.select-modal {
 		flex-shrink: 0;
