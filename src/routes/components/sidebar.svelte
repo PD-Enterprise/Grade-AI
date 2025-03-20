@@ -12,15 +12,16 @@
 	import { goto } from '$app/navigation';
 	import { db } from '$lib/db/db';
 	import { liveQuery } from 'dexie';
+	import { writable } from 'svelte/store';
 
-	let userPictureUrl: string;
+	const userPictureUrl = writable<string>('');
 	let userName: string;
 
 	onMount(async () => {
 		user.subscribe((value) => {
 			if (value) {
 				// @ts-expect-error
-				userPictureUrl = value.picture;
+				userPictureUrl.set(value.picture);
 				// @ts-expect-error
 				userName = value.name;
 			}
@@ -93,9 +94,9 @@
 	}
 </script>
 
-<div class="side-bar flex overflow-hidden p-1" id="side-bar">
-	<div class="content h-screen">
-		<div class="title flex">
+<div class="side-bar flex resize-x overflow-hidden" id="side-bar">
+	<div class="content h-screen w-full p-1">
+		<div class="title flex justify-between p-1">
 			<p class="text-2xl">Grade AI</p>
 			{#if $isAuthenticated}
 				<button
@@ -127,10 +128,10 @@
 				</button>
 			{/if}
 		</div>
-		<div class="conversations mt-2 w-full list-none flex-row flex-wrap gap-3 overflow-y-scroll p-1">
+		<div class="conversations mt-2 list-none flex-row flex-wrap gap-3 overflow-y-scroll p-1">
 			{#each $conversationsList as conversation}
 				<a
-					class="conversation btn btn-ghost flex w-full overflow-hidden border-r-4 p-1"
+					class="conversation btn btn-ghost flex overflow-hidden border-r-4 p-1"
 					on:click={() => {
 						currentSlug.set(conversation.slug);
 					}}
@@ -186,11 +187,11 @@
 			{/each}
 		</div>
 		{#if $isAuthenticated}
-			<div class="user-profile w-full p-2">
+			<div class="user-profile w-full p-1">
 				<li class="list-none">
 					<a href="/setting/user" title="Admin Dashboard" class="flex">
 						<img
-							src={userPictureUrl}
+							src={$userPictureUrl}
 							alt="profile"
 							title={userName}
 							class="h-10 w-10 cursor-pointer rounded-full"
@@ -219,7 +220,7 @@
 	}
 	.conversations {
 		height: calc(100vh - 100px);
-		width: 100vw;
+		width: 90%;
 	}
 	.login-button {
 		position: absolute;
@@ -232,7 +233,6 @@
 	}
 	.conversation {
 		height: 35px;
-		max-width: 17vw;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
