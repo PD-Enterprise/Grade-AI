@@ -104,7 +104,7 @@
 			</button>
 		</div>
 		<div class="right-button hidden" id="right-button">
-			<button aria-label="open sidebar" class="btn btn-ghost w-12" onclick={openSidebar}>
+			<button aria-label="open sidebar absolute" class="btn btn-ghost w-12" onclick={openSidebar}>
 				<svg
 					width="20px"
 					height="20px"
@@ -124,7 +124,7 @@
 			{#if $isAuthenticated}
 				<button
 					aria-label="Add New Conversation"
-					class="fade-in-left btn btn-ghost w-14"
+					class="fade-in-left btn btn-ghost absolute w-14"
 					onclick={() => {
 						localStorage.setItem('Sidebar', 'closed');
 						goto('/');
