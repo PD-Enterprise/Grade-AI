@@ -368,7 +368,7 @@
 						<SelectModal />
 					</div>
 					<div class="buttons flex gap-3">
-						{#if isAuthenticated}
+						{#if isAuthenticated && localStorage.getItem('role') == 'admin'}
 							<div class="tootltip ml-auto" data-tip="Speak">
 								<button
 									type="button"
