@@ -84,7 +84,7 @@
 </script>
 
 <div class="main flex overflow-hidden">
-	<div class="control absolute z-10 pt-2">
+	<div class="control absolute z-30 pt-2">
 		<div class="left-button" id="left-button">
 			<button aria-label="close sidebar" class="btn btn-ghost w-12" onclick={closeSidebar}>
 				<svg
@@ -153,7 +153,7 @@
 			{/if}
 		</div>
 	</div>
-	<div class="side-bar fade-in-left" id="side-bar">
+	<div class="side-bar fade-in-left z-20" id="side-bar">
 		<Sidebar />
 	</div>
 	<div class="main-content h-screen w-screen">

@@ -363,7 +363,7 @@
 	.input-area-bottom {
 		height: 130px;
 		padding: 20px;
-		max-width: 69vw;
+		justify-content: flex-start;
 		position: fixed;
 		bottom: -5px;
 		border-radius: 15px;
@@ -372,6 +372,17 @@
 		align-items: center;
 		background-color: var(--base-300);
 		backdrop-filter: blur(15px);
+	}
+	@media (max-width: 450px) {
+		.input-area-bottom {
+			width: 100vw;
+			transform: translateX(0%);
+			left: 0%;
+		}
+		.send-button svg {
+			width: 30px;
+			height: 30px;
+		}
 	}
 	.select-modal {
 		flex-shrink: 0;

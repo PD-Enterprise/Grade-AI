@@ -322,15 +322,27 @@
 		left: 11%;
 	}
 	.input-area-bottom {
-		background-color: var(--color-base-300);
 		height: 130px;
-		padding: 10px;
+		padding: 20px;
 		justify-content: flex-start;
 		position: fixed;
 		bottom: -5px;
 		border-radius: 10px;
 		gap: 5px;
 		align-items: center;
+		background-color: var(--base-300);
+		backdrop-filter: blur(15px);
+	}
+	@media (max-width: 450px) {
+		.input-area-bottom {
+			width: 100vw;
+			transform: translateX(0%);
+			left: 0%;
+		}
+		.send-button svg {
+			width: 30px;
+			height: 30px;
+		}
 	}
 	.select-modal {
 		flex-shrink: 0;
