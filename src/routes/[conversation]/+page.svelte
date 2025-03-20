@@ -41,7 +41,7 @@
 		}
 		// console.log('Conv currentslug: ', $currentSlug);
 		currentSlug.subscribe(async (value) => {
-			console.log('Conversation:', value);
+			// console.log('Conversation:', value);
 			if (value) {
 				slug = value;
 				try {
@@ -203,6 +203,9 @@
 				time: new Date().toLocaleTimeString()
 			};
 			messages = [...messages, aiMessage];
+			const updateStoredConv = await db.conversations.update(slug, {
+				content: [...conversation.content, [{ prompt: userMessage, response: aiMessage }]]
+			});
 		} catch (error) {
 			error = error;
 		} finally {
@@ -239,27 +242,29 @@
 <div class="main flex h-screen w-screen">
 	<div class="content h-screen w-full">
 		<div class="chat-log sideBarOpenWidth p-4" id="chat-log">
-			{#each messages[0] as message}
-				<div class="user">
-					<div class="chat chat-end">
-						<div class="chat-header">
-							{message.prompt.sender}
-						</div>
-						<div class="chat-bubble">
-							{message.prompt.content}
-						</div>
-					</div>
-				</div>
-				<div class="AI">
-					<div class="chat chat-start">
-						<div class="chat-header">
-							{message.response.sender}
-						</div>
-						<div class="chat-bubble bg-base-200">
-							{@html message.response.content}
+			{#each messages as eachMessage}
+				{#each eachMessage as individualMessage}
+					<div class="user">
+						<div class="chat chat-end">
+							<div class="chat-header">
+								{individualMessage[0].prompt.sender}
+							</div>
+							<div class="chat-bubble">
+								{individualMessage[0].prompt.content}
+							</div>
 						</div>
 					</div>
-				</div>
+					<div class="AI">
+						<div class="chat chat-start">
+							<div class="chat-header">
+								{individualMessage[0].response.sender}
+							</div>
+							<div class="chat-bubble bg-base-200">
+								{@html individualMessage[0].response.content}
+							</div>
+						</div>
+					</div>
+				{/each}
 			{/each}
 			{#if loading}
 				<div class="system">

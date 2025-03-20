@@ -161,7 +161,7 @@
 				id: chatName.replace(/ /g, '-').toLowerCase(),
 				name: chatName,
 				slug: chatName.toLowerCase().replaceAll(' ', '-').replaceAll('"', ''),
-				content: [{ prompt: userMessage, response: aiMessage }]
+				content: [[{ prompt: userMessage, response: aiMessage }]]
 			});
 			goto(`/${chatName.toLowerCase().replaceAll(' ', '-')}`);
 		} catch (error) {
