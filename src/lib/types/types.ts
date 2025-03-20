@@ -8,10 +8,10 @@ export interface ConversationType {
     id: string,
     name: string,
     slug: string,
-    content: Array<{
+    content: Array<Array<{
         prompt: MessageType | null,
         response: MessageType | null
-    }>
+    }>>
 }
 
 export type modalType = {

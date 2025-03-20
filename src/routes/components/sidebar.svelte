@@ -12,15 +12,16 @@
 	import { goto } from '$app/navigation';
 	import { db } from '$lib/db/db';
 	import { liveQuery } from 'dexie';
+	import { writable } from 'svelte/store';
 
-	let userPictureUrl: string;
+	const userPictureUrl = writable<string>('');
 	let userName: string;
 
 	onMount(async () => {
 		user.subscribe((value) => {
 			if (value) {
 				// @ts-expect-error
-				userPictureUrl = value.picture;
+				userPictureUrl.set(value.picture);
 				// @ts-expect-error
 				userName = value.name;
 			}
@@ -42,14 +43,15 @@
 						name: 'Welcome to Grade AI',
 						slug: 'welcome-to-grade-ai',
 						content: [
-							{
-								prompt: {
-									content: 'What is Grade AI?',
-									sender: 'User',
-									time: '2023-03-30T10:00:00.000Z'
-								},
-								response: {
-									content: `<h1 class="text-4xl"><b>Grade AI is the best AI Chat for students ever made.</b></h1><br>
+							[
+								{
+									prompt: {
+										content: 'What is Grade AI?',
+										sender: 'User',
+										time: '2023-03-30T10:00:00.000Z'
+									},
+									response: {
+										content: `<h1 class="text-4xl"><b>Grade AI is the best AI Chat for students ever made.</b></h1><br>
 																<h2 class="text-2xl">1. We're optimized for students.</h2>
 																<p>We have optimized each of our models for students, with custom prompting and much more to not only provide the answer, but to teach it.</p><br>
 																<h2 class="text-2xl">2. We have multiple models, not just one.</h2>
@@ -59,10 +61,11 @@
 																<p>We're way cheaper than the price of ChatGPT or Claude.</p><br>
 																<h2 class="text-2xl">What are you waiting for?</h2>
 																Reply here to get started, or head over to conversation 1 to start a new chat.`,
-									sender: 'Gemini',
-									time: '2023-03-30T10:00:00.000Z'
+										sender: 'Gemini',
+										time: '2023-03-30T10:00:00.000Z'
+									}
 								}
-							}
+							]
 						]
 					});
 				}
@@ -91,10 +94,10 @@
 	}
 </script>
 
-<div class="side-bar flex overflow-hidden p-1" id="side-bar">
-	<div class="content h-screen">
-		<div class="title flex">
-			<p class="text-2xl">Grade AI</p>
+<div class="side-bar flex resize-x overflow-hidden" id="side-bar">
+	<div class="content h-screen w-full p-1">
+		<div class="title flex justify-between p-1">
+			<p class="ml-14 text-2xl">Grade AI</p>
 			{#if $isAuthenticated}
 				<button
 					aria-label="Add New Conversation"
@@ -125,10 +128,10 @@
 				</button>
 			{/if}
 		</div>
-		<div class="conversations mt-2 w-full list-none flex-row flex-wrap gap-3 overflow-y-scroll p-1">
+		<div class="conversations mt-2 list-none flex-row flex-wrap gap-3 overflow-y-scroll p-1">
 			{#each $conversationsList as conversation}
 				<a
-					class="conversation btn btn-ghost flex w-full overflow-hidden border-r-4 p-1"
+					class="conversation btn btn-ghost flex overflow-hidden border-r-4 p-1"
 					on:click={() => {
 						currentSlug.set(conversation.slug);
 					}}
@@ -184,11 +187,11 @@
 			{/each}
 		</div>
 		{#if $isAuthenticated}
-			<div class="user-profile w-full p-2">
+			<div class="user-profile w-full p-1">
 				<li class="list-none">
 					<a href="/setting/user" title="Admin Dashboard" class="flex">
 						<img
-							src={userPictureUrl}
+							src={$userPictureUrl}
 							alt="profile"
 							title={userName}
 							class="h-10 w-10 cursor-pointer rounded-full"
@@ -217,7 +220,7 @@
 	}
 	.conversations {
 		height: calc(100vh - 100px);
-		width: 100vw;
+		width: 100%;
 	}
 	.login-button {
 		position: absolute;
@@ -230,7 +233,6 @@
 	}
 	.conversation {
 		height: 35px;
-		max-width: 17vw;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;

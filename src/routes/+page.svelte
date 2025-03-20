@@ -26,9 +26,15 @@
 			if (value == 'opened') {
 				document.getElementById('mid')?.classList.remove('sideBarClosedWidth');
 				document.getElementById('mid')?.classList.add('sideBarOpenWidth');
+
+				document.getElementById('input-area')?.classList.remove('sideBarClosedWidthInput');
+				document.getElementById('input-area')?.classList.add('sideBarOpenWidthInput');
 			} else {
 				document.getElementById('mid')?.classList.remove('sideBarOpenWidth');
 				document.getElementById('mid')?.classList.add('sideBarClosedWidth');
+
+				document.getElementById('input-area')?.classList.remove('sideBarOpenWidthInput');
+				document.getElementById('input-area')?.classList.add('sideBarClosedWidthInput');
 			}
 		});
 	});
@@ -161,8 +167,9 @@
 				id: chatName.replace(/ /g, '-').toLowerCase(),
 				name: chatName,
 				slug: chatName.toLowerCase().replaceAll(' ', '-').replaceAll('"', ''),
-				content: [{ prompt: userMessage, response: aiMessage }]
+				content: [[{ prompt: userMessage, response: aiMessage }]]
 			});
+			welcomeMessage.set(true);
 			goto(`/${chatName.toLowerCase().replaceAll(' ', '-')}`);
 		} catch (error) {
 			error = error;
@@ -257,13 +264,12 @@
 						</button>
 					</div>
 				</div>
-				<div class="input-area-bottom hidden"></div>
 			</div>
 		</div>
 	</div>
 </div>
 
-<div class="sideBarClosedWidth hidden"></div>
+<div class="sideBarClosedWidth input-area-bottom sideBarClosedWidthInput hidden"></div>
 
 <style>
 	.sideBarOpenWidth {
@@ -303,14 +309,13 @@
 		height: 130px;
 		padding: 10px;
 		justify-content: flex-start;
-		/* position: absolute;
-		top: 50%;
-		left: 50%; */
-		/* transform: translate(-50%, -50%); */
 		width: 69vw;
 		border-radius: 10px;
 		gap: 5px;
 		align-items: center;
+	}
+	.sideBarClosedWidthInput {
+		left: 11%;
 	}
 	.input-area-bottom {
 		background-color: var(--color-base-300);
@@ -318,9 +323,8 @@
 		padding: 10px;
 		justify-content: flex-start;
 		position: fixed;
-		left: 50%;
 		bottom: -5px;
-		transform: translateX(-50%);
+		transform: translateX(8%);
 		border-radius: 10px;
 		gap: 5px;
 		align-items: center;
