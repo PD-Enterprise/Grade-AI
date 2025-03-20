@@ -29,6 +29,7 @@
 	let SpeechGrammarList;
 	let SpeechRecognitionEvent;
 	let recognition: any;
+	let isSpeaking = false;
 
 	onMount(async () => {
 		email = localStorage.getItem('Email')?.toString() || '';
@@ -230,7 +231,7 @@
 			sendMessage();
 		}
 	}
-	function speak(messageContent: string) {
+	async function speak(messageContent: string) {
 		const formattedContent = messageContent
 			.replace(/<html>/g, '')
 			.replace(/<\/html>/g, '')
@@ -241,30 +242,70 @@
 			.replace(/<p>/g, '')
 			.replace(/<\/p>/g, '')
 			.replace(/<b>/g, '')
-			.replace(/<\/b>/g, '');
+			.replace(/<\/b>/g, '')
+			.replace(/<ul>/g, '')
+			.replace(/<\/ul>/g, '')
+			.replace(/<li>/g, '')
+			.replace(/<\/li>/g, '')
+			.replace(/<ol>/g, '')
+			.replace(/<\/ol>/g, '')
+			.replace(/<br>/g, '')
+			.replace(/<\/br>/g, '')
+			.replace(/<div>/g, '')
+			.replace(/<\/div>/g, '');
 		const utterance = new SpeechSynthesisUtterance(formattedContent);
 
 		const voices = speechSynthesis.getVoices();
 		utterance.voice = voices[0]; // Use the first voice
 
+		utterance.onstart = function () {
+			isSpeaking = true; // Set the flag to true when speaking starts
+		};
+
+		utterance.onend = function () {
+			isSpeaking = false; // Reset the flag when speaking ends
+			microphone(); // Start listening again after speaking
+		};
+
 		speechSynthesis.speak(utterance);
 	}
 	async function microphone() {
+		if (isSpeaking) {
+			return; // Do not start listening if currently speaking
+		}
+
 		recognition.start();
 		console.log('Listening...');
+
 		recognition.onresult = async function (event: any) {
 			const transcript = event.results[0][0].transcript;
-			console.log(transcript.split(' '));
-			if (transcript.split(' ').includes('Hey') || transcript.split(' ').includes('hey')) {
+			console.log(transcript);
+
+			try {
 				result = await chatSession.sendMessage(transcript);
+				console.log(result.response.text());
+
 				const jsonResult = result.response.text().replace(/json/, '').replace(/`/g, '');
 				const summary = JSON.parse(jsonResult).summary;
 				const text = JSON.parse(jsonResult).content.replace(/`/g, '');
-				console.log(result.response.text());
+
 				console.log(JSON.parse(jsonResult));
 				console.log('summary:', summary);
 				console.log('content:', text);
+
 				speak(text);
+			} catch (error) {
+				console.log(error);
+			}
+		};
+		recognition.onerror = function (event: any) {
+			console.error('Recognition error:', event.error);
+			microphone(); // Restart listening on error
+		};
+
+		recognition.onend = function () {
+			if (!isSpeaking) {
+				microphone(); // Restart listening when recognition ends, if not speaking
 			}
 		};
 	}
