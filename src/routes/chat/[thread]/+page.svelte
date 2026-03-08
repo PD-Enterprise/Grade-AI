@@ -13,12 +13,18 @@
 		{ role: 'user', content: 'What is your purpose?' },
 		{ role: 'assistant', content: 'My purpose is to help you with any questions you have.' },
 		{ role: 'user', content: 'Can you help me with my homework?' },
+		{ role: 'assistant', content: 'I am sorry, but I am not able to help you with your homework.' },
+		{ role: 'user', content: 'What is your name?' },
+		{ role: 'assistant', content: 'My name is Grade AI.' },
+		{ role: 'user', content: 'What is your purpose?' },
+		{ role: 'assistant', content: 'My purpose is to help you with any questions you have.' },
+		{ role: 'user', content: 'Can you help me with my homework?' },
 		{ role: 'assistant', content: 'I am sorry, but I am not able to help you with your homework.' }
 	];
 </script>
 
 <div class="thread-container flex h-full flex-col gap-2">
-	<header>
+	<header class="thread-header absolute z-1 mt-2 ml-2 rounded-xl p-3 backdrop-blur-lg">
 		<h2 class="font-bold">Thread {slug}</h2>
 	</header>
 
@@ -42,21 +48,21 @@
 		{/each}
 	</div>
 
-	<div class="input-group flex w-full flex-col gap-3 rounded-2xl rounded-b-none bg-base-200 p-3">
+	<div class="input-group flex w-full flex-col gap-3 rounded-2xl rounded-b-none bg-base-300 p-3">
 		<div class="input-field">
 			<input
 				type="text"
 				placeholder="Enter your question here"
-				class="input w-full rounded border-none bg-base-200 p-0 focus:outline-none"
+				class="input w-full rounded border-none bg-transparent p-0 focus:outline-none"
 			/>
 		</div>
 		<div class="action-bar flex flex-row justify-between gap-3">
-			<select class="model-selection select rounded border-none bg-base-200 focus:outline-none">
+			<select class="model-selection select rounded border-none bg-transparent focus:outline-none">
 				{#each Array(3) as _, i}
 					<option value={i}>Model {i + 1}</option>
 				{/each}
 			</select>
-			<button class="btn rounded hover:bg-base-100"
+			<button class="btn rounded bg-transparent hover:bg-base-100"
 				><Icon icon="ic:round-send" width="24" height="24" /></button
 			>
 		</div>

@@ -4,6 +4,7 @@
 	import Sidebar from './components/sidebar.svelte';
 	import './layout.css';
 	import Icon from '@iconify/svelte';
+	import { fly, fade } from 'svelte/transition';
 
 	let { children } = $props();
 
@@ -13,9 +14,11 @@
 </script>
 
 <div class="main flex overflow-y-hidden">
-	<section class="sidebar h-screen flex-1 bg-base-200 p-2">
+	<aside class="sidebar h-screen flex-1 bg-base-200 p-2 transition-all ease-in-out">
 		{#if sidebarStatus.value}
-			<Sidebar />
+			<div in:fly={{ x: -20, duration: 50 }} out:fade={{ duration: 50 }}>
+				<Sidebar />
+			</div>
 		{:else}
 			<div class="sidebar-action-bar flex flex-col gap-2">
 				<button
@@ -29,8 +32,8 @@
 				</a>
 			</div>
 		{/if}
-	</section>
-	<section class={`body h-screen ${sidebarStatus.value ? 'flex-5' : 'flex-50'} p-2`}>
+	</aside>
+	<section class={`body h-screen ${sidebarStatus.value ? 'flex-5' : 'flex-50'}`}>
 		{@render children()}
 	</section>
 </div>
