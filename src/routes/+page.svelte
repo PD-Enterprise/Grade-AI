@@ -4,7 +4,7 @@
 	import type { ModelList } from '$lib/types';
 
 	let modelList: ModelList[] = $state([]);
-	let currentModel: string = $state('');
+	let currentModel: string = $state('Llama 3.1 8B');
 	let modelType: 'direct' | 'socratic' = $state('direct');
 	let isModelSelectionMenuOpen: boolean = $state(false);
 	let menuRef: HTMLDivElement | undefined = $state();
