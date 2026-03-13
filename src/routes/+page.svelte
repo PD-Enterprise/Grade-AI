@@ -6,7 +6,7 @@
 	let modelList: ModelList[] = $state([]);
 	let currentModel: string = $state('');
 	let modelType: 'direct' | 'socratic' = $state('direct');
-	let isModelSelectionMenuOpen: boolean = $state(true);
+	let isModelSelectionMenuOpen: boolean = $state(false);
 	let menuRef: HTMLDivElement | undefined = $state();
 
 	function changeModel(modelName: string) {
@@ -53,6 +53,10 @@
 </script>
 
 <svelte:window onclick={handleClickOutside} />
+
+<svelte:head>
+	<title>Grade AI</title>
+</svelte:head>
 
 <div class="new-chat flex h-full flex-col items-center justify-center gap-5">
 	<div class="welcome-title">

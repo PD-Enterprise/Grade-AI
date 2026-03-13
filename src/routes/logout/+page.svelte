@@ -2,6 +2,10 @@
 	import { logout } from '$lib/utils/auth-helper';
 </script>
 
+<svelte:head>
+	<title>Grade AI - Logout</title>
+</svelte:head>
+
 <div class="logout flex h-full flex-col items-center justify-center gap-5">
 	<h1 class="text-2xl">Are you sure you want to sign out?</h1>
 

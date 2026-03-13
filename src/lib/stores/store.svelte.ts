@@ -1,6 +1,5 @@
-import type { UserData } from '$lib/types';
+import type { UserData, Thread } from '$lib/types';
 import { writable } from 'svelte/store';
-import type { Thread } from '../../routes/types';
 
 export const sidebarStatus = $state({ value: true });
 

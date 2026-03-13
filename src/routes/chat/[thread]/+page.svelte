@@ -4,8 +4,13 @@
 	import { threads } from '$lib/stores/store.svelte';
 
 	let slug = $derived(page.params.thread);
+	let thread = $derived(threads.find((t) => t.id === slug));
 	let messages = $derived(threads.find((t) => t.id === slug)?.messages ?? []);
 </script>
+
+<svelte:head>
+	<title>{thread.title}</title>
+</svelte:head>
 
 <div class="thread-container flex h-full flex-col gap-2">
 	<header class="thread-header absolute z-1 mt-2 ml-2 rounded-xl p-3 backdrop-blur-lg">

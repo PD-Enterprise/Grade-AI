@@ -2,6 +2,10 @@
 	import { login } from '$lib/utils/auth-helper';
 </script>
 
+<svelte:head>
+	<title>Grade AI - Login</title>
+</svelte:head>
+
 <div class="login flex h-full flex-col items-center justify-center gap-5">
 	<h1 class=" text-center text-3xl font-bold">Sign in to GradeAI</h1>
 
