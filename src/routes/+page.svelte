@@ -16,7 +16,8 @@
 		</div>
 		<div class="action-bar flex flex-row justify-between gap-3">
 			<select class="model-selection select rounded border-none bg-base-200 focus:outline-none">
-				{#each Array(3) as _, i}
+				<!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -->
+				{#each Array(3) as _, i (i)}
 					<option value={i}>Model {i + 1}</option>
 				{/each}
 			</select>
