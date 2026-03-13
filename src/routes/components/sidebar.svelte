@@ -2,6 +2,7 @@
 	import Icon from '@iconify/svelte';
 	import { isAuthenticated, sidebarStatus, userData } from '$lib/stores/store.svelte';
 	import { resolve } from '$app/paths';
+	import { threads } from '$lib/stores/store.svelte';
 
 	let image: string | undefined = $state('');
 
@@ -16,9 +17,8 @@
 
 <div class="sidebar flex h-full flex-col gap-2">
 	<header class="header flex flex-row items-center justify-between">
-		<a
-			class="btn rounded p-2 text-xl font-bold text-white btn-ghost btn-accent"
-			href="{resolve('/')})">Grade AI</a
+		<a class="btn rounded p-2 text-xl font-bold text-white btn-ghost btn-accent" href={resolve('/')}
+			>Grade AI</a
 		>
 		<button
 			class="btn rounded p-2 btn-ghost btn-accent"
@@ -37,13 +37,13 @@
 
 	<span class="pl-2">Your Chats</span>
 	<div class="list flex flex-1 flex-col gap-1 overflow-y-scroll pl-2">
-		<!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -->
-		{#each Array(20) as _, i (i)}
+		{#each threads as thread (thread.id)}
 			<a
-				href={resolve(`/chat/${`This is thread ${i + 1}`.replaceAll(' ', '_')}`)}
+				href={resolve(`/chat/${thread.id}`)}
 				class="btn h-7 justify-start rounded p-0 pt-4 pb-4 btn-ghost hover:bg-base-100"
-				>{`This is thread ${i + 1}`.replaceAll(' ', '_')}</a
 			>
+				{thread.title}
+			</a>
 		{/each}
 	</div>
 

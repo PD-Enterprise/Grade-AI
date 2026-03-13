@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
 	import { onMount } from 'svelte';
-	import type { ModelList } from './types';
+	import type { ModelList } from '$lib/types';
 
 	let modelList: ModelList[] = $state([]);
 	let currentModel: string = $state('');

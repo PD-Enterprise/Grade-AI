@@ -4,10 +4,22 @@ export interface ChatMessage {
 	role: ChatRole;
 	content: string;
 }
+export interface Thread {
+	id: string;
+	title: string;
+	messages: ChatMessage[];
+}
 
 export type UserData = {
 	name: string;
 	email: string;
 	image: string | null | undefined;
 	membership: 'tier-1' | 'tier-2' | 'tier-3' | undefined;
+};
+
+export type ModelList = {
+	providerName: 'groq' | 'openrouter' | 'gemini';
+	modelName: string;
+	modelString: string;
+	description: string;
 };
