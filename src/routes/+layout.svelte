@@ -5,6 +5,7 @@
 	import Icon from '@iconify/svelte';
 	import { fly, fade } from 'svelte/transition';
 	import { resolve } from '$app/paths';
+	import NotLoggedIn from './components/notLoggedIn.svelte';
 
 	let { data, children } = $props();
 
@@ -27,6 +28,9 @@
 </script>
 
 <div class="main flex overflow-y-hidden">
+	{#if !isAuthenticated.value}
+		<NotLoggedIn />
+	{/if}
 	{#if sidebarStatus.value}
 		<aside
 			class="sidebar h-screen flex-1 bg-base-200 p-2 transition-all ease-in-out"
