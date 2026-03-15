@@ -2,7 +2,7 @@
 	import Icon from '@iconify/svelte';
 	import { onMount } from 'svelte';
 	import type { ModelList, promptBody } from '$lib/types';
-	import { newPromptBody } from '$lib/stores/store.svelte';
+	import { isAuthenticated, newPromptBody } from '$lib/stores/store.svelte';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 
@@ -12,6 +12,7 @@
 	let isModelSelectionMenuOpen: boolean = $state(false);
 	let menuRef: HTMLDivElement | undefined = $state();
 	let prompt: string = $state('');
+	let sendButton: HTMLButtonElement | undefined = $state();
 
 	function changeModel(modelName: string) {
 		currentModel = modelName;
@@ -54,6 +55,8 @@
 	}
 
 	onMount(async () => {
+		sendButton = document.getElementById('send-message-button') as HTMLButtonElement;
+
 		const response = await fetch('/', {
 			method: 'GET',
 			headers: { 'Content-Type': 'application/json' }
@@ -73,7 +76,19 @@
 			changeModel(modelList[0].modelName);
 		}
 	});
-	$effect(() => {});
+	$effect(() => {
+		if (sendButton) {
+			if (!isAuthenticated.value) {
+				sendButton.disabled = true;
+			} else {
+				if (prompt == '') {
+					sendButton.disabled = true;
+				} else {
+					sendButton.disabled = false;
+				}
+			}
+		}
+	});
 </script>
 
 <svelte:window onclick={handleClickOutside} />
@@ -152,7 +167,7 @@
 				{/if}
 			</div>
 
-			<button class="btn rounded hover:bg-base-100" onclick={sendMessage}
+			<button class="btn rounded hover:bg-base-100" onclick={sendMessage} id="send-message-button"
 				><Icon icon="ic:round-send" width="24" height="24" /></button
 			>
 		</div>
