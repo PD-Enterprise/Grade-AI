@@ -1,13 +1,17 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
 	import { onMount } from 'svelte';
-	import type { ModelList } from '$lib/types';
+	import type { ModelList, promptBody } from '$lib/types';
+	import { newPromptBody } from '$lib/stores/store.svelte';
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 
 	let modelList: ModelList[] = $state([]);
 	let currentModel: string = $state('Llama 3.1 8B');
 	let modelType: 'direct' | 'socratic' = $state('direct');
 	let isModelSelectionMenuOpen: boolean = $state(false);
 	let menuRef: HTMLDivElement | undefined = $state();
+	let prompt: string = $state('');
 
 	function changeModel(modelName: string) {
 		currentModel = modelName;
@@ -27,6 +31,26 @@
 				isModelSelectionMenuOpen = false;
 			}
 		}
+	}
+
+	async function sendMessage() {
+		if (!prompt.trim()) return;
+
+		const model = modelList.find((m) => m.modelName === currentModel);
+		if (!model) return;
+
+		const promptBody: promptBody = {
+			prompt: prompt,
+			provider: model.providerName,
+			model: model.modelString,
+			mode: modelType,
+			history: [],
+			conversationId: crypto.randomUUID()
+		};
+
+		newPromptBody.value = promptBody;
+		const threadId = crypto.randomUUID();
+		goto(resolve(`/chat/${threadId}`));
 	}
 
 	onMount(async () => {
@@ -65,6 +89,7 @@
 	<div class="input-group flex w-[60%] flex-col gap-3 rounded-2xl bg-base-200 p-3">
 		<div class="input-field">
 			<input
+				bind:value={prompt}
 				type="text"
 				placeholder="Enter your question here"
 				class="input w-full rounded border-none bg-base-200 p-0 focus:outline-none"
@@ -127,7 +152,7 @@
 				{/if}
 			</div>
 
-			<button class="btn rounded hover:bg-base-100"
+			<button class="btn rounded hover:bg-base-100" onclick={sendMessage}
 				><Icon icon="ic:round-send" width="24" height="24" /></button
 			>
 		</div>
