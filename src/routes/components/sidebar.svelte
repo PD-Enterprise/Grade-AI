@@ -6,6 +6,13 @@
 
 	let image: string | undefined = $state('');
 
+	function deleteThread(threadId: string) {
+		const currentThread = threads.values.find((t) => t.id === threadId);
+		if (currentThread) {
+			threads.values = threads.values.filter((t) => t.id !== threadId);
+		}
+	}
+
 	$effect(() => {
 		if (userData.value.image) {
 			image = userData.value.image;
@@ -37,13 +44,18 @@
 
 	<span class="pl-2">Your Chats</span>
 	<div class="list flex flex-1 flex-col gap-1 overflow-y-scroll pl-2">
-		{#each threads as thread (thread.id)}
-			<a
-				href={resolve(`/chat/${thread.id}`)}
-				class="btn h-7 justify-start rounded p-0 pt-4 pb-4 btn-ghost hover:bg-base-100"
-			>
-				{thread.title}
-			</a>
+		{#each threads.values as thread (thread.id)}
+			<div class="each-thread flex flex-row justify-between">
+				<a
+					href={resolve(`/chat/${thread.id}`)}
+					class="btn h-7 justify-start rounded p-0 pt-4 pb-4 btn-ghost hover:bg-base-100"
+				>
+					{thread.title}
+				</a>
+				<button class="btn mr-4 p-0 btn-ghost" onclick={() => deleteThread(thread.id)}>
+					<Icon icon="ic:round-close" width="20" height="20" />
+				</button>
+			</div>
 		{/each}
 	</div>
 
