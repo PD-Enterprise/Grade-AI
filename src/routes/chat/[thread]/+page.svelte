@@ -93,7 +93,7 @@
 	}
 
 	onMount(async () => {
-		console.log(newPromptBody.value);
+		// console.log(newPromptBody.value);
 
 		if (newPromptBody.value && !thread) {
 			const initialPrompt = newPromptBody.value.prompt;
