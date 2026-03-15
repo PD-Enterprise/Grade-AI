@@ -1,4 +1,4 @@
-import type { UserData, Thread } from '$lib/types';
+import type { UserData, Thread, promptBody } from '$lib/types';
 import { writable } from 'svelte/store';
 
 export const sidebarStatus = $state({ value: true });
@@ -13,33 +13,43 @@ export const userData = $state<{ value: UserData }>({
 	}
 });
 
-export const threads = $state<Thread[]>([
-	{
-		id: '1',
-		title: 'Thread 1',
-		messages: [
-			{
-				role: 'user',
-				content: 'Hello, how are you?'
-			},
-			{
-				role: 'assistant',
-				content: 'I am fine, thank you for asking.'
-			}
-		]
-	},
-	{
-		id: '2',
-		title: 'Thread 2',
-		messages: [
-			{
-				role: 'user',
-				content: 'What is your name?'
-			},
-			{
-				role: 'assistant',
-				content: 'My name is AI Assistant.'
-			}
-		]
-	}
-]);
+export const threads = $state<{ values: Thread[] }>({
+	values: [
+		{
+			id: '1',
+			title: 'Thread 1',
+			messages: [
+				{
+					role: 'user',
+					content: 'Hello, how are you?',
+					id: ''
+				},
+				{
+					role: 'assistant',
+					content: 'I am fine, thank you for asking.',
+					id: ''
+				}
+			],
+			status: 'success'
+		},
+		{
+			id: '2',
+			title: 'Thread 2',
+			messages: [
+				{
+					role: 'user',
+					content: 'What is your name?',
+					id: ''
+				},
+				{
+					role: 'assistant',
+					content: 'My name is AI Assistant.',
+					id: ''
+				}
+			],
+			status: 'success'
+		}
+	]
+});
+
+export const newPromptBody = $state<{ value: promptBody | null }>({ value: null });
