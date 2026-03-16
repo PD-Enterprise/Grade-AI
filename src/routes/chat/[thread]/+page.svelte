@@ -2,19 +2,20 @@
 	import { generateTitle } from '$lib/utils/generateTempTitle';
 	import Icon from '@iconify/svelte';
 	import { page } from '$app/state';
-	import { newPromptBody, threads } from '$lib/stores/store.svelte';
+	import { isAuthenticated, newPromptBody, threads } from '$lib/stores/store.svelte';
 	import { onMount } from 'svelte';
-	import type { ModelList, promptBody } from '$lib/types';
+	import type { ModelList, promptBody, Thread } from '$lib/types';
 
 	let slug = $derived(page.params.thread);
 	let thread = $derived(threads.values.find((t) => t.id === slug));
 	let messages = $derived(threads.values.find((t) => t.id === slug)?.messages ?? []);
 	let inputValue = $state('');
 	let currentModel: string = $state('Llama 3.1 8B');
-	let isModelSelectionMenuOpen: boolean = $state(true);
+	let isModelSelectionMenuOpen: boolean = $state(false);
 	let menuRef: HTMLDivElement | undefined = $state();
 	let modelList: ModelList[] = $state([]);
 	let modelType: 'direct' | 'socratic' = $state('direct');
+	let sendButton: HTMLButtonElement | undefined = $state();
 
 	function toggleModelSelectionMenu() {
 		isModelSelectionMenuOpen = !isModelSelectionMenuOpen;
@@ -42,14 +43,20 @@
 		const provider = model.providerName;
 		if (!provider || !modelString) return;
 
-		await getResponseFromLLM({
-			prompt: promptToSend,
-			provider: provider,
-			model: modelString,
-			mode: modelType,
-			history: thread.messages,
-			conversationId: thread.id
-		});
+		try {
+			await getResponseFromLLM({
+				prompt: promptToSend,
+				provider: provider,
+				model: modelString,
+				mode: modelType,
+				history: thread.messages,
+				conversationId: thread.id
+			});
+		} catch (error) {
+			console.error('Error:', error);
+		} finally {
+			localStorage.setItem(`thread: ${JSON.stringify(thread.id)}`, JSON.stringify(thread));
+		}
 	}
 	async function getModelList() {
 		const response = await fetch('/', {
@@ -124,6 +131,8 @@
 	}
 
 	onMount(async () => {
+		sendButton = document.getElementById('send-message-button') as HTMLButtonElement;
+
 		getModelList();
 
 		if (newPromptBody.value && !thread) {
@@ -131,8 +140,7 @@
 			if (!slug) {
 				return;
 			}
-
-			threads.values.push({
+			const tempThread: Thread = {
 				id: slug,
 				title: generateTitle(initialPrompt),
 				messages: [
@@ -143,10 +151,25 @@
 					}
 				],
 				status: 'loading'
-			});
+			};
+			threads.values.push(tempThread);
 
 			await getResponseFromLLM(newPromptBody.value);
+			localStorage.setItem(`thread: ${JSON.stringify(tempThread.id)}`, JSON.stringify(thread));
 			newPromptBody.value = null;
+		}
+	});
+	$effect(() => {
+		if (sendButton) {
+			if (!isAuthenticated.value) {
+				sendButton.disabled = true;
+			} else {
+				if (inputValue == '') {
+					sendButton.disabled = true;
+				} else {
+					sendButton.disabled = false;
+				}
+			}
 		}
 	});
 </script>
@@ -256,8 +279,10 @@
 				{/if}
 			</div>
 
-			<button class="btn rounded bg-transparent hover:bg-base-100" onclick={sendMessage}
-				><Icon icon="ic:round-send" width="24" height="24" /></button
+			<button
+				class="btn rounded bg-transparent hover:bg-base-100"
+				onclick={sendMessage}
+				id="send-message-button"><Icon icon="ic:round-send" width="24" height="24" /></button
 			>
 		</div>
 	</div>

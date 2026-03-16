@@ -107,6 +107,7 @@
 		<div class="input-field">
 			<input
 				bind:value={prompt}
+				onkeydown={(e) => e.key === 'Enter' && sendMessage()}
 				type="text"
 				placeholder="Enter your question here"
 				class="input w-full rounded border-none bg-base-200 p-0 focus:outline-none"
