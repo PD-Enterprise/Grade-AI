@@ -11,7 +11,7 @@ export const auth = betterAuth({
 			clientSecret: GOOGLE_CLIENT_SECRET as string
 		}
 	},
-	plugins: [sveltekitCookies(getRequestEvent)],
+	plugins: [sveltekitCookies(() => getRequestEvent())],
 	session: {
 		expiresIn: 60 * 60 * 24 * 7,
 		updateAge: 60 * 60 * 24

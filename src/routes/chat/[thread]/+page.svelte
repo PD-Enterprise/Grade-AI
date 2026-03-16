@@ -4,13 +4,26 @@
 	import { page } from '$app/state';
 	import { newPromptBody, threads } from '$lib/stores/store.svelte';
 	import { onMount } from 'svelte';
-	import type { promptBody } from '$lib/types';
+	import type { ModelList, promptBody } from '$lib/types';
 
 	let slug = $derived(page.params.thread);
 	let thread = $derived(threads.values.find((t) => t.id === slug));
 	let messages = $derived(threads.values.find((t) => t.id === slug)?.messages ?? []);
 	let inputValue = $state('');
+	let currentModel: string = $state('Llama 3.1 8B');
+	let isModelSelectionMenuOpen: boolean = $state(true);
+	let menuRef: HTMLDivElement | undefined = $state();
+	let modelList: ModelList[] = $state([]);
+	let modelType: 'direct' | 'socratic' = $state('direct');
 
+	function toggleModelSelectionMenu() {
+		isModelSelectionMenuOpen = !isModelSelectionMenuOpen;
+	}
+	function changeModel(modelName: string) {
+		currentModel = modelName;
+		localStorage.setItem('CurrentModel', currentModel);
+		isModelSelectionMenuOpen = false;
+	}
 	async function sendMessage() {
 		if (!inputValue.trim() || !thread) return;
 
@@ -23,14 +36,32 @@
 		const promptToSend = inputValue;
 		inputValue = '';
 
+		const model = modelList.find((m) => m.modelName === currentModel);
+		if (!model) return;
+		const modelString = model.modelString;
+		const provider = model.providerName;
+		if (!provider || !modelString) return;
+
 		await getResponseFromLLM({
 			prompt: promptToSend,
-			provider: 'groq',
-			model: 'llama-3.3-70b-versatile',
-			mode: 'socratic',
+			provider: provider,
+			model: modelString,
+			mode: modelType,
 			history: thread.messages,
 			conversationId: thread.id
 		});
+	}
+	async function getModelList() {
+		const response = await fetch('/', {
+			method: 'GET',
+			headers: { 'Content-Type': 'application/json' }
+		});
+		const result = await response.json();
+		// console.log(result);
+		if (result.status !== 200) {
+			console.log('Error fetching model list');
+		}
+		modelList = result.data;
 	}
 
 	async function getResponseFromLLM(promptBody: promptBody) {
@@ -93,7 +124,7 @@
 	}
 
 	onMount(async () => {
-		// console.log(newPromptBody.value);
+		getModelList();
 
 		if (newPromptBody.value && !thread) {
 			const initialPrompt = newPromptBody.value.prompt;
@@ -157,7 +188,7 @@
 		{/each}
 	</div>
 
-	<div class="input-group flex w-full flex-col gap-3 rounded-2xl rounded-b-none bg-base-300 p-3">
+	<div class="input-group flex w-full flex-col gap-3 rounded-2xl rounded-b-none bg-base-200 p-3">
 		<div class="input-field">
 			<input
 				type="text"
@@ -168,14 +199,62 @@
 			/>
 		</div>
 
-		<div class="action-bar flex flex-row justify-between gap-3">
-			<select class="model-selection select rounded border-none bg-transparent focus:outline-none">
-				<!-- eslint-disable @typescript-eslint/no-unused-vars -->
-
-				{#each Array(3) as _, i (i)}
-					<option value={i}>Model {i + 1}</option>
-				{/each}
-			</select>
+		<div class="action-bar flex h-10 flex-row justify-between gap-3 bg-base-200">
+			<div class="current-model">
+				<button
+					class="bg-ghost btn rounded p-2 hover:bg-base-100"
+					onclick={() => {
+						toggleModelSelectionMenu();
+					}}
+				>
+					{currentModel}
+				</button>
+				{#if isModelSelectionMenuOpen}
+					<div
+						bind:this={menuRef}
+						class="model-selection relative bottom-60 left-26 flex flex-col gap-2 rounded-xl bg-base-300 p-2"
+						id="model-selection-menu"
+					>
+						<div class="model-type flex flex-row gap-2">
+							<button
+								class={`direct-models btn rounded underline ${modelType == 'direct' ? '' : 'btn-ghost'} hover:bg-base-100`}
+								onclick={() => {
+									modelType = 'direct';
+								}}>Direct Model</button
+							>
+							<button
+								class={`socratic-models btn rounded underline ${modelType != 'direct' ? '' : 'btn-ghost'} hover:bg-base-100`}
+								onclick={() => {
+									modelType = 'socratic';
+								}}>Socratic Models</button
+							>
+						</div>
+						<div class="model-list flex flex-col gap-2">
+							{#each modelList as model (model)}
+								{#if model.modelString == currentModel}
+									<button
+										class="btn justify-start rounded p-2"
+										onclick={() => {
+											changeModel(model.modelName);
+										}}
+									>
+										{model.modelName}
+									</button>
+								{:else}
+									<button
+										class="btn justify-start rounded p-2 btn-ghost"
+										onclick={() => {
+											changeModel(model.modelName);
+										}}
+									>
+										{model.modelName}
+									</button>
+								{/if}
+							{/each}
+						</div>
+					</div>
+				{/if}
+			</div>
 
 			<button class="btn rounded bg-transparent hover:bg-base-100" onclick={sendMessage}
 				><Icon icon="ic:round-send" width="24" height="24" /></button

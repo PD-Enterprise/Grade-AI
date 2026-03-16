@@ -53,10 +53,7 @@
 		const threadId = crypto.randomUUID();
 		goto(resolve(`/chat/${threadId}`));
 	}
-
-	onMount(async () => {
-		sendButton = document.getElementById('send-message-button') as HTMLButtonElement;
-
+	async function getModelList() {
 		const response = await fetch('/', {
 			method: 'GET',
 			headers: { 'Content-Type': 'application/json' }
@@ -67,6 +64,11 @@
 			console.log('Error fetching model list');
 		}
 		modelList = result.data;
+	}
+	onMount(async () => {
+		sendButton = document.getElementById('send-message-button') as HTMLButtonElement;
+
+		getModelList();
 		// console.log(modelList);
 
 		const localCurrentModel = localStorage.getItem('CurrentModel');
