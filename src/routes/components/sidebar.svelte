@@ -5,6 +5,7 @@
 	import { threads } from '$lib/stores/store.svelte';
 	import { onMount } from 'svelte';
 	import type { Thread } from '$lib/types';
+	import { goto } from '$app/navigation';
 
 	let image: string | undefined = $state('');
 
@@ -12,6 +13,8 @@
 		const currentThread = threads.values.find((t) => t.id === threadId);
 		if (currentThread) {
 			threads.values = threads.values.filter((t) => t.id !== threadId);
+			localStorage.removeItem(`thread: "${threadId}"`);
+			goto(resolve('/'));
 		}
 	}
 	onMount(() => {
