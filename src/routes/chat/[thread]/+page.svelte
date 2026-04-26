@@ -5,6 +5,7 @@
 	import { isAuthenticated, newPromptBody, threads } from '$lib/stores/store.svelte';
 	import { onMount } from 'svelte';
 	import type { ModelList, promptBody, Thread } from '$lib/types';
+	import SvelteMarkdown from 'svelte-markdown';
 
 	let slug = $derived(page.params.thread);
 	let thread = $derived(threads.values.find((t) => t.id === slug));
@@ -205,7 +206,9 @@
 						{message.role}
 					</div>
 
-					<div class="chat-bubble prose prose-sm bg-base-200">{message.content}</div>
+					<div class="chat-bubble prose prose-sm bg-base-200">
+						<SvelteMarkdown source={message.content} />
+					</div>
 				</div>
 			{/if}
 		{/each}
