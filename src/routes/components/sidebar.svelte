@@ -63,19 +63,23 @@
 		</a>
 	</div>
 
-	<span class="pl-2">Your Chats</span>
-	<div class="list flex flex-1 flex-col gap-1 overflow-y-scroll pl-2">
+	<div class="list flex flex-1 flex-col gap-1 overflow-y-scroll">
 		{#each threads.values as thread (thread.id)}
-			<div class="each-thread flex flex-row justify-between">
+			<div class="each-thread relative flex h-8 flex-row items-center justify-between gap-1">
 				<a
 					href={resolve(`/chat/${thread.id}`)}
-					class="btn h-7 justify-start rounded p-0 pt-4 pb-4 btn-ghost hover:bg-base-100"
+					class="overflow-y-hide h-full w-full content-center justify-start rounded p-1 hover:bg-base-100"
 				>
 					{thread.title}
 				</a>
-				<button class="btn mr-4 p-0 btn-ghost" onclick={() => deleteThread(thread.id)}>
-					<Icon icon="ic:round-close" width="20" height="20" />
-				</button>
+				<div class="menu-btn absolute right-0">
+					<button
+						class="btn h-8 w-8 rounded bg-base-300 p-0 btn-ghost hover:bg-base-100"
+						onclick={() => deleteThread(thread.id)}
+					>
+						<Icon icon="ic:round-close" width="16" height="16" />
+					</button>
+				</div>
 			</div>
 		{/each}
 	</div>
@@ -141,3 +145,12 @@
 		<button>close</button>
 	</form>
 </dialog>
+
+<style>
+	.each-thread .menu-btn {
+		display: none;
+	}
+	.each-thread:hover .menu-btn {
+		display: block;
+	}
+</style>
