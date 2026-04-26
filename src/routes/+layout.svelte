@@ -1,14 +1,33 @@
 <script lang="ts">
-	import { isAuthenticated, sidebarStatus, userData } from '$lib/stores/store.svelte';
+	import { isAuthenticated, sidebarStatus, threads, userData } from '$lib/stores/store.svelte';
 	import Sidebar from './components/sidebar.svelte';
 	import './layout.css';
 	import Icon from '@iconify/svelte';
 	import { fly, fade } from 'svelte/transition';
 	import { resolve } from '$app/paths';
 	import NotLoggedIn from './components/notLoggedIn.svelte';
+	import { onMount } from 'svelte';
+	import type { Thread } from '$lib/types';
 
 	let { data, children } = $props();
 
+	onMount(() => {
+		let tempThreads: Thread[] = [];
+
+		for (let i = 0; i < localStorage.length; i++) {
+			const key = localStorage.key(i);
+			if (key?.startsWith('thread:')) {
+				const threadData = localStorage.getItem(key);
+				if (threadData) {
+					tempThreads.push(JSON.parse(threadData));
+				}
+			}
+		}
+
+		if (tempThreads.length > 0) {
+			threads.values.push(...tempThreads);
+		}
+	});
 	$effect(() => {
 		if (!data.session) {
 			isAuthenticated.value = false;
@@ -24,6 +43,8 @@
 				};
 			}
 		}
+
+		console.log(sidebarStatus.value);
 	});
 </script>
 

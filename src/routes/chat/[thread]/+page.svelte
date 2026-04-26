@@ -4,7 +4,7 @@
 	import { page } from '$app/state';
 	import { isAuthenticated, newPromptBody, threads } from '$lib/stores/store.svelte';
 	import { onMount } from 'svelte';
-	import type { ModelList, promptBody, Thread } from '$lib/types';
+	import type { ChatMessage, ModelList, promptBody, Thread } from '$lib/types';
 	import SvelteMarkdown from 'svelte-markdown';
 
 	let slug = $derived(page.params.thread);
@@ -25,6 +25,17 @@
 		currentModel = modelName;
 		localStorage.setItem('CurrentModel', currentModel);
 		isModelSelectionMenuOpen = false;
+	}
+	function handleClickOutside(event: MouseEvent) {
+		// If menu is open and the click target is NOT the menu or its children
+		if (isModelSelectionMenuOpen && menuRef && !menuRef.contains(event.target as Node)) {
+			// We also check if the click was on the button that toggles it
+			// to avoid double-toggling conflicts.
+			const toggleButton = (event.target as HTMLElement).closest('.current-model button');
+			if (!toggleButton) {
+				isModelSelectionMenuOpen = false;
+			}
+		}
 	}
 	async function sendMessage() {
 		if (!inputValue.trim() || !thread) return;
@@ -83,48 +94,61 @@
 			if (!response.body) return;
 			const aiMessageId = crypto.randomUUID();
 			const currentThread = threads.values.find((t) => t.id === slug);
+			const aiMessage: ChatMessage = {
+				role: 'assistant',
+				content: '',
+				id: aiMessageId
+			};
 
 			if (currentThread) {
-				currentThread.messages.push({
-					role: 'assistant',
-					content: '',
-					id: aiMessageId
-				});
+				currentThread.messages.push(aiMessage);
 			}
 
 			const reader = response.body.getReader();
 			const decoder = new TextDecoder();
 
+			let buffer = '';
+
 			while (true) {
 				const { done, value } = await reader.read();
 				if (done) break;
 
-				const chunk = decoder.decode(value);
-				const lines = chunk.split('\n');
+				buffer += decoder.decode(value, { stream: true });
+
+				const lines = buffer.split('\n');
+				buffer = lines.pop() || '';
 
 				for (const line of lines) {
-					if (line.startsWith('data: ')) {
-						const strData = line.replace('data: ', '').trim();
-						if (strData === '[DONE]') continue;
+					if (!line.trim()) continue;
 
-						try {
-							const json = JSON.parse(strData);
-							if (json.type === 'delta' && json.delta) {
-								const msg = currentThread?.messages.find((m) => m.id === aiMessageId);
-								if (msg) {
-									msg.content += json.delta;
-								}
-							}
+					try {
+						const json = JSON.parse(line);
 
-							// eslint-disable-next-line @typescript-eslint/no-unused-vars
-						} catch (error) {
-							// Ignore partial JSON chunks from the SSE envelope
+						if (json.type == 'delta' && json.delta) {
+							threads.values = threads.values.map((t) => {
+								if (t.id !== slug) return t;
+
+								return {
+									...t,
+									messages: t.messages.map((m) =>
+										m.id === aiMessage.id ? { ...m, content: m.content + json.delta } : m
+									)
+								};
+							});
 						}
+
+						if (json.type === 'done') {
+							if (currentThread) currentThread.status = 'success';
+						}
+
+						if (json.type === 'error') {
+							console.error(json.message);
+						}
+					} catch (err) {
+						console.error('JSON parse error:', err, line);
 					}
 				}
 			}
-			// Mark as success when done
-			if (currentThread) currentThread.status = 'success';
 		} catch (error) {
 			console.error('Streaming Error:', error);
 			if (thread) thread.status = 'error';
@@ -158,7 +182,18 @@
 			await getResponseFromLLM(newPromptBody.value);
 			localStorage.setItem(`thread: ${JSON.stringify(tempThread.id)}`, JSON.stringify(thread));
 			newPromptBody.value = null;
+
+			const localModelType = localStorage.getItem('modelType');
+			if (localModelType) {
+				// @ts-expect-error the localModalType is set from the same type
+				modelType = localModelType;
+			} else {
+				modelType = 'direct';
+			}
 		}
+
+		const inputElement = document.getElementById('input-element') as HTMLInputElement;
+		inputElement.focus();
 	});
 	$effect(() => {
 		if (sendButton) {
@@ -172,8 +207,11 @@
 				}
 			}
 		}
+		localStorage.setItem('modelType', modelType);
 	});
 </script>
+
+<svelte:window onclick={handleClickOutside} />
 
 <svelte:head>
 	{#if thread}
@@ -191,7 +229,7 @@
 	</header>
 
 	<div class="chat-container over flex flex-1 flex-col-reverse gap-2 overflow-y-scroll p-2">
-		{#each messages.toReversed() as message (message)}
+		{#each messages.toReversed() as message (message.id)}
 			{#if message.role === 'user'}
 				<div class="chat-end chat">
 					<div class="chat-header">
@@ -222,6 +260,7 @@
 				class="input w-full rounded border-none bg-transparent p-0 focus:outline-none"
 				bind:value={inputValue}
 				onkeydown={(e) => e.key === 'Enter' && sendMessage()}
+				id="input-element"
 			/>
 		</div>
 

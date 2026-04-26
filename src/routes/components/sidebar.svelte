@@ -3,8 +3,7 @@
 	import { isAuthenticated, sidebarStatus, userData } from '$lib/stores/store.svelte';
 	import { resolve } from '$app/paths';
 	import { threads } from '$lib/stores/store.svelte';
-	import { onMount } from 'svelte';
-	import type { Thread } from '$lib/types';
+
 	import { goto } from '$app/navigation';
 
 	let image: string | undefined = $state('');
@@ -17,23 +16,7 @@
 			goto(resolve('/'));
 		}
 	}
-	onMount(() => {
-		let tempThreads: Thread[] = [];
 
-		for (let i = 0; i < localStorage.length; i++) {
-			const key = localStorage.key(i);
-			if (key?.startsWith('thread:')) {
-				const threadData = localStorage.getItem(key);
-				if (threadData) {
-					tempThreads.push(JSON.parse(threadData));
-				}
-			}
-		}
-
-		if (tempThreads.length > 0) {
-			threads.values.push(...tempThreads);
-		}
-	});
 	$effect(() => {
 		if (userData.value.image) {
 			image = userData.value.image;

@@ -72,11 +72,21 @@
 		// console.log(modelList);
 
 		const localCurrentModel = localStorage.getItem('CurrentModel');
+		const localModelType = localStorage.getItem('modelType');
 		if (localCurrentModel) {
 			changeModel(localCurrentModel);
 		} else {
 			changeModel(modelList[0].modelName);
 		}
+		if (localModelType) {
+			// @ts-expect-error the localModalType is set from the same type
+			modelType = localModelType;
+		} else {
+			modelType = 'direct';
+		}
+
+		const inputElement = document.getElementById('input-element') as HTMLInputElement;
+		inputElement.focus();
 	});
 	$effect(() => {
 		if (sendButton) {
@@ -90,6 +100,7 @@
 				}
 			}
 		}
+		localStorage.setItem('modelType', modelType);
 	});
 </script>
 
@@ -111,6 +122,7 @@
 				type="text"
 				placeholder="Enter your question here"
 				class="input w-full rounded border-none bg-base-200 p-0 focus:outline-none"
+				id="input-element"
 			/>
 		</div>
 		<div class="action-bar flex h-10 flex-row justify-between gap-3 bg-base-200">
