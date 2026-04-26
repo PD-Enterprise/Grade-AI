@@ -43,7 +43,8 @@
 	},
 	"dependencies": {
 		"better-auth": "^1.5.4",
+		"dompurify": "^3.4.1",
 		"nanoid": "^5.1.6",
-		"svelte-markdown": "^0.4.1"
+		"svelte-exmarkdown": "^5.0.2"
 	}
 }

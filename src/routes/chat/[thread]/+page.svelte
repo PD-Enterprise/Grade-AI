@@ -5,7 +5,7 @@
 	import { isAuthenticated, newPromptBody, threads } from '$lib/stores/store.svelte';
 	import { onMount } from 'svelte';
 	import type { ChatMessage, ModelList, promptBody, Thread } from '$lib/types';
-	import SvelteMarkdown from 'svelte-markdown';
+	import Markdown from 'svelte-exmarkdown';
 
 	let slug = $derived(page.params.thread);
 	let thread = $derived(threads.values.find((t) => t.id === slug));
@@ -82,7 +82,6 @@
 		}
 		modelList = result.data;
 	}
-
 	async function getResponseFromLLM(promptBody: promptBody) {
 		try {
 			const response = await fetch(`/chat/${slug}`, {
@@ -154,7 +153,6 @@
 			if (thread) thread.status = 'error';
 		}
 	}
-
 	onMount(async () => {
 		sendButton = document.getElementById('send-message-button') as HTMLButtonElement;
 
@@ -245,7 +243,8 @@
 					</div>
 
 					<div class="chat-bubble prose prose-sm bg-base-200">
-						<SvelteMarkdown source={message.content} />
+						<Markdown md={message.content} />
+						<!-- <Markdown content={message.content} /> -->
 					</div>
 				</div>
 			{/if}
