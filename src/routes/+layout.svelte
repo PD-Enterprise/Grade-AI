@@ -3,7 +3,6 @@
 	import Sidebar from './components/sidebar.svelte';
 	import './layout.css';
 	import Icon from '@iconify/svelte';
-	import { fly, fade } from 'svelte/transition';
 	import { resolve } from '$app/paths';
 	import NotLoggedIn from './components/notLoggedIn.svelte';
 	import { onMount } from 'svelte';
@@ -44,38 +43,41 @@
 			}
 		}
 
-		console.log(sidebarStatus.value);
+		// console.log(sidebarStatus.value);
 	});
 </script>
 
-<div class="main flex overflow-y-hidden">
+<div class="flex h-screen overflow-hidden bg-background text-foreground">
 	{#if !isAuthenticated.value}
-		<NotLoggedIn />
+		<!-- <NotLoggedIn /> -->
 	{/if}
+
+	<!-- Sidebar -->
+	<dib class="transition-all duration-300 ease-out">
+		<!-- <Sidebar /> -->
+	</dib>
+
+	<!-- Sidebar Action Bar -->
 	{#if sidebarStatus.value}
-		<aside
-			class="sidebar h-screen flex-1 bg-base-200 p-2 transition-all ease-in-out"
-			in:fly={{ x: -20, duration: 50 }}
-			out:fade={{ duration: 50 }}
-		>
-			<Sidebar />
-		</aside>
-	{:else}
-		<aside class="sidebar h-screen flex-1 bg-base-200 p-2 transition-all ease-in-out">
-			<div class="sidebar-action-bar flex flex-col gap-2">
-				<button
-					class="btn p-2 btn-ghost btn-accent"
-					onclick={() => (sidebarStatus.value = !sidebarStatus.value)}
-				>
-					<Icon icon="ic:round-view-sidebar" width="24" height="24" />
-				</button>
-				<a class="btn p-2 btn-ghost btn-accent" href={resolve('/')}>
-					<Icon icon="ic:round-plus" width="24" height="24" />
-				</a>
-			</div>
-		</aside>
+		<div class="sidebar-action-bar fixed top-4 left-4 z-500 flex flex-col gap-1">
+			<button
+				onclick={() => (sidebarStatus.value = !sidebarStatus.value)}
+				class="rounded-full bg-secondary p-3 transition-colors hover:bg-secondary/80"
+				aria-label="Open sidebar"
+			>
+				<Icon icon="lucide:menu" class="h-4 w-4" />
+			</button>
+			<a
+				class="rounded-full bg-secondary p-3 transition-colors hover:bg-secondary/80"
+				href={resolve('/')}
+			>
+				<Icon icon="lucide:plus" class="h-4 w-4" />
+			</a>
+		</div>
 	{/if}
-	<section class={`body h-screen ${sidebarStatus.value ? 'flex-5' : 'flex-50'}`}>
+
+	<!-- Main Content -->
+	<div class="flex flex-1 flex-col overflow-hidden">
 		{@render children()}
-	</section>
+	</div>
 </div>

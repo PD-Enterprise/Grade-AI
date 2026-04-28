@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { fly } from 'svelte/transition';
 	import Icon from '@iconify/svelte';
 	import { onMount } from 'svelte';
 	import type { ModelList, promptBody } from '$lib/types';
@@ -13,6 +14,7 @@
 	let menuRef: HTMLDivElement | undefined = $state();
 	let prompt: string = $state('');
 	let sendButton: HTMLButtonElement | undefined = $state();
+	let mounted: boolean = $state(false);
 
 	function changeModel(modelName: string) {
 		currentModel = modelName;
@@ -66,6 +68,8 @@
 		modelList = result.data;
 	}
 	onMount(async () => {
+		mounted = true;
+
 		sendButton = document.getElementById('send-message-button') as HTMLButtonElement;
 
 		getModelList();
@@ -102,6 +106,20 @@
 		}
 		localStorage.setItem('modelType', modelType);
 	});
+	function handleKeyDown(event: KeyboardEvent) {
+		if (event.key == 'Enter' && !event.shiftKey) {
+			event.preventDefault();
+			sendMessage();
+		}
+	}
+	function grow(node, { value }) {
+		const update = () => {
+			node.style.height = 'auto';
+			node.style.height = Math.min(node.scrollHeight, 200) + 'px';
+		};
+		update();
+		return { update };
+	}
 </script>
 
 <svelte:window onclick={handleClickOutside} />
@@ -110,81 +128,120 @@
 	<title>Grade AI</title>
 </svelte:head>
 
-<div class="new-chat flex h-full flex-col items-center justify-center gap-5">
-	<div class="welcome-title">
-		<h1 class="text-4xl font-bold">Welcome to Grade AI</h1>
-	</div>
-	<div class="input-group flex w-[60%] flex-col gap-3 rounded-2xl bg-base-200 p-3">
-		<div class="input-field">
-			<input
-				bind:value={prompt}
-				onkeydown={(e) => e.key === 'Enter' && sendMessage()}
-				type="text"
-				placeholder="Enter your question here"
-				class="input w-full rounded border-none bg-base-200 p-0 focus:outline-none"
-				id="input-element"
-			/>
+<div class="flex flex-1 flex-col items-center justify-center bg-background px-4 py-20">
+	<div class="w-full max-w-2xl">
+		<!-- Logo and Title -->
+		<div
+			class={`logo-and-title mb-12 text-center transition-all duration-700  ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
+		>
+			<div class="mb-4 flex items-center justify-center gap-2">
+				<div class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+					<Icon icon="lucide:sparkles" class="h-5 w-5 text-primary" />
+				</div>
+			</div>
+			<h1 class="text-4xl font-semibold tracking-tight text-foreground md:text-5xl">Grade AI</h1>
+			<p class="mt-3 text-muted-foreground">Learn smarter with intelligent dialogue</p>
 		</div>
-		<div class="action-bar flex h-10 flex-row justify-between gap-3 bg-base-200">
-			<div class="current-model">
+
+		<!-- Input -->
+		<div
+			class={`relative z-10 transition-all delay-100 duration-700 ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
+		>
+			<!-- Input Field -->
+			<div class="relative flex items-center">
+				<textarea
+					bind:value={prompt}
+					use:grow={{ value: prompt }}
+					onkeydown={handleKeyDown}
+					placeholder="Ask anything..."
+					rows="1"
+					class="w-full resize-none overflow-y-auto rounded-xl border border-border bg-card px-5 py-4 pr-14 text-foreground transition-all placeholder:text-muted-foreground/50 focus:border-primary/50 focus:outline-none"
+					id="input-element"
+				></textarea>
 				<button
-					class="bg-ghost btn rounded p-2 hover:bg-base-100"
-					onclick={() => {
-						toggleModelSelectionMenu();
-					}}
+					class="absolute right-2 rounded-lg bg-primary p-2 text-primary-foreground transition-colors hover:bg-primary/90 disabled:border-primary-content/50 disabled:bg-base-content"
+					onclick={sendMessage}
+					id="send-message-button"
 				>
-					{currentModel}
+					<Icon icon="lucide:arrow-right" class="h-4 w-4" />
 				</button>
-				{#if isModelSelectionMenuOpen}
-					<div
-						bind:this={menuRef}
-						class="model-selection relative bottom-30 left-26 flex flex-col gap-2 rounded-xl bg-base-300 p-2"
-						id="model-selection-menu"
-					>
-						<div class="model-type flex flex-row gap-2">
-							<button
-								class={`direct-models btn rounded underline ${modelType == 'direct' ? '' : 'btn-ghost'} hover:bg-base-100`}
-								onclick={() => {
-									modelType = 'direct';
-								}}>Direct Model</button
-							>
-							<button
-								class={`socratic-models btn rounded underline ${modelType != 'direct' ? '' : 'btn-ghost'} hover:bg-base-100`}
-								onclick={() => {
-									modelType = 'socratic';
-								}}>Socratic Models</button
-							>
-						</div>
-						<div class="model-list flex flex-col gap-2">
-							{#each modelList as model (model)}
-								{#if model.modelString == currentModel}
-									<button
-										class="btn justify-start rounded p-2"
-										onclick={() => {
-											changeModel(model.modelName);
-										}}
-									>
-										{model.modelName}
-									</button>
-								{:else}
-									<button
-										class="btn justify-start rounded p-2 btn-ghost"
-										onclick={() => {
-											changeModel(model.modelName);
-										}}
-									>
-										{model.modelName}
-									</button>
-								{/if}
-							{/each}
-						</div>
-					</div>
-				{/if}
 			</div>
 
-			<button class="btn rounded hover:bg-base-100" onclick={sendMessage} id="send-message-button"
-				><Icon icon="ic:round-send" width="24" height="24" /></button
-			>
+			<!-- Mode and Model Selector -->
+			<div class="mt-4 flex items-center justify-center gap-2">
+				<!-- Mode Selector -->
+				<div class="flex rounded-lg bg-secondary p-1">
+					<button
+						class={`rounded-md px-3 py-1.5 text-sm font-medium transition-all ${modelType == 'direct' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+						onclick={() => {
+							modelType = 'direct';
+						}}>Direct Model</button
+					>
+					<button
+						class={`rounded-md px-3 py-1.5 text-sm font-medium transition-all ${modelType == 'socratic' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+						onclick={() => {
+							modelType = 'socratic';
+						}}>Socratic Models</button
+					>
+				</div>
+
+				<!-- Model Selector -->
+				<div class="relative">
+					<button
+						class="flex items-center gap-1.5 rounded-lg bg-secondary px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-secondary/80 hover:text-foreground"
+						onclick={() => {
+							toggleModelSelectionMenu();
+						}}
+					>
+						{currentModel}
+						<Icon icon="lucide:chevron-down" class="h-3 w-3" />
+					</button>
+
+					{#if isModelSelectionMenuOpen}
+						<div
+							class="absolute top-full right-0 z-40 mt-2 min-w-40 overflow-hidden rounded-lg border border-border bg-card shadow-xl"
+						>
+							{#each modelList as model (model)}
+								<button
+									class={`w-full px-4 py-2.5 text-left text-sm transition-colors ${
+										currentModel == model.modelName
+											? 'bg-primary text-primary-foreground'
+											: 'text-foreground hover:bg-secondary'
+									}`}
+									onclick={() => {
+										changeModel(model.modelName);
+									}}
+								>
+									{model.modelName}
+								</button>
+							{/each}
+						</div>
+					{/if}
+				</div>
+			</div>
+		</div>
+
+		<!-- Features -->
+		<div
+			class={`mt-16 grid grid-cols-2 gap-4 transition-all delay-200 duration-700 ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
+		>
+			<div class="rounded-xl border border-border/50 bg-card/50 p-4">
+				<Icon icon="lucide:zap" class="mb-2 h-5 w-5 text-primary" />
+				<div class="text-sm font-medium">Direct Answers</div>
+				<div class="mt-1 text-xs text-muted-foreground">Get instant responses from AI models</div>
+			</div>
+			<div class="rounded-xl border border-border/50 bg-card/50 p-4">
+				<Icon icon="lucide:sparkles" class="mb-2 h-5 w-5 text-primary" />
+				<div class="text-sm font-medium">Socratic Learning</div>
+				<div class="mt-1 text-xs text-muted-foreground">Learn through guided questions</div>
+			</div>
 		</div>
 	</div>
 </div>
+
+<style>
+	textarea {
+		-ms-overflow-style: none;
+		scrollbar-width: none;
+	}
+</style>
