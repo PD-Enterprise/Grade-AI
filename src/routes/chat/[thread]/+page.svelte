@@ -2,7 +2,7 @@
 	import { generateTitle } from '$lib/utils/generateTempTitle';
 	import Icon from '@iconify/svelte';
 	import { page } from '$app/state';
-	import { isAuthenticated, newPromptBody, threads } from '$lib/stores/store.svelte';
+	import { newPromptBody, threads } from '$lib/stores/store.svelte';
 	import { onMount } from 'svelte';
 	import type { ChatMessage, ModelList, promptBody, Thread } from '$lib/types';
 	import Markdown from 'svelte-exmarkdown';
@@ -13,13 +13,19 @@
 	let inputValue = $state('');
 	let currentModel: string = $state('Llama 3.1 8B');
 	let isModelSelectionMenuOpen: boolean = $state(false);
+	let isModelTypeSelectionMenuOpen: boolean = $state(false);
 	let menuRef: HTMLDivElement | undefined = $state();
 	let modelList: ModelList[] = $state([]);
 	let modelType: 'direct' | 'socratic' = $state('direct');
-	let sendButton: HTMLButtonElement | undefined = $state();
+	let messagesContainer: HTMLDivElement | undefined = $state();
 
 	function toggleModelSelectionMenu() {
+		isModelTypeSelectionMenuOpen = false;
 		isModelSelectionMenuOpen = !isModelSelectionMenuOpen;
+	}
+	function toggleModelTypeSelectionMenu() {
+		isModelSelectionMenuOpen = false;
+		isModelTypeSelectionMenuOpen = !isModelTypeSelectionMenuOpen;
 	}
 	function changeModel(modelName: string) {
 		currentModel = modelName;
@@ -154,8 +160,6 @@
 		}
 	}
 	onMount(async () => {
-		sendButton = document.getElementById('send-message-button') as HTMLButtonElement;
-
 		getModelList();
 
 		if (newPromptBody.value && !thread) {
@@ -192,21 +196,36 @@
 
 		const inputElement = document.getElementById('input-element') as HTMLInputElement;
 		inputElement.focus();
+		scrollToBottom(true);
 	});
 	$effect(() => {
-		if (sendButton) {
-			if (!isAuthenticated.value) {
-				sendButton.disabled = true;
-			} else {
-				if (inputValue == '') {
-					sendButton.disabled = true;
-				} else {
-					sendButton.disabled = false;
-				}
-			}
-		}
 		localStorage.setItem('modelType', modelType);
 	});
+	$effect(() => {
+		scrollToBottom();
+	});
+	function scrollToBottom(instant: boolean = false) {
+		if (messages.length && messagesContainer) {
+			messagesContainer.scrollTo({
+				top: messagesContainer.scrollHeight,
+				behavior: instant ? 'smooth' : 'smooth'
+			});
+		}
+	}
+	function handleKeyDown(event: KeyboardEvent) {
+		if (event.key == 'Enter' && !event.shiftKey) {
+			event.preventDefault();
+			sendMessage();
+		}
+	}
+	function grow(node: HTMLTextAreaElement, { value }) {
+		const update = () => {
+			node.style.height = 'auto';
+			node.style.height = Math.min(node.scrollHeight, 150) + 'px';
+		};
+		update();
+		return { update };
+	}
 </script>
 
 <svelte:window onclick={handleClickOutside} />
@@ -222,108 +241,191 @@
 </svelte:head>
 
 <div class="thread-container flex h-full flex-col gap-2">
-	<header class="thread-header absolute z-1 mt-2 ml-2 rounded-xl p-3 backdrop-blur-lg">
-		<h2 class="font-bold">Thread {slug}</h2>
-	</header>
-
-	<div class="chat-container over flex flex-1 flex-col-reverse gap-2 overflow-y-scroll p-2">
-		<!-- {#each messages.toReversed() as message (message.id)}
-			{#if message.role === 'user'}
-				<div class="chat-end chat">
-					<div class="chat-header">
-						{message.role}
-					</div>
-
-					<div class="chat-bubble bg-base-300">{message.content}</div>
-				</div>
-			{:else}
-				<div class="chat-start chat">
-					<div class="chat-header">
-						{message.role}
-					</div>
-
-					<div class="chat-bubble prose prose-sm bg-base-200">
-						<Markdown md={message.content} />
-					</div>
-				</div>
-			{/if}
-		{/each} -->
-	</div>
-
-	<div class="input-group flex w-full flex-col gap-3 rounded-2xl rounded-b-none bg-base-200 p-3">
-		<div class="input-field">
-			<input
-				type="text"
-				placeholder="Enter your question here"
-				class="input w-full rounded border-none bg-transparent p-0 focus:outline-none"
-				bind:value={inputValue}
-				onkeydown={(e) => e.key === 'Enter' && sendMessage()}
-				id="input-element"
-			/>
+	<!-- Header -->
+	<div class="flex items-center justify-between border-b border-border bg-card/50 px-6 py-4">
+		<!-- Thread Title -->
+		<div class="flex items-center gap-4">
+			<div class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+				<Icon icon="lucide:sparkles" class="h-5 w-5 text-primary" />
+			</div>
+			<div>
+				<h1 class="text-lg font-medium text-foreground">{thread?.title}</h1>
+				<p class="text-sm text-muted-foreground">
+					{currentModel} · {modelType[0].toUpperCase() + modelType.slice(1)}
+				</p>
+			</div>
 		</div>
 
-		<div class="action-bar flex h-10 flex-row justify-between gap-3 bg-base-200">
-			<div class="current-model">
+		<!-- Mode and Model Selector -->
+		<div class="flex gap-2">
+			<!-- Mode Selector -->
+			<div class="relative">
 				<button
-					class="bg-ghost btn rounded p-2 hover:bg-base-100"
+					class="flex items-center gap-2 rounded-lg bg-secondary px-3 py-2 text-sm transition-colors hover:bg-secondary/80"
+					onclick={() => {
+						toggleModelTypeSelectionMenu();
+					}}
+				>
+					{modelType[0].toUpperCase() + modelType.slice(1)}
+					<Icon icon="lucide:chevron-down" class="h-3.5 w-3.5" />
+				</button>
+
+				{#if isModelTypeSelectionMenuOpen}
+					<div
+						class="absolute top-full right-0 z-40 mt-2 min-w-32 overflow-hidden rounded-lg border border-border bg-card shadow-xl"
+					>
+						<button
+							class={`w-full px-4 py-2.5 text-left text-sm transition-colors ${modelType == 'direct' ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-secondary'}`}
+							onclick={() => {
+								modelType = 'direct';
+							}}>Direct</button
+						>
+						<button
+							class={`w-full px-4 py-2.5 text-left text-sm transition-colors ${modelType == 'socratic' ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-secondary'}`}
+							onclick={() => {
+								modelType = 'socratic';
+							}}>Socratic</button
+						>
+					</div>
+				{/if}
+			</div>
+
+			<!-- Model Selector -->
+			<div class="relative">
+				<button
+					class="flex items-center gap-2 rounded-lg bg-secondary px-3 py-2 text-sm transition-colors hover:bg-secondary/80"
 					onclick={() => {
 						toggleModelSelectionMenu();
 					}}
 				>
 					{currentModel}
+					<Icon icon="lucide:chevron-down" class="h-3.5 w-3.5" />
 				</button>
+
 				{#if isModelSelectionMenuOpen}
 					<div
-						bind:this={menuRef}
-						class="model-selection relative bottom-60 left-26 flex flex-col gap-2 rounded-xl bg-base-300 p-2"
-						id="model-selection-menu"
+						class="absolute top-full right-0 z-40 mt-2 min-w-48 overflow-hidden rounded-lg border border-border bg-card shadow-xl"
 					>
-						<div class="model-type flex flex-row gap-2">
+						{#each modelList as model (model)}
 							<button
-								class={`direct-models btn rounded underline ${modelType == 'direct' ? '' : 'btn-ghost'} hover:bg-base-100`}
+								class={`w-full px-4 py-2.5 text-left text-sm transition-colors ${
+									currentModel == model.modelName
+										? 'bg-primary text-primary-foreground'
+										: 'text-foreground hover:bg-secondary'
+								}`}
 								onclick={() => {
-									modelType = 'direct';
-								}}>Direct Model</button
+									changeModel(model.modelName);
+								}}
 							>
-							<button
-								class={`socratic-models btn rounded underline ${modelType != 'direct' ? '' : 'btn-ghost'} hover:bg-base-100`}
-								onclick={() => {
-									modelType = 'socratic';
-								}}>Socratic Models</button
-							>
-						</div>
-						<div class="model-list flex flex-col gap-2">
-							{#each modelList as model (model)}
-								{#if model.modelString == currentModel}
-									<button
-										class="btn justify-start rounded p-2"
-										onclick={() => {
-											changeModel(model.modelName);
-										}}
-									>
-										{model.modelName}
-									</button>
-								{:else}
-									<button
-										class="btn justify-start rounded p-2 btn-ghost"
-										onclick={() => {
-											changeModel(model.modelName);
-										}}
-									>
-										{model.modelName}
-									</button>
-								{/if}
-							{/each}
-						</div>
+								{model.modelName}
+							</button>
+						{/each}
 					</div>
 				{/if}
 			</div>
+		</div>
+	</div>
 
+	<!-- Messages -->
+	<div bind:this={messagesContainer} class="messages flex-1 space-y-6 overflow-y-auto px-6 py-8">
+		{#if thread?.messages.length === 0}
+			<div class="flex h-full flex-col items-center justify-center text-center">
+				<Icon icon="lucide:sparkles" className="w-12 h-12 text-muted-foreground/20 mb-4" />
+				<p class="text-muted-foreground/50">Start the conversation...</p>
+			</div>
+		{:else}
+			{#each messages as message, index (message.id)}
+				<div class="message animate-enter flex" style={`animation-delay: ${index * 30}ms; `}>
+					<div
+						class={`flex max-w-2xl gap-4 ${message.role === 'user' ? 'ml-auto flex-row-reverse' : 'flex-row'}`}
+					>
+						<!--Avatar  -->
+						<div class="shrink-0">
+							<div
+								class={`flex h-9 w-9 items-center justify-center rounded-xl text-xs font-medium ${
+									message.role === 'user'
+										? 'bg-primary text-primary-foreground'
+										: 'bg-secondary text-secondary-foreground'
+								}`}
+							>
+								{message.role === 'user' ? 'You' : currentModel.split(' ')[0].slice(0, 3)}
+							</div>
+						</div>
+
+						<!-- Content -->
+						<div
+							class={`flex flex-col gap-1 ${message.role === 'user' ? 'items-end' : 'items-start'}`}
+						>
+							{#if message.role === 'assistant'}
+								<p class="text-xs text-muted-foreground/60">{currentModel}</p>
+							{/if}
+
+							<div
+								class={`message-content px-5 py-4 text-sm leading-relaxed whitespace-pre-wrap ${
+									message.role === 'user'
+										? 'bg-primary/10 text-foreground'
+										: 'bg-secondary/50 text-foreground'
+								}`}
+							>
+								<Markdown md={message.content} />
+							</div>
+						</div>
+					</div>
+				</div>
+			{/each}
+		{/if}
+	</div>
+
+	<!-- Input -->
+	<div class="input-field border-t border-border bg-card/30 px-6 py-5">
+		<div class="flex items-center gap-3">
+			<div class="flex-1">
+				<textarea
+					bind:value={inputValue}
+					use:grow={{ value: inputValue }}
+					onkeydown={(e) => handleKeyDown(e)}
+					placeholder="Continue the conversation..."
+					rows="1"
+					class="w-full resize-none overflow-hidden border border-border bg-card px-4 py-3 text-foreground transition-colors placeholder:text-muted-foreground/40 focus:border-primary/50 focus:outline-none"
+					id="input-element"
+				></textarea>
+			</div>
 			<button
-				class="btn rounded bg-transparent hover:bg-base-100"
-				onclick={sendMessage}
-				id="send-message-button"><Icon icon="ic:round-send" width="24" height="24" /></button
+				disabled={!inputValue.trim()}
+				class="shrink-0 bg-primary p-3 text-primary-foreground transition-all hover:bg-primary/90 disabled:cursor-not-allowed disabled:border-primary-content/50 disabled:bg-primary/20 disabled:opacity-50"
 			>
+				<Icon icon="lucide:arrow-right" class="h-4 w-4" />
+			</button>
 		</div>
 	</div>
 </div>
+
+<style>
+	.input-field {
+		textarea {
+			-ms-overflow-style: none;
+			scrollbar-width: none;
+			border-radius: 1rem;
+		}
+		button {
+			border-radius: 1rem;
+		}
+	}
+	.messages .message .message-content {
+		border-radius: 1rem;
+	}
+
+	.animate-enter {
+		animation: enter 0.3s ease-out forwards;
+	}
+	@keyframes enter {
+		from {
+			opacity: 0;
+			transform: scale(0.98);
+		}
+		to {
+			opacity: 1;
+			transform: scale(1);
+		}
+	}
+</style>

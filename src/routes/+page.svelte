@@ -92,17 +92,6 @@
 		inputElement.focus();
 	});
 	$effect(() => {
-		if (sendButton) {
-			if (!isAuthenticated.value) {
-				sendButton.disabled = true;
-			} else {
-				if (prompt == '') {
-					sendButton.disabled = true;
-				} else {
-					sendButton.disabled = false;
-				}
-			}
-		}
 		localStorage.setItem('modelType', modelType);
 	});
 	function handleKeyDown(event: KeyboardEvent) {
@@ -111,7 +100,7 @@
 			sendMessage();
 		}
 	}
-	function grow(node: HTMLDivElement, { value }) {
+	function grow(node: HTMLTextAreaElement, { value }) {
 		const update = () => {
 			node.style.height = 'auto';
 			node.style.height = Math.min(node.scrollHeight, 200) + 'px';
@@ -158,7 +147,8 @@
 					id="input-element"
 				></textarea>
 				<button
-					class="absolute right-2 rounded-lg bg-primary p-2 text-primary-foreground transition-colors hover:bg-primary/90 disabled:border-primary-content/50 disabled:bg-base-content"
+					disabled={!prompt.trim()}
+					class="absolute right-2 rounded-lg bg-primary p-2 text-primary-foreground transition-colors hover:bg-primary/90 disabled:bg-primary/20"
 					onclick={sendMessage}
 					id="send-message-button"
 				>
