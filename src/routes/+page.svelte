@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { fly } from 'svelte/transition';
 	import Icon from '@iconify/svelte';
 	import { onMount } from 'svelte';
 	import type { ModelList, promptBody } from '$lib/types';
@@ -112,7 +111,7 @@
 			sendMessage();
 		}
 	}
-	function grow(node, { value }) {
+	function grow(node: HTMLDivElement, { value }) {
 		const update = () => {
 			node.style.height = 'auto';
 			node.style.height = Math.min(node.scrollHeight, 200) + 'px';

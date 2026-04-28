@@ -227,7 +227,7 @@
 	</header>
 
 	<div class="chat-container over flex flex-1 flex-col-reverse gap-2 overflow-y-scroll p-2">
-		{#each messages.toReversed() as message (message.id)}
+		<!-- {#each messages.toReversed() as message (message.id)}
 			{#if message.role === 'user'}
 				<div class="chat-end chat">
 					<div class="chat-header">
@@ -244,11 +244,10 @@
 
 					<div class="chat-bubble prose prose-sm bg-base-200">
 						<Markdown md={message.content} />
-						<!-- <Markdown content={message.content} /> -->
 					</div>
 				</div>
 			{/if}
-		{/each}
+		{/each} -->
 	</div>
 
 	<div class="input-group flex w-full flex-col gap-3 rounded-2xl rounded-b-none bg-base-200 p-3">

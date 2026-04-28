@@ -49,16 +49,18 @@
 
 <div class="flex h-screen overflow-hidden bg-background text-foreground">
 	{#if !isAuthenticated.value}
-		<!-- <NotLoggedIn /> -->
+		<NotLoggedIn />
 	{/if}
 
 	<!-- Sidebar -->
-	<dib class="transition-all duration-300 ease-out">
-		<!-- <Sidebar /> -->
-	</dib>
+	<div
+		class={`transition-all duration-300 ease-out ${sidebarStatus.value ? 'w-72' : 'w-0'} overflow-hidden`}
+	>
+		<Sidebar />
+	</div>
 
 	<!-- Sidebar Action Bar -->
-	{#if sidebarStatus.value}
+	{#if !sidebarStatus.value}
 		<div class="sidebar-action-bar fixed top-4 left-4 z-500 flex flex-col gap-1">
 			<button
 				onclick={() => (sidebarStatus.value = !sidebarStatus.value)}
