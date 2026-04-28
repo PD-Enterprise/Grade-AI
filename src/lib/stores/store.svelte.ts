@@ -22,12 +22,12 @@ export const threads = $state<{ values: Thread[] }>({
 				{
 					role: 'user',
 					content: 'Hello, how are you?',
-					id: ''
+					id: '1-1'
 				},
 				{
 					role: 'assistant',
 					content: 'I am fine, thank you for asking.',
-					id: ''
+					id: '1-2'
 				}
 			],
 			status: 'success'
@@ -39,12 +39,12 @@ export const threads = $state<{ values: Thread[] }>({
 				{
 					role: 'user',
 					content: 'What is your name?',
-					id: ''
+					id: '2-1'
 				},
 				{
 					role: 'assistant',
 					content: 'My name is AI Assistant.',
-					id: ''
+					id: '2-2'
 				}
 			],
 			status: 'success'
