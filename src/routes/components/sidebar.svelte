@@ -79,7 +79,7 @@
 				<p class="text-sm text-sidebar-accent-foreground/40">No conversations yet</p>
 			</div>
 		{:else}
-			{#each threads.values as thread (thread.id)}
+			{#each threads.values.toReversed() as thread (thread.id)}
 				<button
 					onclick={() => {
 						goto(resolve(`/chat/${thread.id}`));
