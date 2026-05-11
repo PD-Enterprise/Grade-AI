@@ -6,6 +6,8 @@
 	import { onMount } from 'svelte';
 	import type { ChatMessage, ModelList, promptBody, Thread } from '$lib/types';
 	import Markdown from 'svelte-exmarkdown';
+	import { handleKeyDown } from '../../utils/sendMessageKeyboard';
+	import { grow } from '../../utils/growTextbox';
 
 	let slug = $derived(page.params.thread);
 	let thread = $derived(threads.values.find((t) => t.id === slug));
@@ -160,6 +162,8 @@
 		}
 	}
 	onMount(async () => {
+		console.log(thread);
+
 		getModelList();
 
 		if (newPromptBody.value && !thread) {
@@ -211,20 +215,6 @@
 				behavior: instant ? 'smooth' : 'smooth'
 			});
 		}
-	}
-	function handleKeyDown(event: KeyboardEvent) {
-		if (event.key == 'Enter' && !event.shiftKey) {
-			event.preventDefault();
-			sendMessage();
-		}
-	}
-	function grow(node: HTMLTextAreaElement, { value }) {
-		const update = () => {
-			node.style.height = 'auto';
-			node.style.height = Math.min(node.scrollHeight, 150) + 'px';
-		};
-		update();
-		return { update };
 	}
 </script>
 
@@ -383,7 +373,7 @@
 				<textarea
 					bind:value={inputValue}
 					use:grow={{ value: inputValue }}
-					onkeydown={(e) => handleKeyDown(e)}
+					onkeydown={(e) => handleKeyDown(e, sendMessage)}
 					placeholder="Continue the conversation..."
 					rows="1"
 					class="w-full resize-none overflow-hidden border border-border bg-card px-4 py-3 text-foreground transition-colors placeholder:text-muted-foreground/40 focus:border-primary/50 focus:outline-none"

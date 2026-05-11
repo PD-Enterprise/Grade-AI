@@ -11,20 +11,24 @@
 	let { data, children } = $props();
 
 	onMount(() => {
-		let tempThreads: Thread[] = [];
+		const existingIds = new Set(threads.values.map((t) => t.id));
 
 		for (let i = 0; i < localStorage.length; i++) {
 			const key = localStorage.key(i);
 			if (key?.startsWith('thread:')) {
 				const threadData = localStorage.getItem(key);
-				if (threadData) {
-					tempThreads.push(JSON.parse(threadData));
+				if (threadData && threadData !== 'undefined') {
+					try {
+						const thread = JSON.parse(threadData);
+						if (thread && thread.id && !existingIds.has(thread.id)) {
+							threads.values.push(thread);
+							existingIds.add(thread.id);
+						}
+					} catch (e) {
+						console.error(`Error parsing thread data for key ${key}:`, e);
+					}
 				}
 			}
-		}
-
-		if (tempThreads.length > 0) {
-			threads.values.push(...tempThreads);
 		}
 	});
 	$effect(() => {

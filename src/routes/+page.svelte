@@ -2,9 +2,11 @@
 	import Icon from '@iconify/svelte';
 	import { onMount } from 'svelte';
 	import type { ModelList, promptBody } from '$lib/types';
-	import { isAuthenticated, newPromptBody } from '$lib/stores/store.svelte';
+	import { newPromptBody } from '$lib/stores/store.svelte';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { handleKeyDown } from './utils/sendMessageKeyboard';
+	import { grow } from './utils/growTextbox';
 
 	let modelList: ModelList[] = $state([]);
 	let currentModel: string = $state('Llama 3.1 8B');
@@ -12,7 +14,6 @@
 	let isModelSelectionMenuOpen: boolean = $state(false);
 	let menuRef: HTMLDivElement | undefined = $state();
 	let prompt: string = $state('');
-	let sendButton: HTMLButtonElement | undefined = $state();
 	let mounted: boolean = $state(false);
 
 	function changeModel(modelName: string) {
@@ -41,17 +42,17 @@
 		const model = modelList.find((m) => m.modelName === currentModel);
 		if (!model) return;
 
+		const threadId = crypto.randomUUID();
 		const promptBody: promptBody = {
 			prompt: prompt,
 			provider: model.providerName,
 			model: model.modelString,
 			mode: modelType,
 			history: [],
-			conversationId: crypto.randomUUID()
+			conversationId: threadId
 		};
 
 		newPromptBody.value = promptBody;
-		const threadId = crypto.randomUUID();
 		goto(resolve(`/chat/${threadId}`));
 	}
 	async function getModelList() {
@@ -68,8 +69,6 @@
 	}
 	onMount(async () => {
 		mounted = true;
-
-		sendButton = document.getElementById('send-message-button') as HTMLButtonElement;
 
 		getModelList();
 		// console.log(modelList);
@@ -94,20 +93,6 @@
 	$effect(() => {
 		localStorage.setItem('modelType', modelType);
 	});
-	function handleKeyDown(event: KeyboardEvent) {
-		if (event.key == 'Enter' && !event.shiftKey) {
-			event.preventDefault();
-			sendMessage();
-		}
-	}
-	function grow(node: HTMLTextAreaElement, { value }) {
-		const update = () => {
-			node.style.height = 'auto';
-			node.style.height = Math.min(node.scrollHeight, 200) + 'px';
-		};
-		update();
-		return { update };
-	}
 </script>
 
 <svelte:window onclick={handleClickOutside} />
@@ -140,7 +125,7 @@
 				<textarea
 					bind:value={prompt}
 					use:grow={{ value: prompt }}
-					onkeydown={handleKeyDown}
+					onkeydown={(e) => handleKeyDown(e, sendMessage)}
 					placeholder="Ask anything..."
 					rows="1"
 					class="w-full resize-none overflow-y-auto rounded-xl border border-border bg-card px-5 py-4 pr-14 text-foreground transition-all placeholder:text-muted-foreground/50 focus:border-primary/50 focus:outline-none"
