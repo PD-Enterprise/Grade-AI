@@ -2,23 +2,27 @@
 	import { generateTitle } from '$lib/utils/generateTempTitle';
 	import Icon from '@iconify/svelte';
 	import { page } from '$app/state';
-	import { newPromptBody, threads } from '$lib/stores/store.svelte';
+	import {
+		newPromptBody,
+		threads,
+		currentModel,
+		modelType,
+		modelList
+	} from '$lib/stores/store.svelte';
 	import { onMount } from 'svelte';
 	import type { ChatMessage, ModelList, promptBody, Thread } from '$lib/types';
 	import Markdown from 'svelte-exmarkdown';
 	import { handleKeyDown } from '../../utils/sendMessageKeyboard';
 	import { grow } from '../../utils/growTextbox';
+	import Message from '../../components/message.svelte';
 
 	let slug = $derived(page.params.thread);
 	let thread = $derived(threads.values.find((t) => t.id === slug));
 	let messages = $derived(threads.values.find((t) => t.id === slug)?.messages ?? []);
 	let inputValue = $state('');
-	let currentModel: string = $state('Llama 3.1 8B');
 	let isModelSelectionMenuOpen: boolean = $state(false);
 	let isModelTypeSelectionMenuOpen: boolean = $state(false);
 	let menuRef: HTMLDivElement | undefined = $state();
-	let modelList: ModelList[] = $state([]);
-	let modelType: 'direct' | 'socratic' = $state('direct');
 	let messagesContainer: HTMLDivElement | undefined = $state();
 
 	function toggleModelSelectionMenu() {
@@ -30,8 +34,8 @@
 		isModelTypeSelectionMenuOpen = !isModelTypeSelectionMenuOpen;
 	}
 	function changeModel(modelName: string) {
-		currentModel = modelName;
-		localStorage.setItem('CurrentModel', currentModel);
+		currentModel.value = modelName;
+		localStorage.setItem('CurrentModel', currentModel.value);
 		isModelSelectionMenuOpen = false;
 	}
 	function handleClickOutside(event: MouseEvent) {
@@ -57,7 +61,7 @@
 		const promptToSend = inputValue;
 		inputValue = '';
 
-		const model = modelList.find((m) => m.modelName === currentModel);
+		const model = modelList.values.find((m) => m.modelName === currentModel.value);
 		if (!model) return;
 		const modelString = model.modelString;
 		const provider = model.providerName;
@@ -68,7 +72,7 @@
 				prompt: promptToSend,
 				provider: provider,
 				model: modelString,
-				mode: modelType,
+				mode: modelType.value,
 				history: thread.messages,
 				conversationId: thread.id
 			});
@@ -78,7 +82,7 @@
 			localStorage.setItem(`thread: ${JSON.stringify(thread.id)}`, JSON.stringify(thread));
 		}
 	}
-	async function getModelList() {
+	async function getModelListFromApi() {
 		const response = await fetch('/', {
 			method: 'GET',
 			headers: { 'Content-Type': 'application/json' }
@@ -88,7 +92,7 @@
 		if (result.status !== 200) {
 			console.log('Error fetching model list');
 		}
-		modelList = result.data;
+		modelList.values = result.data;
 	}
 	async function getResponseFromLLM(promptBody: promptBody) {
 		try {
@@ -164,7 +168,7 @@
 	onMount(async () => {
 		// console.log(thread);
 
-		getModelList();
+		await getModelListFromApi();
 
 		if (newPromptBody.value && !thread) {
 			const initialPrompt = newPromptBody.value.prompt;
@@ -192,9 +196,9 @@
 			const localModelType = localStorage.getItem('modelType');
 			if (localModelType) {
 				// @ts-expect-error the localModalType is set from the same type
-				modelType = localModelType;
+				modelType.value = localModelType;
 			} else {
-				modelType = 'direct';
+				modelType.value = 'direct';
 			}
 		}
 
@@ -203,7 +207,7 @@
 		scrollToBottom(true);
 	});
 	$effect(() => {
-		localStorage.setItem('modelType', modelType);
+		localStorage.setItem('modelType', modelType.value);
 	});
 	$effect(() => {
 		scrollToBottom();
@@ -218,7 +222,7 @@
 	}
 </script>
 
-<svelte:window onclick={handleClickOutside} />
+t<svelte:window onclick={handleClickOutside} />
 
 <svelte:head>
 	{#if thread}
@@ -241,7 +245,7 @@
 			<div>
 				<h1 class="text-lg font-medium text-foreground">{thread?.title}</h1>
 				<p class="text-sm text-muted-foreground">
-					{currentModel} · {modelType[0].toUpperCase() + modelType.slice(1)}
+					{currentModel.value} · {modelType.value[0].toUpperCase() + modelType.value.slice(1)}
 				</p>
 			</div>
 		</div>
@@ -256,7 +260,7 @@
 						toggleModelTypeSelectionMenu();
 					}}
 				>
-					{modelType[0].toUpperCase() + modelType.slice(1)}
+					{modelType.value[0].toUpperCase() + modelType.value.slice(1)}
 					<Icon icon="lucide:chevron-down" class="h-3.5 w-3.5" />
 				</button>
 
@@ -265,15 +269,15 @@
 						class="absolute top-full right-0 z-40 mt-2 min-w-32 overflow-hidden rounded-lg border border-border bg-card shadow-xl"
 					>
 						<button
-							class={`w-full px-4 py-2.5 text-left text-sm transition-colors ${modelType == 'direct' ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-secondary'}`}
+							class={`w-full px-4 py-2.5 text-left text-sm transition-colors ${modelType.value == 'direct' ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-secondary'}`}
 							onclick={() => {
-								modelType = 'direct';
+								modelType.value = 'direct';
 							}}>Direct</button
 						>
 						<button
-							class={`w-full px-4 py-2.5 text-left text-sm transition-colors ${modelType == 'socratic' ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-secondary'}`}
+							class={`w-full px-4 py-2.5 text-left text-sm transition-colors ${modelType.value == 'socratic' ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-secondary'}`}
 							onclick={() => {
-								modelType = 'socratic';
+								modelType.value = 'socratic';
 							}}>Socratic</button
 						>
 					</div>
@@ -288,7 +292,7 @@
 						toggleModelSelectionMenu();
 					}}
 				>
-					{currentModel}
+					{currentModel.value}
 					<Icon icon="lucide:chevron-down" class="h-3.5 w-3.5" />
 				</button>
 
@@ -296,10 +300,10 @@
 					<div
 						class="absolute top-full right-0 z-40 mt-2 min-w-48 overflow-hidden rounded-lg border border-border bg-card shadow-xl"
 					>
-						{#each modelList as model (model)}
+						{#each modelList.values as model (model)}
 							<button
 								class={`w-full px-4 py-2.5 text-left text-sm transition-colors ${
-									currentModel == model.modelName
+									currentModel.value == model.modelName
 										? 'bg-primary text-primary-foreground'
 										: 'text-foreground hover:bg-secondary'
 								}`}
@@ -325,43 +329,7 @@
 			</div>
 		{:else}
 			{#each messages as message, index (message.id)}
-				<div class="message animate-enter flex" style={`animation-delay: ${index * 30}ms; `}>
-					<div
-						class={`flex max-w-2xl gap-4 ${message.role === 'user' ? 'ml-auto flex-row-reverse' : 'flex-row'}`}
-					>
-						<!--Avatar  -->
-						<div class="shrink-0">
-							<div
-								class={`flex h-9 w-9 items-center justify-center rounded-xl text-xs font-medium ${
-									message.role === 'user'
-										? 'bg-primary text-primary-foreground'
-										: 'bg-secondary text-secondary-foreground'
-								}`}
-							>
-								{message.role === 'user' ? 'You' : currentModel.split(' ')[0].slice(0, 3)}
-							</div>
-						</div>
-
-						<!-- Content -->
-						<div
-							class={`flex flex-col gap-1 ${message.role === 'user' ? 'items-end' : 'items-start'}`}
-						>
-							{#if message.role === 'assistant'}
-								<p class="text-xs text-muted-foreground/60">{currentModel}</p>
-							{/if}
-
-							<div
-								class={`message-content px-5 py-4 text-sm leading-relaxed whitespace-pre-wrap ${
-									message.role === 'user'
-										? 'bg-primary/10 text-foreground'
-										: 'bg-secondary/50 text-foreground'
-								}`}
-							>
-								<Markdown md={message.content} />
-							</div>
-						</div>
-					</div>
-				</div>
+				<Message {index} role={message.role} content={message.content} />
 			{/each}
 		{/if}
 	</div>
@@ -401,10 +369,6 @@
 			border-radius: 1rem;
 		}
 	}
-	.messages .message .message-content {
-		border-radius: 1rem;
-	}
-
 	.animate-enter {
 		animation: enter 0.3s ease-out forwards;
 	}

@@ -1,24 +1,21 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
 	import { onMount } from 'svelte';
-	import type { ModelList, promptBody } from '$lib/types';
-	import { newPromptBody } from '$lib/stores/store.svelte';
+	import type { promptBody } from '$lib/types';
+	import { newPromptBody, currentModel, modelType, modelList } from '$lib/stores/store.svelte';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { handleKeyDown } from './utils/sendMessageKeyboard';
 	import { grow } from './utils/growTextbox';
 
-	let modelList: ModelList[] = $state([]);
-	let currentModel: string = $state('Llama 3.1 8B');
-	let modelType: 'direct' | 'socratic' = $state('direct');
 	let isModelSelectionMenuOpen: boolean = $state(false);
 	let menuRef: HTMLDivElement | undefined = $state();
 	let prompt: string = $state('');
 	let mounted: boolean = $state(false);
 
 	function changeModel(modelName: string) {
-		currentModel = modelName;
-		localStorage.setItem('CurrentModel', currentModel);
+		currentModel.value = modelName;
+		localStorage.setItem('CurrentModel', currentModel.value);
 		isModelSelectionMenuOpen = false;
 	}
 	function toggleModelSelectionMenu() {
@@ -39,7 +36,7 @@
 	async function sendMessage() {
 		if (!prompt.trim()) return;
 
-		const model = modelList.find((m) => m.modelName === currentModel);
+		const model = modelList.values.find((m) => m.modelName === currentModel.value);
 		if (!model) return;
 
 		const threadId = crypto.randomUUID();
@@ -47,7 +44,7 @@
 			prompt: prompt,
 			provider: model.providerName,
 			model: model.modelString,
-			mode: modelType,
+			mode: modelType.value,
 			history: [],
 			conversationId: threadId
 		};
@@ -55,7 +52,7 @@
 		newPromptBody.value = promptBody;
 		goto(resolve(`/chat/${threadId}`));
 	}
-	async function getModelList() {
+	async function getModelListFromApi() {
 		const response = await fetch('/', {
 			method: 'GET',
 			headers: { 'Content-Type': 'application/json' }
@@ -65,33 +62,33 @@
 		if (result.status !== 200) {
 			console.log('Error fetching model list');
 		}
-		modelList = result.data;
+		modelList.values = result.data;
 	}
 	onMount(async () => {
 		mounted = true;
 
-		getModelList();
+		await getModelListFromApi();
 		// console.log(modelList);
 
 		const localCurrentModel = localStorage.getItem('CurrentModel');
 		const localModelType = localStorage.getItem('modelType');
 		if (localCurrentModel) {
 			changeModel(localCurrentModel);
-		} else {
-			changeModel(modelList[0].modelName);
+		} else if (modelList.values.length > 0) {
+			changeModel(modelList.values[0].modelName);
 		}
 		if (localModelType) {
 			// @ts-expect-error the localModalType is set from the same type
-			modelType = localModelType;
+			modelType.value = localModelType;
 		} else {
-			modelType = 'direct';
+			modelType.value = 'direct';
 		}
 
 		const inputElement = document.getElementById('input-element') as HTMLInputElement;
 		inputElement.focus();
 	});
 	$effect(() => {
-		localStorage.setItem('modelType', modelType);
+		localStorage.setItem('modelType', modelType.value);
 	});
 </script>
 
@@ -146,15 +143,15 @@
 				<!-- Mode Selector -->
 				<div class="flex rounded-lg bg-secondary p-1">
 					<button
-						class={`rounded-md px-3 py-1.5 text-sm font-medium transition-all ${modelType == 'direct' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+						class={`rounded-md px-3 py-1.5 text-sm font-medium transition-all ${modelType.value == 'direct' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
 						onclick={() => {
-							modelType = 'direct';
+							modelType.value = 'direct';
 						}}>Direct Model</button
 					>
 					<button
-						class={`rounded-md px-3 py-1.5 text-sm font-medium transition-all ${modelType == 'socratic' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+						class={`rounded-md px-3 py-1.5 text-sm font-medium transition-all ${modelType.value == 'socratic' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
 						onclick={() => {
-							modelType = 'socratic';
+							modelType.value = 'socratic';
 						}}>Socratic Models</button
 					>
 				</div>
@@ -167,7 +164,7 @@
 							toggleModelSelectionMenu();
 						}}
 					>
-						{currentModel}
+						{currentModel.value}
 						<Icon icon="lucide:chevron-down" class="h-3 w-3" />
 					</button>
 
@@ -175,10 +172,10 @@
 						<div
 							class="absolute top-full right-0 z-40 mt-2 min-w-40 overflow-hidden rounded-lg border border-border bg-card shadow-xl"
 						>
-							{#each modelList as model (model)}
+							{#each modelList.values as model (model)}
 								<button
 									class={`w-full px-4 py-2.5 text-left text-sm transition-colors ${
-										currentModel == model.modelName
+										currentModel.value == model.modelName
 											? 'bg-primary text-primary-foreground'
 											: 'text-foreground hover:bg-secondary'
 									}`}

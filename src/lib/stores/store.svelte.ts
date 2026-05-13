@@ -1,4 +1,4 @@
-import type { UserData, Thread, promptBody } from '$lib/types';
+import type { UserData, Thread, promptBody, ModelList } from '$lib/types';
 
 export const sidebarStatus = $state({ value: true });
 
@@ -52,3 +52,7 @@ export const threads = $state<{ values: Thread[] }>({
 });
 
 export const newPromptBody = $state<{ value: promptBody | null }>({ value: null });
+
+export const currentModel = $state({ value: 'Llama 3.1 8B' });
+export const modelType = $state<{ value: 'direct' | 'socratic' }>({ value: 'direct' });
+export const modelList = $state<{ values: ModelList[] }>({ values: [] });
