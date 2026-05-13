@@ -297,17 +297,19 @@
 	</div>
 
 	<!-- Messages -->
-	<div bind:this={messagesContainer} class="messages flex-1 space-y-6 overflow-y-auto px-6 py-8">
-		{#if thread?.messages.length === 0}
-			<div class="flex h-full flex-col items-center justify-center text-center">
-				<Icon icon="lucide:sparkles" className="w-12 h-12 text-muted-foreground/20 mb-4" />
-				<p class="text-muted-foreground/50">Start the conversation...</p>
-			</div>
-		{:else}
-			{#each messages as message, index (message.id)}
-				<Message {index} role={message.role} content={message.content} />
-			{/each}
-		{/if}
+	<div bind:this={messagesContainer} class="messages flex-1 overflow-y-auto px-6 py-8">
+		<div class="mx-auto max-w-4xl space-y-8">
+			{#if thread?.messages.length === 0}
+				<div class="flex h-full flex-col items-center justify-center text-center">
+					<Icon icon="lucide:sparkles" className="w-12 h-12 text-muted-foreground/20 mb-4" />
+					<p class="text-muted-foreground/50">Start the conversation...</p>
+				</div>
+			{:else}
+				{#each messages as message, index (message.id)}
+					<Message {index} role={message.role} content={message.content} />
+				{/each}
+			{/if}
+		</div>
 	</div>
 
 	<!-- Input -->
