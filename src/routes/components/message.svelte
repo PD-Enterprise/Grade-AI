@@ -1,15 +1,25 @@
 <script lang="ts">
 	import { currentModel } from '$lib/stores/store.svelte';
 	import type { ChatRole } from '$lib/types';
-	import Markdown from 'svelte-exmarkdown';
-
+	import 'katex/dist/katex.min.css';
+	import SvelteMarkdown from '@humanspeak/svelte-markdown';
+	import { KatexRenderer, markedKatex } from '@humanspeak/svelte-markdown/extensions';
+	import type { RendererComponent, Renderers } from '@humanspeak/svelte-markdown';
 	interface props {
 		index: number;
 		role: ChatRole;
 		content: string;
 	}
+	interface KatexRenderers extends Renderers {
+		inlineKatex: RendererComponent;
+		blockKatex: RendererComponent;
+	}
 
 	const { index, role, content }: props = $props();
+	const renderers: Partial<KatexRenderers> = {
+		inlineKatex: KatexRenderer,
+		blockKatex: KatexRenderer
+	};
 </script>
 
 <div class="message animate-enter flex" style={`animation-delay: ${index * 30}ms; `}>
@@ -34,11 +44,11 @@
 			{/if}
 
 			<div
-				class={`message-content px-5 py-4 text-sm leading-relaxed whitespace-pre-wrap ${
+				class={`message-content px-5 py-4 text-sm leading-relaxed ${
 					role === 'user' ? 'bg-primary/10 text-foreground' : 'bg-secondary/50 text-foreground'
 				}`}
 			>
-				<Markdown md={content} />
+				<SvelteMarkdown source={content} extensions={[markedKatex()]} {renderers} />
 			</div>
 		</div>
 	</div>

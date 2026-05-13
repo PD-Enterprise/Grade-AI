@@ -15,7 +15,6 @@
 
 	function changeModel(modelName: string) {
 		currentModel.value = modelName;
-		localStorage.setItem('CurrentModel', currentModel.value);
 		isModelSelectionMenuOpen = false;
 	}
 	function toggleModelSelectionMenu() {
@@ -52,43 +51,12 @@
 		newPromptBody.value = promptBody;
 		goto(resolve(`/chat/${threadId}`));
 	}
-	async function getModelListFromApi() {
-		const response = await fetch('/', {
-			method: 'GET',
-			headers: { 'Content-Type': 'application/json' }
-		});
-		const result = await response.json();
-		// console.log(result);
-		if (result.status !== 200) {
-			console.log('Error fetching model list');
-		}
-		modelList.values = result.data;
-	}
+
 	onMount(async () => {
 		mounted = true;
 
-		await getModelListFromApi();
-		// console.log(modelList);
-
-		const localCurrentModel = localStorage.getItem('CurrentModel');
-		const localModelType = localStorage.getItem('modelType');
-		if (localCurrentModel) {
-			changeModel(localCurrentModel);
-		} else if (modelList.values.length > 0) {
-			changeModel(modelList.values[0].modelName);
-		}
-		if (localModelType) {
-			// @ts-expect-error the localModalType is set from the same type
-			modelType.value = localModelType;
-		} else {
-			modelType.value = 'direct';
-		}
-
 		const inputElement = document.getElementById('input-element') as HTMLInputElement;
 		inputElement.focus();
-	});
-	$effect(() => {
-		localStorage.setItem('modelType', modelType.value);
 	});
 </script>
 

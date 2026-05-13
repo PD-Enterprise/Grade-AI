@@ -10,8 +10,7 @@
 		modelList
 	} from '$lib/stores/store.svelte';
 	import { onMount } from 'svelte';
-	import type { ChatMessage, ModelList, promptBody, Thread } from '$lib/types';
-	import Markdown from 'svelte-exmarkdown';
+	import type { ChatMessage, promptBody, Thread } from '$lib/types';
 	import { handleKeyDown } from '../../utils/sendMessageKeyboard';
 	import { grow } from '../../utils/growTextbox';
 	import Message from '../../components/message.svelte';
@@ -35,7 +34,6 @@
 	}
 	function changeModel(modelName: string) {
 		currentModel.value = modelName;
-		localStorage.setItem('CurrentModel', currentModel.value);
 		isModelSelectionMenuOpen = false;
 	}
 	function handleClickOutside(event: MouseEvent) {
@@ -82,18 +80,7 @@
 			localStorage.setItem(`thread: ${JSON.stringify(thread.id)}`, JSON.stringify(thread));
 		}
 	}
-	async function getModelListFromApi() {
-		const response = await fetch('/', {
-			method: 'GET',
-			headers: { 'Content-Type': 'application/json' }
-		});
-		const result = await response.json();
-		// console.log(result);
-		if (result.status !== 200) {
-			console.log('Error fetching model list');
-		}
-		modelList.values = result.data;
-	}
+
 	async function getResponseFromLLM(promptBody: promptBody) {
 		try {
 			const response = await fetch(`/chat/${slug}`, {
@@ -168,7 +155,7 @@
 	onMount(async () => {
 		// console.log(thread);
 
-		await getModelListFromApi();
+		const thread = threads.values.find((t) => t.id === slug);
 
 		if (newPromptBody.value && !thread) {
 			const initialPrompt = newPromptBody.value.prompt;
@@ -192,22 +179,11 @@
 			await getResponseFromLLM(newPromptBody.value);
 			localStorage.setItem(`thread: ${JSON.stringify(tempThread.id)}`, JSON.stringify(thread));
 			newPromptBody.value = null;
-
-			const localModelType = localStorage.getItem('modelType');
-			if (localModelType) {
-				// @ts-expect-error the localModalType is set from the same type
-				modelType.value = localModelType;
-			} else {
-				modelType.value = 'direct';
-			}
 		}
 
 		const inputElement = document.getElementById('input-element') as HTMLInputElement;
 		inputElement.focus();
 		scrollToBottom(true);
-	});
-	$effect(() => {
-		localStorage.setItem('modelType', modelType.value);
 	});
 	$effect(() => {
 		scrollToBottom();
@@ -222,7 +198,7 @@
 	}
 </script>
 
-t<svelte:window onclick={handleClickOutside} />
+<svelte:window onclick={handleClickOutside} />
 
 <svelte:head>
 	{#if thread}
@@ -335,7 +311,7 @@ t<svelte:window onclick={handleClickOutside} />
 	</div>
 
 	<!-- Input -->
-	<div class="input-field border-t border-border bg-card/30 px-6 py-5">
+	<div class="input-field border-t border-border bg-card/30 px-4 py-4">
 		<div class="flex items-center gap-3">
 			<div class="flex-1">
 				<textarea

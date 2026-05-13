@@ -1,5 +1,13 @@
 <script lang="ts">
-	import { isAuthenticated, sidebarStatus, threads, userData } from '$lib/stores/store.svelte';
+	import {
+		isAuthenticated,
+		sidebarStatus,
+		threads,
+		userData,
+		currentModel,
+		modelType,
+		modelList
+	} from '$lib/stores/store.svelte';
 	import Sidebar from './components/sidebar.svelte';
 	import './layout.css';
 	import Icon from '@iconify/svelte';
@@ -9,8 +17,26 @@
 	import type { Thread } from '$lib/types';
 
 	let { data, children } = $props();
+	let isLoaded = $state(false);
 
-	onMount(() => {
+	async function getModelListFromApi() {
+		try {
+			const response = await fetch('/', {
+				method: 'GET',
+				headers: { 'Content-Type': 'application/json' }
+			});
+			const result = await response.json();
+			if (result.status === 200) {
+				modelList.values = result.data;
+				return result.data;
+			}
+		} catch (e) {
+			console.error('Error fetching model list:', e);
+		}
+		return [];
+	}
+
+	onMount(async () => {
 		const existingIds = new Set(threads.values.map((t) => t.id));
 
 		for (let i = 0; i < localStorage.length; i++) {
@@ -30,7 +56,38 @@
 				}
 			}
 		}
+
+		// Load modelType first (no async dependency needed)
+		const localModelType = localStorage.getItem('modelType');
+		if (localModelType) {
+			modelType.value = localModelType as 'direct' | 'socratic';
+		}
+
+		// Fetch model list
+		const models = await getModelListFromApi();
+
+		// Load currentModel (depends on model list for fallback)
+		const localCurrentModel = localStorage.getItem('CurrentModel');
+		if (localCurrentModel) {
+			currentModel.value = localCurrentModel;
+		} else if (models.length > 0) {
+			currentModel.value = models[0].modelName;
+		}
+
+		isLoaded = true;
 	});
+
+	$effect(() => {
+		if (isLoaded) {
+			if (currentModel.value) {
+				localStorage.setItem('CurrentModel', currentModel.value);
+			}
+			if (modelType.value) {
+				localStorage.setItem('modelType', modelType.value);
+			}
+		}
+	});
+
 	$effect(() => {
 		if (!data.session) {
 			isAuthenticated.value = false;
