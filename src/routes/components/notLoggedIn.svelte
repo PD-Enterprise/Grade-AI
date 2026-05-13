@@ -15,7 +15,7 @@
 </script>
 
 <dialog id="login-dialog" class="modal">
-	<div class="modal-box">
+	<div class="modal-box bg-black">
 		<form method="dialog">
 			<button class="btn absolute top-2 right-2 btn-circle btn-ghost btn-sm">✕</button>
 		</form>
@@ -29,7 +29,7 @@
 				}
 			}}
 		>
-			<a href={resolve('/login')} class="btn btn-primary">Login</a>
+			<a href={resolve('/login')} class="btn hover:text-black hover:btn-primary">Login</a>
 		</button>
 	</div>
 	<form method="dialog" class="modal-backdrop">

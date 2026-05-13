@@ -1,5 +1,4 @@
 import type { UserData, Thread, promptBody } from '$lib/types';
-import { writable } from 'svelte/store';
 
 export const sidebarStatus = $state({ value: true });
 

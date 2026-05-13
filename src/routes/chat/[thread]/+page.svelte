@@ -162,7 +162,7 @@
 		}
 	}
 	onMount(async () => {
-		console.log(thread);
+		// console.log(thread);
 
 		getModelList();
 

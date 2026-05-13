@@ -42,7 +42,7 @@
 		"wrangler": "^4.85.0"
 	},
 	"dependencies": {
-		"better-auth": "^1.6.9",
+		"better-auth": "^1.6.11",
 		"dompurify": "^3.4.1",
 		"nanoid": "^5.1.9",
 		"svelte-exmarkdown": "^5.0.2"

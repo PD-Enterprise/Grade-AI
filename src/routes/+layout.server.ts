@@ -1,12 +1,14 @@
 import type { UserData } from '$lib/types';
 import config from '$lib/utils/apiConfig';
+import { auth } from '$lib/utils/auth';
 import type { LayoutServerLoad } from './$types';
 
-export const load: LayoutServerLoad = async ({ locals }) => {
-	const { user, session } = locals;
+export const load: LayoutServerLoad = async ({ request }) => {
+	const session = await auth.api.getSession({ headers: request.headers });
 	let membership: UserData['membership'] | undefined;
 
-	if (session && user) {
+	if (session && session.user) {
+		const user = session.user;
 		// Add new user to Database
 		const userInsertion = await insertUser(user.email, user.name, user.image);
 		if (userInsertion instanceof Error) {
@@ -25,16 +27,16 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 			};
 		}
 		membership = userRole;
-	}
 
-	return {
-		session,
-		user,
-		membership
-	};
+		return {
+			session,
+			user,
+			membership
+		};
+	}
 };
 
-async function insertUser(email: string, name: string, image: string | null) {
+async function insertUser(email: string, name: string, image: string | null | undefined) {
 	try {
 		const request = await fetch(`${config.apiUrl}users/new-user`, {
 			method: 'POST',
@@ -48,7 +50,7 @@ async function insertUser(email: string, name: string, image: string | null) {
 
 		return await request.json();
 	} catch (error) {
-		return new Error('Error inserting user');
+		return new Error('Error inserting user' + error);
 	}
 }
 
@@ -66,6 +68,6 @@ async function getUserRole(email: string) {
 
 		return result.data;
 	} catch (error) {
-		return new Error('Error getting user role');
+		return new Error('Error getting user role' + error);
 	}
 }

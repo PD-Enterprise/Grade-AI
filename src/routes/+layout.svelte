@@ -46,8 +46,6 @@
 				};
 			}
 		}
-
-		// console.log(sidebarStatus.value);
 	});
 </script>
 
