@@ -37,7 +37,9 @@ export const load: LayoutServerLoad = async ({ request }) => {
 				message: 'Error getting user academic level'
 			};
 		}
-		academicLevel = userAcademicLevel.academicLevel;
+		academicLevel = userAcademicLevel?.academicLevel;
+
+		console.log(academicLevel);
 
 		return {
 			session,
