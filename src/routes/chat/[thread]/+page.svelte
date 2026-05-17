@@ -19,6 +19,11 @@
 	let slug = $derived(page.params.thread);
 	let thread = $derived(threads.values.find((t) => t.id === slug));
 	let messages = $derived(threads.values.find((t) => t.id === slug)?.messages ?? []);
+	let lastAssistantId = $derived(
+		thread?.status === 'loading'
+			? [...messages].reverse().find((m) => m.role === 'assistant')?.id ?? null
+			: null
+	);
 	let inputValue = $state('');
 	let isModelSelectionMenuOpen: boolean = $state(false);
 	let isModelTypeSelectionMenuOpen: boolean = $state(false);
@@ -66,6 +71,8 @@
 		const provider = model.providerName;
 		if (!provider || !modelString) return;
 
+		thread.status = 'loading';
+
 		try {
 			await getResponseFromLLM({
 				prompt: promptToSend,
@@ -84,6 +91,18 @@
 	}
 
 	async function getResponseFromLLM(promptBody: promptBody) {
+		const aiMessageId = crypto.randomUUID();
+		const currentThread = threads.values.find((t) => t.id === slug);
+		const aiMessage: ChatMessage = {
+			role: 'assistant',
+			content: '',
+			id: aiMessageId
+		};
+
+		if (currentThread) {
+			currentThread.messages.push(aiMessage);
+		}
+
 		try {
 			const response = await fetch(`/chat/${slug}`, {
 				method: 'POST',
@@ -92,17 +111,6 @@
 			});
 
 			if (!response.body) return;
-			const aiMessageId = crypto.randomUUID();
-			const currentThread = threads.values.find((t) => t.id === slug);
-			const aiMessage: ChatMessage = {
-				role: 'assistant',
-				content: '',
-				id: aiMessageId
-			};
-
-			if (currentThread) {
-				currentThread.messages.push(aiMessage);
-			}
 
 			const reader = response.body.getReader();
 			const decoder = new TextDecoder();
@@ -138,7 +146,10 @@
 						}
 
 						if (json.type === 'done') {
-							if (currentThread) currentThread.status = 'success';
+							threads.values = threads.values.map((t) => {
+								if (t.id !== slug) return t;
+								return { ...t, status: 'success' as const };
+							});
 						}
 
 						if (json.type === 'error') {
@@ -151,7 +162,10 @@
 			}
 		} catch (error) {
 			console.error('Streaming Error:', error);
-			if (thread) thread.status = 'error';
+			threads.values = threads.values.map((t) => {
+				if (t.id !== slug) return t;
+				return { ...t, status: 'error' as const };
+			});
 		}
 	}
 	onMount(async () => {
@@ -308,7 +322,7 @@
 				</div>
 			{:else}
 				{#each messages as message, index (message.id)}
-					<Message {index} role={message.role} content={message.content} />
+					<Message {index} role={message.role} content={message.content} loading={message.id === lastAssistantId} />
 				{/each}
 			{/if}
 		</div>

@@ -8,13 +8,14 @@
 		index: number;
 		role: ChatRole;
 		content: string;
+		loading?: boolean;
 	}
 	interface KatexRenderers extends Renderers {
 		inlineKatex: RendererComponent;
 		blockKatex: RendererComponent;
 	}
 
-	const { index, role, content }: props = $props();
+	const { index, role, content, loading = false }: props = $props();
 	const renderers: Partial<KatexRenderers> = {
 		inlineKatex: KatexRenderer,
 		blockKatex: KatexRenderer
@@ -30,7 +31,11 @@
 		</div>
 	{:else}
 		<div class="text-[15px] leading-relaxed text-foreground">
-			<SvelteMarkdown source={content} extensions={[markedKatex()]} {renderers} />
+			{#if content === ''}
+				<span class="loading loading-sm loading-dots"></span>
+			{:else}
+				<SvelteMarkdown source={content} extensions={[markedKatex()]} {renderers} />
+			{/if}
 		</div>
 	{/if}
 </div>
