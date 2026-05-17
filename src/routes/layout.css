@@ -2,7 +2,7 @@
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
 @plugin 'daisyui' {
-	themes: dark;
+	themes: black --default;
 }
 
 @custom-variant dark (&: is(.dark *));
@@ -14,29 +14,17 @@
 	--card-foreground: #fafafa;
 	--popover: #18181b;
 	--popover-foreground: #fafafa;
-	--primary: #fafafa;
-	--primary-foreground: #09090b;
-	--secondary: #27272a;
-	--secondary-foreground: #fafafa;
 	--muted: #27272a;
 	--muted-foreground: #a1a1aa;
-	--accent: #fafafa;
 	--accent-foreground: #09090b;
 	--destructive: #7f1d1d;
 	--destructive-foreground: #fafafa;
 	--border: #27272a;
 	--input: #27272a;
 	--ring: #fafafa;
-	--chart-1: #fafafa;
-	--chart-2: #a1a1aa;
-	--chart-3: #71717a;
-	--chart-4: #52525b;
-	--chart-5: #3f3f46;
 	--radius: 0.5rem;
 	--sidebar: #09090b;
 	--sidebar-foreground: #fafafa;
-	--sidebar-primary: #fafafa;
-	--sidebar-primary-foreground: #09090b;
 	--sidebar-accent: #27272a;
 	--sidebar-accent-foreground: #fafafa;
 	--sidebar-border: #27272a;
@@ -52,10 +40,6 @@
 	--color-card-foreground: var(--card-foreground);
 	--color-popover: var(--popover);
 	--color-popover-foreground: var(--popover-foreground);
-	--color-primary: var(--primary);
-	--color-primary-foreground: var(--primary-foreground);
-	--color-secondary: var(--secondary);
-	--color-secondary-foreground: var(--secondary-foreground);
 	--color-muted: var(--muted);
 	--color-muted-foreground: var(--muted-foreground);
 	--color-accent: var(--accent);
@@ -85,12 +69,6 @@
 }
 
 @layer base {
-	* {
-		@apply border-border outline-ring/50;
-	}
-	body {
-		@apply bg-background text-foreground;
-	}
 	html {
 		scroll-behavior: smooth;
 	}

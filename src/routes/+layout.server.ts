@@ -6,6 +6,7 @@ import type { LayoutServerLoad } from './$types';
 export const load: LayoutServerLoad = async ({ request }) => {
 	const session = await auth.api.getSession({ headers: request.headers });
 	let membership: UserData['membership'] | undefined;
+	let academicLevel: UserData['academicLevel'] | undefined;
 
 	if (session && session.user) {
 		const user = session.user;
@@ -28,10 +29,21 @@ export const load: LayoutServerLoad = async ({ request }) => {
 		}
 		membership = userRole;
 
+		// Get user academic level
+		const userAcademicLevel = await getUserAcademicLevel(user.email);
+		if (userAcademicLevel instanceof Error) {
+			return {
+				status: 500,
+				message: 'Error getting user academic level'
+			};
+		}
+		academicLevel = userAcademicLevel.academicLevel;
+
 		return {
 			session,
 			user,
-			membership
+			membership,
+			academicLevel
 		};
 	}
 };
@@ -65,6 +77,23 @@ async function getUserRole(email: string) {
 		});
 		const result = await request.json();
 		// console.log(result.data);
+
+		return result.data;
+	} catch (error) {
+		return new Error('Error getting user role' + error);
+	}
+}
+
+async function getUserAcademicLevel(email: string) {
+	try {
+		const request = await fetch(`${config.apiUrl}grade-ai/get-user-academic-level`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				email: email
+			})
+		});
+		const result = await request.json();
 
 		return result.data;
 	} catch (error) {

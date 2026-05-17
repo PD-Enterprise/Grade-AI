@@ -8,9 +8,11 @@ export const userData = $state<{ value: UserData }>({
 		name: '',
 		email: '',
 		image: '',
-		membership: 'tier-1'
+		membership: 'tier-1',
+		academicLevel: undefined
 	}
 });
+export const userAcademicLevel = $state<{ value: string }>({ value: '' });
 
 export const threads = $state<{ values: Thread[] }>({
 	values: [

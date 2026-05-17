@@ -1,15 +1,29 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
-	import { isAuthenticated, sidebarStatus, userData } from '$lib/stores/store.svelte';
+	import {
+		isAuthenticated,
+		sidebarStatus,
+		userAcademicLevel,
+		userData
+	} from '$lib/stores/store.svelte';
 	import { resolve } from '$app/paths';
 	import { threads } from '$lib/stores/store.svelte';
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
+	import { updateUserAcademicLevel } from '$lib/api/updateUserAcademicLevel';
+	import { validateAcademicLevel } from '$lib/utils/validateAcademicLevel';
+	import { onMount } from 'svelte';
+	import { slide } from 'svelte/transition';
 
 	let image: string | undefined = $state('');
 	let slug = $derived(page.params.thread);
 	let selectedThread = $derived(threads.values.find((t) => t.id === slug));
 	let hoveredId: string = $state('');
+	let isK_12: string = $state('true');
+	let academicLevel: string | undefined = $state(undefined);
+	let academicLevelError: boolean = $state(false);
+	let editAcademicLevel: boolean = $state(false);
+	let userModelDialogue: HTMLDialogElement | undefined = $state();
 
 	function deleteThread(threadId: string) {
 		const currentThread = threads.values.find((t) => t.id === threadId);
@@ -19,12 +33,34 @@
 			goto(resolve('/'));
 		}
 	}
-
+	async function updateAcademicLevel() {
+		// @ts-expect-error Hoping this won't cause future problems.
+		await updateUserAcademicLevel(userData.value.email, parseInt(academicLevel));
+		userData.value.academicLevel = academicLevel;
+		// @ts-expect-error Function won't run before onMount.
+		userModelDialogue.close();
+	}
+	onMount(() => {
+		userModelDialogue = document.getElementById('user-profile-modal') as HTMLDialogElement;
+	});
 	$effect(() => {
 		if (userData.value.image) {
 			image = userData.value.image;
 		} else {
 			image = undefined;
+		}
+	});
+	$effect(() => {
+		if (academicLevel == undefined) {
+			academicLevel = userData.value.academicLevel;
+		}
+
+		if (academicLevel != '' && academicLevel != undefined) {
+			if (!validateAcademicLevel(academicLevel)) {
+				academicLevelError = true;
+			} else {
+				academicLevelError = false;
+			}
 		}
 	});
 </script>
@@ -55,7 +91,7 @@
 	<!-- New Chat Button -->
 	<div class="p-4">
 		<a
-			class="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+			class="text-primary-foreground flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-medium transition-colors hover:bg-primary/90"
 			href={resolve('/')}
 		>
 			<Icon icon="lucide:plus" class="h-4 w-4" />
@@ -158,13 +194,67 @@
 
 <dialog id="user-profile-modal" class="modal">
 	<div class="modal-box rounded-lg bg-card">
-		<h3 class="text-lg font-bold">Hello {userData.value.name}!</h3>
-		<p class="py-4">
+		<h3 class="mb-4 text-lg font-bold">Hello {userData.value.name}!</h3>
+		<p>
 			Membership: {userData.value.membership}
 		</p>
+		<span class="flex items-center gap-2">
+			<p>
+				Academic Level: {userData.value.academicLevel}
+			</p>
+			<button
+				class="btn btn-circle border-none btn-ghost btn-xs"
+				onclick={() => {
+					editAcademicLevel = !editAcademicLevel;
+				}}
+			>
+				<Icon icon="lucide:edit" class="h-4 w-4" />
+			</button>
+		</span>
+		{#if editAcademicLevel}
+			<div
+				class="editAcademicLevel bg-card-foreground/10 p-2"
+				in:slide={{ duration: 300 }}
+				out:slide={{ duration: 200 }}
+			>
+				<div class="academicLevel flex flex-row gap-5">
+					<select
+						class="select-bordered metadata-input-field select bg-card-foreground/10"
+						bind:value={isK_12}
+						required
+					>
+						<option value="true">K-12</option>
+						<option value="false">Not K-12</option>
+					</select>
+					{#if isK_12 == 'true'}
+						<input
+							type="text"
+							class="input-bordered metadata-input-field input bg-card-foreground/10"
+							required
+							bind:value={academicLevel}
+							placeholder="Academic Level"
+						/>
+					{:else}
+						<select
+							class="select-bordered metadata-input-field select bg-card-foreground/10"
+							bind:value={academicLevel}
+							required
+						>
+							<option value="13">Undergraduate (UG)</option>
+							<option value="14">Graduate (G)</option>
+							<option value="15">Postgraduate (PG)</option>
+						</select>
+					{/if}
+				</div>
+				{#if academicLevelError}
+					<p class="mt-2 text-red-500">Please enter a valid academic level.</p>
+				{/if}
+				<button class="btn mt-2" onclick={updateAcademicLevel}>Save</button>
+			</div>
+		{/if}
 		<div class="modal-action justify-between">
 			<a
-				class="px-4 py-2.5 text-sm text-sidebar-accent-foreground/60 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+				class="bg-error/20 px-4 py-2.5 text-sm text-sidebar-accent-foreground/60 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
 				href={resolve('/logout')}
 				onclick={() => {
 					const modal = document.getElementById('user-profile-modal') as HTMLDialogElement;

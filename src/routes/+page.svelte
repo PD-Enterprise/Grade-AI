@@ -2,11 +2,19 @@
 	import Icon from '@iconify/svelte';
 	import { onMount } from 'svelte';
 	import type { promptBody } from '$lib/types';
-	import { newPromptBody, currentModel, modelType, modelList } from '$lib/stores/store.svelte';
+	import {
+		newPromptBody,
+		currentModel,
+		modelType,
+		modelList,
+		userData,
+		isAuthenticated
+	} from '$lib/stores/store.svelte';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { handleKeyDown } from './utils/sendMessageKeyboard';
 	import { grow } from './utils/growTextbox';
+	import Onboarding from './components/onboarding.svelte';
 
 	let isModelSelectionMenuOpen: boolean = $state(false);
 	let menuRef: HTMLDivElement | undefined = $state();
@@ -177,6 +185,10 @@
 		</div>
 	</div>
 </div>
+
+{#if isAuthenticated.value && !userData.value.academicLevel}
+	<Onboarding />
+{/if}
 
 <style>
 	textarea {

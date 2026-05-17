@@ -99,7 +99,8 @@
 					name: data.user.name,
 					email: data.user.email,
 					image: data.user.image,
-					membership: data.membership
+					membership: data.membership,
+					academicLevel: data.academicLevel
 				};
 			}
 		}

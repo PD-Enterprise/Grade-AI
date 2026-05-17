@@ -17,6 +17,7 @@ export type UserData = {
 	email: string;
 	image: string | null | undefined;
 	membership: 'tier-1' | 'tier-2' | 'tier-3' | undefined;
+	academicLevel: string | undefined;
 };
 
 export type ModelList = {
