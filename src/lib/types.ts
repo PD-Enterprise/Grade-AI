@@ -34,4 +34,5 @@ export type promptBody = {
 	mode: 'socratic' | 'direct';
 	history: ChatMessage[];
 	conversationId: Thread['id'] | undefined;
+	email: string;
 };

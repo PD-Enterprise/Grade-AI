@@ -1,11 +1,6 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
-	import {
-		isAuthenticated,
-		sidebarStatus,
-		userAcademicLevel,
-		userData
-	} from '$lib/stores/store.svelte';
+	import { isAuthenticated, sidebarStatus, userData } from '$lib/stores/store.svelte';
 	import { resolve } from '$app/paths';
 	import { threads } from '$lib/stores/store.svelte';
 	import { page } from '$app/state';

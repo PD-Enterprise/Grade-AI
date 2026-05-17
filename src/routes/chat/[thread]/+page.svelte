@@ -7,7 +7,8 @@
 		threads,
 		currentModel,
 		modelType,
-		modelList
+		modelList,
+		userData
 	} from '$lib/stores/store.svelte';
 	import { onMount } from 'svelte';
 	import type { ChatMessage, promptBody, Thread } from '$lib/types';
@@ -72,7 +73,8 @@
 				model: modelString,
 				mode: modelType.value,
 				history: thread.messages,
-				conversationId: thread.id
+				conversationId: thread.id,
+				email: userData.value.email
 			});
 		} catch (error) {
 			console.error('Error:', error);
@@ -245,13 +247,13 @@
 						class="absolute top-full right-0 z-40 mt-2 min-w-32 overflow-hidden rounded-lg border border-border bg-card shadow-xl"
 					>
 						<button
-							class={`w-full px-4 py-2.5 text-left text-sm transition-colors ${modelType.value == 'direct' ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-secondary'}`}
+							class={`w-full px-4 py-2.5 text-left text-sm transition-colors ${modelType.value == 'direct' ? 'text-primary-foreground bg-primary' : 'text-foreground hover:bg-secondary'}`}
 							onclick={() => {
 								modelType.value = 'direct';
 							}}>Direct</button
 						>
 						<button
-							class={`w-full px-4 py-2.5 text-left text-sm transition-colors ${modelType.value == 'socratic' ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-secondary'}`}
+							class={`w-full px-4 py-2.5 text-left text-sm transition-colors ${modelType.value == 'socratic' ? 'text-primary-foreground bg-primary' : 'text-foreground hover:bg-secondary'}`}
 							onclick={() => {
 								modelType.value = 'socratic';
 							}}>Socratic</button
@@ -280,7 +282,7 @@
 							<button
 								class={`w-full px-4 py-2.5 text-left text-sm transition-colors ${
 									currentModel.value == model.modelName
-										? 'bg-primary text-primary-foreground'
+										? 'text-primary-foreground bg-primary'
 										: 'text-foreground hover:bg-secondary'
 								}`}
 								onclick={() => {
@@ -328,7 +330,7 @@
 			</div>
 			<button
 				disabled={!inputValue.trim()}
-				class="shrink-0 bg-primary p-3 text-primary-foreground transition-all hover:bg-primary/90 disabled:cursor-not-allowed disabled:border-primary-content/50 disabled:bg-primary/20 disabled:opacity-50"
+				class="text-primary-foreground shrink-0 bg-primary p-3 transition-all hover:bg-primary/90 disabled:cursor-not-allowed disabled:border-primary-content/50 disabled:bg-primary/20 disabled:opacity-50"
 			>
 				<Icon icon="lucide:arrow-right" class="h-4 w-4" />
 			</button>

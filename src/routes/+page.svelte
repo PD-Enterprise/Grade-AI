@@ -53,7 +53,8 @@
 			model: model.modelString,
 			mode: modelType.value,
 			history: [],
-			conversationId: threadId
+			conversationId: threadId,
+			email: userData.value.email
 		};
 
 		newPromptBody.value = promptBody;
@@ -106,7 +107,7 @@
 				></textarea>
 				<button
 					disabled={!prompt.trim()}
-					class="absolute right-2 rounded-lg bg-primary p-2 text-primary-foreground transition-colors hover:bg-primary/90 disabled:bg-primary/20"
+					class="text-primary-foreground absolute right-2 rounded-lg bg-primary p-2 transition-colors hover:bg-primary/90 disabled:bg-primary/20"
 					onclick={sendMessage}
 					id="send-message-button"
 				>
@@ -119,13 +120,13 @@
 				<!-- Mode Selector -->
 				<div class="flex rounded-lg bg-secondary p-1">
 					<button
-						class={`rounded-md px-3 py-1.5 text-sm font-medium transition-all ${modelType.value == 'direct' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+						class={`rounded-md px-3 py-1.5 text-sm font-medium transition-all ${modelType.value == 'direct' ? 'text-primary-foreground bg-card-foreground/10' : 'text-muted-foreground hover:text-foreground'}`}
 						onclick={() => {
 							modelType.value = 'direct';
 						}}>Direct Model</button
 					>
 					<button
-						class={`rounded-md px-3 py-1.5 text-sm font-medium transition-all ${modelType.value == 'socratic' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+						class={`rounded-md px-3 py-1.5 text-sm font-medium transition-all ${modelType.value == 'socratic' ? 'text-primary-foreground bg-card-foreground/10' : 'text-muted-foreground hover:text-foreground'}`}
 						onclick={() => {
 							modelType.value = 'socratic';
 						}}>Socratic Models</button
@@ -152,7 +153,7 @@
 								<button
 									class={`w-full px-4 py-2.5 text-left text-sm transition-colors ${
 										currentModel.value == model.modelName
-											? 'bg-primary text-primary-foreground'
+											? 'text-primary-foreground bg-primary'
 											: 'text-foreground hover:bg-secondary'
 									}`}
 									onclick={() => {
