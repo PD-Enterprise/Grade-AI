@@ -2,5 +2,8 @@ import { createAuthClient } from 'better-auth/svelte';
 import config from './apiConfig';
 
 export const authClient = createAuthClient({
-	baseURL: config.apiUrl
+	baseURL: config.apiUrl,
+	fetchOptions: {
+		credentials: 'include'
+	}
 });
