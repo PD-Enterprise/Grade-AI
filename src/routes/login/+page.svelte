@@ -1,5 +1,9 @@
 <script lang="ts">
-	import { login } from '$lib/utils/auth-helper';
+	import { signIn } from '@auth/sveltekit/client';
+
+	async function login() {
+		signIn('google', { redirectTo: '/' });
+	}
 </script>
 
 <svelte:head>

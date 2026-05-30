@@ -4,7 +4,7 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
 	plugins: [tailwindcss(), sveltekit()],
-	ssr: {
-		external: ['@better-auth/core']
+	define: {
+		'process.env.IS_PREACT': JSON.stringify('true')
 	}
 });

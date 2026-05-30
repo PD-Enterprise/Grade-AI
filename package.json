@@ -42,8 +42,8 @@
 		"wrangler": "^4.85.0"
 	},
 	"dependencies": {
+		"@auth/sveltekit": "^1.10.0",
 		"@humanspeak/svelte-markdown": "^1.4.5",
-		"better-auth": "^1.6.12",
 		"dompurify": "^3.4.1",
 		"katex": "^0.16.45",
 		"nanoid": "^5.1.9"

@@ -1,7 +1,1 @@
-import { auth } from '$lib/utils/auth';
-import { svelteKitHandler } from 'better-auth/svelte-kit';
-import { building } from '$app/environment';
-
-export async function handle({ event, resolve }) {
-	return svelteKitHandler({ event, resolve, auth, building });
-}
+export { handle } from '$lib/utils/auth';

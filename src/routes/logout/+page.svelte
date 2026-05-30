@@ -1,5 +1,9 @@
 <script lang="ts">
-	import { logout } from '$lib/utils/auth-helper';
+	import { signOut } from '@auth/sveltekit/client';
+
+	async function logout() {
+		signOut();
+	}
 </script>
 
 <svelte:head>

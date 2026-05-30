@@ -1,15 +1,21 @@
 import type { UserData } from '$lib/types';
 import config from '$lib/utils/apiConfig';
-import { auth } from '$lib/utils/auth';
 import type { LayoutServerLoad } from './$types';
 
-export const load: LayoutServerLoad = async ({ request }) => {
-	const session = await auth.api.getSession({ headers: request.headers });
+export const load: LayoutServerLoad = async (event) => {
+	const session = await event.locals.auth();
 	let membership: UserData['membership'] | undefined;
 	let academicLevel: UserData['academicLevel'] | undefined;
 
 	if (session && session.user) {
 		const user = session.user;
+		if (!user.email || !user.name || !user.image) {
+			return {
+				status: 400,
+				message: 'User data missing'
+			};
+		}
+
 		// Add new user to Database
 		const userInsertion = await insertUser(user.email, user.name, user.image);
 		if (userInsertion instanceof Error) {

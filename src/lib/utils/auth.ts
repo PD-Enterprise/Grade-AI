@@ -1,22 +1,17 @@
-import {
-	BETTER_AUTH_SECRET,
-	BETTER_AUTH_URL,
-	GOOGLE_CLIENT_ID,
-	GOOGLE_CLIENT_SECRET
-} from '$env/static/private';
-import { betterAuth } from 'better-auth';
+import { AUTH_GOOGLE_ID, AUTH_GOOGLE_SECRET, AUTH_SECRET } from '$env/static/private';
+import type { Provider } from '@auth/core/providers';
+import { SvelteKitAuth } from '@auth/sveltekit';
+import Google from '@auth/sveltekit/providers/google';
 
-export const auth = betterAuth({
-	secret: BETTER_AUTH_SECRET,
-	baseURL: BETTER_AUTH_URL,
-	socialProviders: {
-		google: {
-			clientId: GOOGLE_CLIENT_ID as string,
-			clientSecret: GOOGLE_CLIENT_SECRET as string
-		}
-	},
-	session: {
-		expiresIn: 60 * 60 * 24 * 7,
-		updateAge: 60 * 60 * 24
-	}
+const providers: Provider[] = [
+	Google({
+		clientId: AUTH_GOOGLE_ID,
+		clientSecret: AUTH_GOOGLE_SECRET
+	})
+];
+
+export const { handle, signIn, signOut } = SvelteKitAuth({
+	providers,
+	secret: AUTH_SECRET,
+	trustHost: true
 });
