@@ -46,7 +46,6 @@
 		"better-auth": "^1.6.12",
 		"dompurify": "^3.4.1",
 		"katex": "^0.16.45",
-		"kysely": "^0.29.2",
 		"nanoid": "^5.1.9"
 	}
 }
