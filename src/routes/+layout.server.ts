@@ -1,14 +1,10 @@
 import type { UserData } from '$lib/types';
 import config from '$lib/utils/apiConfig';
+import { auth } from '$lib/utils/auth';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ request }) => {
-	const session = await fetch(`${config.apiUrl}/api/auth/get-session`, {
-		headers: {
-			cookie: request.headers.get('cookie') ?? ''
-		}
-	}).then((r) => r.json());
-
+	const session = await auth.api.getSession({ headers: request.headers });
 	let membership: UserData['membership'] | undefined;
 	let academicLevel: UserData['academicLevel'] | undefined;
 

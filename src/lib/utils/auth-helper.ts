@@ -4,8 +4,8 @@ import { authClient } from './authClient';
 export async function login() {
 	const data = await authClient.signIn.social({
 		provider: 'google',
-		callbackURL: window.location.origin + '/',
-		errorCallbackURL: window.location.origin + '/error'
+		callbackURL: '/',
+		errorCallbackURL: '/error'
 	});
 
 	return data;
