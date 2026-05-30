@@ -2,7 +2,7 @@ import config from '$lib/utils/apiConfig';
 import { functionReturn } from '$lib/utils/functionReturn';
 
 export async function updateUserAcademicLevel(email: string, academicLevel: number) {
-	const response = await fetch(`${config.apiUrl}grade-ai/update-user-academic-level`, {
+	const response = await fetch(`${config.apiUrl}/grade-ai/update-user-academic-level`, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify({ email: email, academicLevel: academicLevel })

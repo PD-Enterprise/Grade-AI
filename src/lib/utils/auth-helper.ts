@@ -1,11 +1,11 @@
 import { resolve } from '$app/paths';
-import { authClient } from './auth-client';
+import { authClient } from './authClient';
 
 export async function login() {
 	const data = await authClient.signIn.social({
 		provider: 'google',
-		callbackURL: '/',
-		errorCallbackURL: '/error'
+		callbackURL: window.location.origin + '/',
+		errorCallbackURL: window.location.origin + '/error'
 	});
 
 	return data;

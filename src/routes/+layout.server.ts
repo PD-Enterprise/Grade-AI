@@ -1,10 +1,14 @@
 import type { UserData } from '$lib/types';
 import config from '$lib/utils/apiConfig';
-import { auth } from '$lib/utils/auth';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ request }) => {
-	const session = await auth.api.getSession({ headers: request.headers });
+	const session = await fetch(`${config.apiUrl}/api/auth/get-session`, {
+		headers: {
+			cookie: request.headers.get('cookie') ?? ''
+		}
+	}).then((r) => r.json());
+
 	let membership: UserData['membership'] | undefined;
 	let academicLevel: UserData['academicLevel'] | undefined;
 
@@ -39,7 +43,7 @@ export const load: LayoutServerLoad = async ({ request }) => {
 		}
 		academicLevel = userAcademicLevel?.academicLevel;
 
-		console.log(academicLevel);
+		// console.log(academicLevel);
 
 		return {
 			session,
@@ -52,7 +56,7 @@ export const load: LayoutServerLoad = async ({ request }) => {
 
 async function insertUser(email: string, name: string, image: string | null | undefined) {
 	try {
-		const request = await fetch(`${config.apiUrl}users/new-user`, {
+		const request = await fetch(`${config.apiUrl}/users/new-user`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
@@ -70,7 +74,7 @@ async function insertUser(email: string, name: string, image: string | null | un
 
 async function getUserRole(email: string) {
 	try {
-		const request = await fetch(`${config.apiUrl}users/roles/get-role`, {
+		const request = await fetch(`${config.apiUrl}/users/roles/get-role`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
@@ -88,7 +92,7 @@ async function getUserRole(email: string) {
 
 async function getUserAcademicLevel(email: string) {
 	try {
-		const request = await fetch(`${config.apiUrl}grade-ai/get-user-academic-level`, {
+		const request = await fetch(`${config.apiUrl}/grade-ai/get-user-academic-level`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
