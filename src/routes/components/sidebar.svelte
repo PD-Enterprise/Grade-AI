@@ -30,7 +30,7 @@
 	}
 	async function updateAcademicLevel() {
 		// @ts-expect-error Hoping this won't cause future problems.
-		await updateUserAcademicLevel(userData.value.email, parseInt(academicLevel));
+		await updateUserAcademicLevel(parseInt(academicLevel));
 		userData.value.academicLevel = academicLevel;
 		// @ts-expect-error Function won't run before onMount.
 		userModelDialogue.close();

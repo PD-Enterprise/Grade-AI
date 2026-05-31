@@ -61,8 +61,7 @@
 		<form method="dialog">
 			<button
 				class="btn mt-2 hover:text-black hover:btn-accent"
-				onclick={async () =>
-					await updateUserAcademicLevel(userData.value.email, parseInt(academicLevel))}
+				onclick={async () => await updateUserAcademicLevel(parseInt(academicLevel))}
 				>Continue</button
 			>
 		</form>

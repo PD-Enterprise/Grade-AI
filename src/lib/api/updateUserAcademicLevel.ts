@@ -1,11 +1,11 @@
 import config from '$lib/utils/apiConfig';
 import { functionReturn } from '$lib/utils/functionReturn';
 
-export async function updateUserAcademicLevel(email: string, academicLevel: number) {
+export async function updateUserAcademicLevel(academicLevel: number) {
 	const response = await fetch(`${config.apiUrl}/users/academic-level`, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({ email: email, academicLevel: academicLevel })
+		body: JSON.stringify({ academicLevel: academicLevel })
 	});
 	const data = await response.json();
 
