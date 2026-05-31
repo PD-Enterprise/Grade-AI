@@ -14,7 +14,8 @@
 	import { resolve } from '$app/paths';
 	import NotLoggedIn from './components/notLoggedIn.svelte';
 	import { onMount } from 'svelte';
-	import type { Thread } from '$lib/types';
+	import { SvelteSet } from 'svelte/reactivity';
+	import { goto } from '$app/navigation';
 
 	let { data, children } = $props();
 	let isLoaded = $state(false);
@@ -37,7 +38,7 @@
 	}
 
 	onMount(async () => {
-		const existingIds = new Set(threads.values.map((t) => t.id));
+		const existingIds = new SvelteSet(threads.values.map((t) => t.id));
 
 		for (let i = 0; i < localStorage.length; i++) {
 			const key = localStorage.key(i);
@@ -93,16 +94,18 @@
 			isAuthenticated.value = false;
 		} else {
 			isAuthenticated.value = true;
-			if (data.user) {
-				// console.log(data.user);
-				userData.value = {
-					name: data.user.name,
-					email: data.user.email,
-					image: data.user.image,
-					membership: data.membership,
-					academicLevel: data.academicLevel
-				};
+			const user = data.session.user;
+			if (!user) {
+				console.error('User does not exist');
+				goto(resolve('/'));
 			}
+			userData.value = {
+				name: user?.name ? user?.name : '',
+				email: user?.email ? user?.email : '',
+				image: user?.image,
+				membership: data.membership,
+				academicLevel: data.academicLevel
+			};
 		}
 	});
 </script>

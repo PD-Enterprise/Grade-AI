@@ -1,5 +1,6 @@
 import type { UserData } from '$lib/types';
 import config from '$lib/utils/apiConfig';
+import type { RequestEvent } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async (event) => {
@@ -26,7 +27,7 @@ export const load: LayoutServerLoad = async (event) => {
 		}
 
 		// Get user role
-		const userRole = await getUserRole(user.email);
+		const userRole = await getUserRole(event);
 		if (userRole instanceof Error) {
 			return {
 				status: 500,
@@ -36,7 +37,7 @@ export const load: LayoutServerLoad = async (event) => {
 		membership = userRole;
 
 		// Get user academic level
-		const userAcademicLevel = await getUserAcademicLevel(user.email);
+		const userAcademicLevel = await getUserAcademicLevel(event);
 		if (userAcademicLevel instanceof Error) {
 			return {
 				status: 500,
@@ -44,12 +45,10 @@ export const load: LayoutServerLoad = async (event) => {
 			};
 		}
 		academicLevel = userAcademicLevel?.academicLevel;
-
 		// console.log(academicLevel);
 
 		return {
 			session,
-			user,
 			membership,
 			academicLevel
 		};
@@ -74,17 +73,13 @@ async function insertUser(email: string, name: string, image: string | null | un
 	}
 }
 
-async function getUserRole(email: string) {
+async function getUserRole(event: RequestEvent) {
 	try {
-		const request = await fetch(`${config.apiUrl}/users/roles/get-role`, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({
-				email: email
-			})
+		const request = await event.fetch(`${config.apiUrl}/users/roles/get-role`, {
+			method: 'GET',
+			headers: { 'Content-Type': 'application/json' }
 		});
 		const result = await request.json();
-		// console.log(result.data);
 
 		return result.data;
 	} catch (error) {
@@ -92,14 +87,11 @@ async function getUserRole(email: string) {
 	}
 }
 
-async function getUserAcademicLevel(email: string) {
+async function getUserAcademicLevel(event: RequestEvent) {
 	try {
-		const request = await fetch(`${config.apiUrl}/grade-ai/get-user-academic-level`, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({
-				email: email
-			})
+		const request = await event.fetch(`${config.apiUrl}/users/academic-level`, {
+			method: 'GET',
+			headers: { 'Content-Type': 'application/json' }
 		});
 		const result = await request.json();
 
