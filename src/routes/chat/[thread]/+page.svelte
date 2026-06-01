@@ -4,17 +4,14 @@
 	import {
 		threads,
 		currentModel,
-		modelList,
-		userData
+		modelList
 	} from '$lib/stores/store.svelte';
-	import { createUserMessage, createAssistantMessage, addMessage, setThreadStatus, updateMessage, saveThread } from '$lib/threads';
+	import { createUserMessage, createAssistantMessage, addMessage, setThreadStatus, saveThread } from '$lib/threads';
 	import { onMount } from 'svelte';
-	import type { ChatMessage, Thread } from '$lib/types';
 	import { handleKeyDown } from '../../utils/sendMessageKeyboard';
 	import { grow } from '../../utils/growTextbox';
 	import Message from '../../components/message.svelte';
-	import { goto } from '$app/navigation';
-	import { resolve } from '$app/paths';
+
 
 	let slug = $derived(page.params.thread);
 	let thread = $derived(threads.values.find((t) => t.id === slug));
@@ -143,15 +140,9 @@
 		if (saved) saveThread(saved);
 	}
 
-	onMount(async () => {
-		const existingThread = threads.values.find((t) => t.id === slug);
-		if (!existingThread) {
-			goto(resolve('/'));
-			return;
-		}
-
+	onMount(() => {
 		const inputElement = document.getElementById('input-element') as HTMLInputElement;
-		inputElement.focus();
+		inputElement?.focus();
 		scrollToBottom(true);
 	});
 
