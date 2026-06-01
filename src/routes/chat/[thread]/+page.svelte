@@ -1,24 +1,24 @@
 <script lang="ts">
-	import { generateTitle } from '$lib/utils/generateTempTitle';
 	import Icon from '@iconify/svelte';
 	import { page } from '$app/state';
 	import {
-		newPromptBody,
 		threads,
 		currentModel,
-		modelType,
 		modelList,
 		userData
 	} from '$lib/stores/store.svelte';
+	import { createUserMessage, createAssistantMessage, addMessage, setThreadStatus, updateMessage, saveThread } from '$lib/threads';
 	import { onMount } from 'svelte';
-	import type { ChatMessage, promptBody, Thread } from '$lib/types';
+	import type { ChatMessage, Thread } from '$lib/types';
 	import { handleKeyDown } from '../../utils/sendMessageKeyboard';
 	import { grow } from '../../utils/growTextbox';
 	import Message from '../../components/message.svelte';
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 
 	let slug = $derived(page.params.thread);
 	let thread = $derived(threads.values.find((t) => t.id === slug));
-	let messages = $derived(threads.values.find((t) => t.id === slug)?.messages ?? []);
+	let messages = $derived(thread?.messages ?? []);
 	let lastAssistantId = $derived(
 		thread?.status === 'loading'
 			? [...messages].reverse().find((m) => m.role === 'assistant')?.id ?? null
@@ -26,88 +26,60 @@
 	);
 	let inputValue = $state('');
 	let isModelSelectionMenuOpen: boolean = $state(false);
-	let isModelTypeSelectionMenuOpen: boolean = $state(false);
 	let menuRef: HTMLDivElement | undefined = $state();
 	let messagesContainer: HTMLDivElement | undefined = $state();
 
 	function toggleModelSelectionMenu() {
-		isModelTypeSelectionMenuOpen = false;
 		isModelSelectionMenuOpen = !isModelSelectionMenuOpen;
-	}
-	function toggleModelTypeSelectionMenu() {
-		isModelSelectionMenuOpen = false;
-		isModelTypeSelectionMenuOpen = !isModelTypeSelectionMenuOpen;
 	}
 	function changeModel(modelName: string) {
 		currentModel.value = modelName;
 		isModelSelectionMenuOpen = false;
 	}
 	function handleClickOutside(event: MouseEvent) {
-		// If menu is open and the click target is NOT the menu or its children
 		if (isModelSelectionMenuOpen && menuRef && !menuRef.contains(event.target as Node)) {
-			// We also check if the click was on the button that toggles it
-			// to avoid double-toggling conflicts.
 			const toggleButton = (event.target as HTMLElement).closest('.current-model button');
 			if (!toggleButton) {
 				isModelSelectionMenuOpen = false;
 			}
 		}
 	}
+
+	function getCurrentModel() {
+		return modelList.values.find((m) => m.modelName === currentModel.value);
+	}
+
 	async function sendMessage() {
 		if (!inputValue.trim() || !thread) return;
 
-		const userMessage = {
-			role: 'user' as const,
-			content: inputValue,
-			id: crypto.randomUUID()
-		};
-		thread.messages.push(userMessage);
 		const promptToSend = inputValue;
+		const model = getCurrentModel();
+		if (!model) return;
+
+		const userMsg = createUserMessage(promptToSend, model.modelString, model.providerName);
+		addMessage(thread, userMsg);
 		inputValue = '';
 
-		const model = modelList.values.find((m) => m.modelName === currentModel.value);
-		if (!model) return;
-		const modelString = model.modelString;
-		const provider = model.providerName;
-		if (!provider || !modelString) return;
+		const aiMsg = createAssistantMessage();
+		addMessage(thread, aiMsg);
+		setThreadStatus(thread, 'loading');
 
-		thread.status = 'loading';
-
-		try {
-			await getResponseFromLLM({
-				prompt: promptToSend,
-				provider: provider,
-				model: modelString,
-				mode: modelType.value,
-				history: thread.messages,
-				conversationId: thread.id,
-				email: userData.value.email
-			});
-		} catch (error) {
-			console.error('Error:', error);
-		} finally {
-			localStorage.setItem(`thread: ${JSON.stringify(thread.id)}`, JSON.stringify(thread));
-		}
-	}
-
-	async function getResponseFromLLM(promptBody: promptBody) {
-		const aiMessageId = crypto.randomUUID();
-		const currentThread = threads.values.find((t) => t.id === slug);
-		const aiMessage: ChatMessage = {
-			role: 'assistant',
-			content: '',
-			id: aiMessageId
-		};
-
-		if (currentThread) {
-			currentThread.messages.push(aiMessage);
-		}
+		const history = thread.messages.slice(0, -1);
 
 		try {
 			const response = await fetch(`/chat/${slug}`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ promptBody })
+				body: JSON.stringify({
+					promptBody: {
+						prompt: promptToSend,
+						provider: model.providerName,
+						model: model.modelString,
+						mode: thread.mode,
+						history: history,
+						conversationId: thread.id
+					}
+				})
 			});
 
 			if (!response.body) return;
@@ -135,11 +107,10 @@
 						if (json.type == 'delta' && json.delta) {
 							threads.values = threads.values.map((t) => {
 								if (t.id !== slug) return t;
-
 								return {
 									...t,
 									messages: t.messages.map((m) =>
-										m.id === aiMessage.id ? { ...m, content: m.content + json.delta } : m
+										m.id === aiMsg.id ? { ...m, content: m.content + json.delta } : m
 									)
 								};
 							});
@@ -167,48 +138,32 @@
 				return { ...t, status: 'error' as const };
 			});
 		}
+
+		const saved = threads.values.find((t) => t.id === slug);
+		if (saved) saveThread(saved);
 	}
+
 	onMount(async () => {
-		// console.log(thread);
-
-		const thread = threads.values.find((t) => t.id === slug);
-
-		if (newPromptBody.value && !thread) {
-			const initialPrompt = newPromptBody.value.prompt;
-			if (!slug) {
-				return;
-			}
-			const tempThread: Thread = {
-				id: slug,
-				title: generateTitle(initialPrompt),
-				messages: [
-					{
-						role: 'user',
-						content: initialPrompt,
-						id: crypto.randomUUID()
-					}
-				],
-				status: 'loading'
-			};
-			threads.values.push(tempThread);
-
-			await getResponseFromLLM(newPromptBody.value);
-			localStorage.setItem(`thread: ${JSON.stringify(tempThread.id)}`, JSON.stringify(thread));
-			newPromptBody.value = null;
+		const existingThread = threads.values.find((t) => t.id === slug);
+		if (!existingThread) {
+			goto(resolve('/'));
+			return;
 		}
 
 		const inputElement = document.getElementById('input-element') as HTMLInputElement;
 		inputElement.focus();
 		scrollToBottom(true);
 	});
+
 	$effect(() => {
 		scrollToBottom();
 	});
+
 	function scrollToBottom(instant: boolean = false) {
 		if (messages.length && messagesContainer) {
 			messagesContainer.scrollTo({
 				top: messagesContainer.scrollHeight,
-				behavior: instant ? 'smooth' : 'smooth'
+				behavior: instant ? 'instant' : 'smooth'
 			});
 		}
 	}
@@ -217,66 +172,28 @@
 <svelte:window onclick={handleClickOutside} />
 
 <svelte:head>
-	{#if thread}
-		<title>{thread.title}</title>
-	{:else if newPromptBody.value}
-		<title>{generateTitle(newPromptBody.value.prompt)}</title>
-	{:else}
-		<title>{slug}</title>
-	{/if}
+	<title>{thread?.title ?? 'Chat'}</title>
 </svelte:head>
 
 <div class="thread-container flex h-full flex-col gap-2">
 	<!-- Header -->
 	<div class="flex items-center justify-between border-b border-border bg-card/50 px-6 py-4">
-		<!-- Thread Title -->
 		<div class="flex items-center gap-4">
 			<div class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
 				<Icon icon="lucide:sparkles" class="h-5 w-5 text-primary" />
 			</div>
 			<div>
-				<h1 class="text-lg font-medium text-foreground">{thread?.title}</h1>
+				<h1 class="text-lg font-medium text-foreground">{thread?.title ?? 'Chat'}</h1>
 				<p class="text-sm text-muted-foreground">
-					{currentModel.value} · {modelType.value[0].toUpperCase() + modelType.value.slice(1)}
+					{currentModel.value || 'No model selected'}
+					{#if thread?.mode}
+						· {thread.mode[0].toUpperCase() + thread.mode.slice(1)}
+					{/if}
 				</p>
 			</div>
 		</div>
 
-		<!-- Mode and Model Selector -->
 		<div class="flex gap-2">
-			<!-- Mode Selector -->
-			<div class="relative">
-				<button
-					class="flex items-center gap-2 rounded-lg bg-secondary px-3 py-2 text-sm transition-colors hover:bg-secondary/80"
-					onclick={() => {
-						toggleModelTypeSelectionMenu();
-					}}
-				>
-					{modelType.value[0].toUpperCase() + modelType.value.slice(1)}
-					<Icon icon="lucide:chevron-down" class="h-3.5 w-3.5" />
-				</button>
-
-				{#if isModelTypeSelectionMenuOpen}
-					<div
-						class="absolute top-full right-0 z-40 mt-2 min-w-32 overflow-hidden rounded-lg border border-border bg-card shadow-xl"
-					>
-						<button
-							class={`w-full px-4 py-2.5 text-left text-sm transition-colors ${modelType.value == 'direct' ? 'text-primary-foreground bg-primary' : 'text-foreground hover:bg-secondary'}`}
-							onclick={() => {
-								modelType.value = 'direct';
-							}}>Direct</button
-						>
-						<button
-							class={`w-full px-4 py-2.5 text-left text-sm transition-colors ${modelType.value == 'socratic' ? 'text-primary-foreground bg-primary' : 'text-foreground hover:bg-secondary'}`}
-							onclick={() => {
-								modelType.value = 'socratic';
-							}}>Socratic</button
-						>
-					</div>
-				{/if}
-			</div>
-
-			<!-- Model Selector -->
 			<div class="relative">
 				<button
 					class="flex items-center gap-2 rounded-lg bg-secondary px-3 py-2 text-sm transition-colors hover:bg-secondary/80"
@@ -343,6 +260,7 @@
 				></textarea>
 			</div>
 			<button
+				onclick={sendMessage}
 				disabled={!inputValue.trim()}
 				class="text-primary-foreground shrink-0 bg-primary p-3 transition-all hover:bg-primary/90 disabled:cursor-not-allowed disabled:border-primary-content/50 disabled:bg-primary/20 disabled:opacity-50"
 			>

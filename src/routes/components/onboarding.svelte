@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { updateUserAcademicLevel } from '$lib/api/updateUserAcademicLevel';
 	import { userData } from '$lib/stores/store.svelte';
 	import { validateAcademicLevel } from '$lib/utils/validateAcademicLevel';
 	import { onMount } from 'svelte';
@@ -21,6 +20,14 @@
 			}
 		}
 	});
+
+	async function handleContinue() {
+		await fetch('/', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ academicLevel: parseInt(academicLevel) })
+		});
+	}
 </script>
 
 <dialog id="onboarding_modal" class="modal">
@@ -61,7 +68,7 @@
 		<form method="dialog">
 			<button
 				class="btn mt-2 hover:text-black hover:btn-accent"
-				onclick={async () => await updateUserAcademicLevel(parseInt(academicLevel))}
+				onclick={handleContinue}
 				>Continue</button
 			>
 		</form>

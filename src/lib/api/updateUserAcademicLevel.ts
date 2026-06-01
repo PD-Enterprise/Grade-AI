@@ -1,10 +1,15 @@
 import config from '$lib/utils/apiConfig';
 import { functionReturn } from '$lib/utils/functionReturn';
 
-export async function updateUserAcademicLevel(academicLevel: number) {
+export async function updateUserAcademicLevel(academicLevel: number, cookie?: string) {
+	const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+	if (cookie) {
+		headers['Cookie'] = cookie;
+	}
+
 	const response = await fetch(`${config.apiUrl}/users/academic-level`, {
 		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
+		headers,
 		body: JSON.stringify({ academicLevel: academicLevel })
 	});
 	const data = await response.json();

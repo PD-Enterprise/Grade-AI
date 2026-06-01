@@ -5,10 +5,10 @@
 	import { threads } from '$lib/stores/store.svelte';
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
-	import { updateUserAcademicLevel } from '$lib/api/updateUserAcademicLevel';
 	import { validateAcademicLevel } from '$lib/utils/validateAcademicLevel';
 	import { onMount } from 'svelte';
 	import { slide } from 'svelte/transition';
+	import { deleteThread as deleteStoredThread } from '$lib/threads';
 
 	let image: string | undefined = $state('');
 	let slug = $derived(page.params.thread);
@@ -24,16 +24,21 @@
 		const currentThread = threads.values.find((t) => t.id === threadId);
 		if (currentThread) {
 			threads.values = threads.values.filter((t) => t.id !== threadId);
-			localStorage.removeItem(`thread: "${threadId}"`);
+			deleteStoredThread(threadId);
 			goto(resolve('/'));
 		}
 	}
 	async function updateAcademicLevel() {
-		// @ts-expect-error Hoping this won't cause future problems.
-		await updateUserAcademicLevel(parseInt(academicLevel));
-		userData.value.academicLevel = academicLevel;
-		// @ts-expect-error Function won't run before onMount.
-		userModelDialogue.close();
+		const response = await fetch('/', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ academicLevel: parseInt(academicLevel as string) })
+		});
+		const result = await response.json();
+		if (result.status === 200) {
+			userData.value.academicLevel = academicLevel;
+		}
+		userModelDialogue?.close();
 	}
 	onMount(() => {
 		userModelDialogue = document.getElementById('user-profile-modal') as HTMLDialogElement;

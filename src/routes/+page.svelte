@@ -1,15 +1,16 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
 	import { onMount } from 'svelte';
-	import type { promptBody } from '$lib/types';
 	import {
-		newPromptBody,
 		currentModel,
-		modelType,
+		defaultMode,
 		modelList,
 		userData,
-		isAuthenticated
+		isAuthenticated,
+		threads
 	} from '$lib/stores/store.svelte';
+	import { createThread, createUserMessage, addMessage } from '$lib/threads';
+	import { generateTitle } from '$lib/utils/generateTempTitle';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { handleKeyDown } from './utils/sendMessageKeyboard';
@@ -29,10 +30,7 @@
 		isModelSelectionMenuOpen = !isModelSelectionMenuOpen;
 	}
 	function handleClickOutside(event: MouseEvent) {
-		// If menu is open and the click target is NOT the menu or its children
 		if (isModelSelectionMenuOpen && menuRef && !menuRef.contains(event.target as Node)) {
-			// We also check if the click was on the button that toggles it
-			// to avoid double-toggling conflicts.
 			const toggleButton = (event.target as HTMLElement).closest('.current-model button');
 			if (!toggleButton) {
 				isModelSelectionMenuOpen = false;
@@ -43,21 +41,19 @@
 	async function sendMessage() {
 		if (!prompt.trim()) return;
 
+		if (!currentModel.value && modelList.values.length > 0) {
+			currentModel.value = modelList.values[0].modelName;
+		}
 		const model = modelList.values.find((m) => m.modelName === currentModel.value);
 		if (!model) return;
 
 		const threadId = crypto.randomUUID();
-		const promptBody: promptBody = {
-			prompt: prompt,
-			provider: model.providerName,
-			model: model.modelString,
-			mode: modelType.value,
-			history: [],
-			conversationId: threadId,
-			email: userData.value.email
-		};
+		const title = generateTitle(prompt);
+		const thread = createThread(threadId, title, defaultMode.value);
+		const userMsg = createUserMessage(prompt, model.modelString, model.providerName);
+		addMessage(thread, userMsg);
+		threads.values.push(thread);
 
-		newPromptBody.value = promptBody;
 		goto(resolve(`/chat/${threadId}`));
 	}
 
@@ -77,7 +73,6 @@
 
 <div class="flex flex-1 flex-col items-center justify-center bg-background px-4 py-20">
 	<div class="w-full max-w-2xl">
-		<!-- Logo and Title -->
 		<div
 			class={`logo-and-title mb-12 text-center transition-all duration-700  ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
 		>
@@ -90,11 +85,9 @@
 			<p class="mt-3 text-muted-foreground">Learn smarter with intelligent dialogue</p>
 		</div>
 
-		<!-- Input -->
 		<div
 			class={`relative z-10 transition-all delay-100 duration-700 ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
 		>
-			<!-- Input Field -->
 			<div class="relative flex items-center">
 				<textarea
 					bind:value={prompt}
@@ -115,25 +108,22 @@
 				</button>
 			</div>
 
-			<!-- Mode and Model Selector -->
 			<div class="mt-4 flex items-center justify-center gap-2">
-				<!-- Mode Selector -->
 				<div class="flex rounded-lg bg-secondary p-1">
 					<button
-						class={`rounded-md px-3 py-1.5 text-sm font-medium transition-all ${modelType.value == 'direct' ? 'text-primary-foreground bg-card-foreground/10' : 'text-muted-foreground hover:text-foreground'}`}
+						class={`rounded-md px-3 py-1.5 text-sm font-medium transition-all ${defaultMode.value == 'direct' ? 'text-primary-foreground bg-card-foreground/10' : 'text-muted-foreground hover:text-foreground'}`}
 						onclick={() => {
-							modelType.value = 'direct';
+							defaultMode.value = 'direct';
 						}}>Direct Model</button
 					>
 					<button
-						class={`rounded-md px-3 py-1.5 text-sm font-medium transition-all ${modelType.value == 'socratic' ? 'text-primary-foreground bg-card-foreground/10' : 'text-muted-foreground hover:text-foreground'}`}
+						class={`rounded-md px-3 py-1.5 text-sm font-medium transition-all ${defaultMode.value == 'socratic' ? 'text-primary-foreground bg-card-foreground/10' : 'text-muted-foreground hover:text-foreground'}`}
 						onclick={() => {
-							modelType.value = 'socratic';
+							defaultMode.value = 'socratic';
 						}}>Socratic Models</button
 					>
 				</div>
 
-				<!-- Model Selector -->
 				<div class="relative">
 					<button
 						class="flex items-center gap-1.5 rounded-lg bg-secondary px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-secondary/80 hover:text-foreground"
@@ -169,7 +159,6 @@
 			</div>
 		</div>
 
-		<!-- Features -->
 		<div
 			class={`mt-16 grid grid-cols-2 gap-4 transition-all delay-200 duration-700 ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
 		>

@@ -1,7 +1,7 @@
 export function validateAcademicLevel(academicLevel: string): boolean {
 	if (academicLevel.match(/^[0-9]+$/)) {
 		const academicLevelAsNumber = parseInt(academicLevel);
-		if (academicLevelAsNumber >= 1 && academicLevelAsNumber <= 12) {
+		if (academicLevelAsNumber >= 1 && academicLevelAsNumber <= 15) {
 			return true;
 		} else {
 			return false;

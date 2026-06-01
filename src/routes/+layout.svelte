@@ -5,20 +5,21 @@
 		threads,
 		userData,
 		currentModel,
-		modelType,
+		defaultMode,
 		modelList
 	} from '$lib/stores/store.svelte';
+	import { loadAllThreads } from '$lib/threads';
 	import Sidebar from './components/sidebar.svelte';
 	import './layout.css';
 	import Icon from '@iconify/svelte';
 	import { resolve } from '$app/paths';
 	import NotLoggedIn from './components/notLoggedIn.svelte';
 	import { onMount } from 'svelte';
-	import { SvelteSet } from 'svelte/reactivity';
-	import { goto } from '$app/navigation';
+	import { goto, afterNavigate } from '$app/navigation';
 
 	let { data, children } = $props();
-	let isLoaded = $state(false);
+
+	isAuthenticated.value = !!data.session;
 
 	async function getModelListFromApi() {
 		try {
@@ -27,7 +28,7 @@
 				headers: { 'Content-Type': 'application/json' }
 			});
 			const result = await response.json();
-			if (result.status === 200) {
+			if (result.status === 200 && result.data?.length) {
 				modelList.values = result.data;
 				return result.data;
 			}
@@ -37,55 +38,33 @@
 		return [];
 	}
 
-	onMount(async () => {
-		const existingIds = new SvelteSet(threads.values.map((t) => t.id));
+	onMount(() => {
+		threads.values = loadAllThreads();
 
-		for (let i = 0; i < localStorage.length; i++) {
-			const key = localStorage.key(i);
-			if (key?.startsWith('thread:')) {
-				const threadData = localStorage.getItem(key);
-				if (threadData && threadData !== 'undefined') {
-					try {
-						const thread = JSON.parse(threadData);
-						if (thread && thread.id && !existingIds.has(thread.id)) {
-							threads.values.push(thread);
-							existingIds.add(thread.id);
-						}
-					} catch (e) {
-						console.error(`Error parsing thread data for key ${key}:`, e);
-					}
-				}
-			}
+		const localDefaultMode = localStorage.getItem('defaultMode');
+		if (localDefaultMode) {
+			defaultMode.value = localDefaultMode as 'direct' | 'socratic';
 		}
 
-		// Load modelType first (no async dependency needed)
-		const localModelType = localStorage.getItem('modelType');
-		if (localModelType) {
-			modelType.value = localModelType as 'direct' | 'socratic';
-		}
-
-		// Fetch model list
-		const models = await getModelListFromApi();
-
-		// Load currentModel (depends on model list for fallback)
 		const localCurrentModel = localStorage.getItem('CurrentModel');
 		if (localCurrentModel) {
 			currentModel.value = localCurrentModel;
-		} else if (models.length > 0) {
+		}
+	});
+
+	afterNavigate(async () => {
+		const models = await getModelListFromApi();
+		if (models.length > 0 && (!currentModel.value || !models.some((m: { modelName: string }) => m.modelName === currentModel.value))) {
 			currentModel.value = models[0].modelName;
 		}
-
-		isLoaded = true;
 	});
 
 	$effect(() => {
-		if (isLoaded) {
-			if (currentModel.value) {
-				localStorage.setItem('CurrentModel', currentModel.value);
-			}
-			if (modelType.value) {
-				localStorage.setItem('modelType', modelType.value);
-			}
+		if (currentModel.value) {
+			localStorage.setItem('CurrentModel', currentModel.value);
+		}
+		if (defaultMode.value) {
+			localStorage.setItem('defaultMode', defaultMode.value);
 		}
 	});
 

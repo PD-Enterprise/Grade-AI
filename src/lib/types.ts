@@ -4,12 +4,21 @@ export interface ChatMessage {
 	id: string;
 	role: ChatRole;
 	content: string;
+	model?: string;
+	provider?: 'groq' | 'gemini';
+	timestamp: number;
 }
+
+export type ThreadStatus = 'idle' | 'loading' | 'success' | 'error';
+
 export interface Thread {
 	id: string;
 	title: string;
+	mode: 'direct' | 'socratic';
 	messages: ChatMessage[];
-	status: 'loading' | 'success' | 'error';
+	status: ThreadStatus;
+	createdAt: number;
+	updatedAt: number;
 }
 
 export type UserData = {
@@ -21,7 +30,7 @@ export type UserData = {
 };
 
 export type ModelList = {
-	providerName: 'groq' | 'openrouter' | 'gemini';
+	providerName: 'groq' | 'gemini';
 	modelName: string;
 	modelString: string;
 	description: string;
@@ -29,10 +38,9 @@ export type ModelList = {
 
 export type promptBody = {
 	prompt: string;
-	provider: 'groq' | 'openrouter' | 'gemini';
+	provider: 'groq' | 'gemini';
 	model: string;
 	mode: 'socratic' | 'direct';
 	history: ChatMessage[];
-	conversationId: Thread['id'] | undefined;
-	email: string;
+	conversationId: Thread['id'];
 };

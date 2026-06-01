@@ -18,7 +18,7 @@ export const load: LayoutServerLoad = async (event) => {
 		}
 
 		// Add new user to Database
-		const userInsertion = await insertUser(user.email, user.name, user.image);
+		const userInsertion = await insertUser(event, user.name, user.image);
 		if (userInsertion instanceof Error) {
 			return {
 				status: 500,
@@ -55,15 +55,14 @@ export const load: LayoutServerLoad = async (event) => {
 	}
 };
 
-async function insertUser(email: string, name: string, image: string | null | undefined) {
+async function insertUser(event: RequestEvent, name: string, image: string | null | undefined) {
 	try {
-		const request = await fetch(`${config.apiUrl}/users/new-user`, {
+		const request = await event.fetch(`${config.apiUrl}/users/new-user`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
-				email: email,
 				name: name,
-				avatarUrl: image
+				picture: image
 			})
 		});
 
