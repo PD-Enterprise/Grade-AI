@@ -64,7 +64,6 @@ async function getUserRole(event: RequestEvent) {
 }
 
 async function getUserAcademicLevel(event: RequestEvent) {
-	console.log(event.request.headers.get("cookie"))
 	try {
 		const request = await event.fetch(`${config.apiUrl}/users/academic-level`, {
 			method: 'GET',
