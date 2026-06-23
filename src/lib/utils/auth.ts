@@ -1,7 +1,8 @@
-import { AUTH_GOOGLE_ID, AUTH_GOOGLE_SECRET, AUTH_SECRET } from '$env/static/private';
+import { AUTH_GOOGLE_ID, AUTH_GOOGLE_SECRET, AUTH_SECRET, INTERNAL_KEY } from '$env/static/private';
 import type { Provider } from '@auth/core/providers';
 import { SvelteKitAuth } from '@auth/sveltekit';
 import Google from '@auth/sveltekit/providers/google';
+import config from './apiConfig';
 
 const providers: Provider[] = [
 	Google({
@@ -13,5 +14,23 @@ const providers: Provider[] = [
 export const { handle, signIn, signOut } = SvelteKitAuth({
 	providers,
 	secret: AUTH_SECRET,
-	trustHost: true
+	trustHost: true,
+	callbacks: {
+		async signIn({ user }) {
+			await fetch(`${config.apiUrl}/users/new-user`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					"Authorization": `Bearer ${INTERNAL_KEY}`
+				},
+				body: JSON.stringify({
+					email: user.email,
+					name: user.name,
+					image: user.image
+				})
+			})
+
+			return true
+		}
+	}
 });

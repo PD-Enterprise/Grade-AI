@@ -17,15 +17,6 @@ export const load: LayoutServerLoad = async (event) => {
 			};
 		}
 
-		// Add new user to Database
-		const userInsertion = await insertUser(event, user.name, user.image);
-		if (userInsertion instanceof Error) {
-			return {
-				status: 500,
-				message: 'Error inserting user'
-			};
-		}
-
 		// Get user role
 		const userRole = await getUserRole(event);
 		if (userRole instanceof Error) {
@@ -54,23 +45,6 @@ export const load: LayoutServerLoad = async (event) => {
 		};
 	}
 };
-
-async function insertUser(event: RequestEvent, name: string, image: string | null | undefined) {
-	try {
-		const request = await event.fetch(`${config.apiUrl}/users/new-user`, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({
-				name: name,
-				picture: image
-			})
-		});
-
-		return await request.json();
-	} catch (error) {
-		return new Error('Error inserting user' + error);
-	}
-}
 
 async function getUserRole(event: RequestEvent) {
 	try {
