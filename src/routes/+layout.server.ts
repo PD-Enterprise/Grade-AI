@@ -50,7 +50,10 @@ async function getUserRole(event: RequestEvent) {
 	try {
 		const request = await event.fetch(`${config.apiUrl}/users/roles/get-role`, {
 			method: 'GET',
-			headers: { 'Content-Type': 'application/json' }
+			headers: {
+				'Content-Type': 'application/json',
+				Cookie: event.request.headers.get('cookie') ?? ''
+			}
 		});
 		const result = await request.json();
 
@@ -61,10 +64,14 @@ async function getUserRole(event: RequestEvent) {
 }
 
 async function getUserAcademicLevel(event: RequestEvent) {
+	console.log(event.request.headers.get("cookie"))
 	try {
 		const request = await event.fetch(`${config.apiUrl}/users/academic-level`, {
 			method: 'GET',
-			headers: { 'Content-Type': 'application/json' }
+			headers: {
+				'Content-Type': 'application/json',
+				Cookie: event.request.headers.get('cookie') ?? ''
+			}
 		});
 		const result = await request.json();
 
