@@ -1,24 +1,27 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
 	import { page } from '$app/state';
+	import { threads, currentModel, modelList } from '$lib/stores/store.svelte';
 	import {
-		threads,
-		currentModel,
-		modelList
-	} from '$lib/stores/store.svelte';
-	import { createUserMessage, createAssistantMessage, addMessage, setThreadStatus, saveThread } from '$lib/threads';
+		createUserMessage,
+		createAssistantMessage,
+		addMessage,
+		setThreadStatus,
+		saveThread,
+		removeMessage
+	} from '$lib/threads';
 	import { onMount } from 'svelte';
 	import { handleKeyDown } from '../../utils/sendMessageKeyboard';
 	import { grow } from '../../utils/growTextbox';
 	import Message from '../../components/message.svelte';
 
-
 	let slug = $derived(page.params.thread);
+	let autoSent = $state(false);
 	let thread = $derived(threads.values.find((t) => t.id === slug));
 	let messages = $derived(thread?.messages ?? []);
 	let lastAssistantId = $derived(
 		thread?.status === 'loading'
-			? [...messages].reverse().find((m) => m.role === 'assistant')?.id ?? null
+			? ([...messages].reverse().find((m) => m.role === 'assistant')?.id ?? null)
 			: null
 	);
 	let inputValue = $state('');
@@ -57,7 +60,7 @@
 		addMessage(thread, userMsg);
 		inputValue = '';
 
-		const aiMsg = createAssistantMessage();
+		const aiMsg = createAssistantMessage(model.modelString, model.providerName);
 		addMessage(thread, aiMsg);
 		setThreadStatus(thread, 'loading');
 
@@ -140,10 +143,31 @@
 		if (saved) saveThread(saved);
 	}
 
+	function tryAutoSend() {
+		if (autoSent) return;
+		if (!thread || messages.length === 0) return;
+		const lastMsg = messages[messages.length - 1];
+		if (lastMsg.role !== 'user' || thread.status !== 'idle') return;
+		const model = getCurrentModel();
+		if (!model) return;
+
+		autoSent = true;
+		removeMessage(thread, lastMsg.id);
+		inputValue = lastMsg.content;
+		sendMessage();
+	}
+
 	onMount(() => {
 		const inputElement = document.getElementById('input-element') as HTMLInputElement;
 		inputElement?.focus();
 		scrollToBottom(true);
+		tryAutoSend();
+	});
+
+	$effect(() => {
+		if (modelList.values.length > 0) {
+			tryAutoSend();
+		}
 	});
 
 	$effect(() => {
@@ -230,7 +254,12 @@
 				</div>
 			{:else}
 				{#each messages as message, index (message.id)}
-					<Message {index} role={message.role} content={message.content} loading={message.id === lastAssistantId} />
+					<Message
+						{index}
+						role={message.role}
+						content={message.content}
+						loading={message.id === lastAssistantId}
+					/>
 				{/each}
 			{/if}
 		</div>
