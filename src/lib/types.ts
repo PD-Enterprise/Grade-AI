@@ -2,6 +2,7 @@ export type ChatRole = 'user' | 'assistant' | 'system';
 
 export interface ChatMessage {
 	id: string;
+	conversationId: string;
 	role: ChatRole;
 	content: string;
 	model?: string;
@@ -15,7 +16,6 @@ export interface Thread {
 	id: string;
 	title: string;
 	mode: 'direct' | 'socratic';
-	messages: ChatMessage[];
 	status: ThreadStatus;
 	createdAt: number;
 	updatedAt: number;
