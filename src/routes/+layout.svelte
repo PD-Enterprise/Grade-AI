@@ -19,8 +19,6 @@
 
 	let { data, children } = $props();
 
-	isAuthenticated.value = !!data.session;
-
 	async function getModelListFromApi() {
 		try {
 			const response = await fetch('/', {
@@ -54,7 +52,11 @@
 
 	afterNavigate(async () => {
 		const models = await getModelListFromApi();
-		if (models.length > 0 && (!currentModel.value || !models.some((m: { modelName: string }) => m.modelName === currentModel.value))) {
+		if (
+			models.length > 0 &&
+			(!currentModel.value ||
+				!models.some((m: { modelName: string }) => m.modelName === currentModel.value))
+		) {
 			currentModel.value = models[0].modelName;
 		}
 	});

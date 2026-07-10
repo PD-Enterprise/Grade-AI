@@ -16,7 +16,10 @@ export async function POST({ request }) {
 	const body = await request.json();
 	const cookie = request.headers.get('cookie') || '';
 
-	const [success, error, message, data, errDetail] = await updateUserAcademicLevel(body.academicLevel, cookie);
+	const [success, error, message, data, errDetail] = await updateUserAcademicLevel(
+		body.academicLevel,
+		cookie
+	);
 
 	if (error || !success) {
 		return returnJson(500, message, null, errDetail);

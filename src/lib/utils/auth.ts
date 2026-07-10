@@ -18,19 +18,19 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
 	callbacks: {
 		async signIn({ user }) {
 			await fetch(`${config.apiUrl}/users/new-user`, {
-				method: "POST",
+				method: 'POST',
 				headers: {
-					"Content-Type": "application/json",
-					"Authorization": `Bearer ${INTERNAL_KEY}`
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${INTERNAL_KEY}`
 				},
 				body: JSON.stringify({
 					email: user.email,
 					name: user.name,
 					image: user.image
 				})
-			})
+			});
 
-			return true
+			return true;
 		}
 	}
 });

@@ -66,9 +66,7 @@
 			<p class="mt-2 text-red-500">Please enter a valid academic level.</p>
 		{/if}
 		<form method="dialog">
-			<button
-				class="btn mt-2 hover:text-black hover:btn-accent"
-				onclick={handleContinue}
+			<button class="btn mt-2 hover:text-black hover:btn-accent" onclick={handleContinue}
 				>Continue</button
 			>
 		</form>

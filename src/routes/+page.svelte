@@ -50,8 +50,8 @@
 		const threadId = crypto.randomUUID();
 		const title = generateTitle(prompt);
 		const thread = createThread(threadId, title, defaultMode.value);
-		const userMsg = createUserMessage(prompt, model.modelString, model.providerName);
-		addMessage(thread, userMsg);
+		const userMsg = createUserMessage(threadId, prompt, model.modelString, model.providerName);
+		addMessage(userMsg);
 		threads.values.push(thread);
 
 		goto(resolve(`/chat/${threadId}`));
