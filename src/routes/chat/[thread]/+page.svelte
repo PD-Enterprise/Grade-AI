@@ -2,26 +2,31 @@
 	import Icon from '@iconify/svelte';
 	import { page } from '$app/state';
 	import { threads, currentModel, modelList } from '$lib/stores/store.svelte';
+	import type { ChatMessage } from '$lib/types';
 	import {
 		createUserMessage,
 		createAssistantMessage,
 		addMessage,
 		setThreadStatus,
 		saveThread,
-		removeMessage
+		removeMessage,
+		loadThreadMessages,
+		updateMessage
 	} from '$lib/threads';
 	import { onMount } from 'svelte';
 	import { handleKeyDown } from '../../utils/sendMessageKeyboard';
 	import { grow } from '../../utils/growTextbox';
 	import Message from '../../components/message.svelte';
+	import { scrollToBottom } from '$lib/utils/scrollToBottom';
 
 	let slug = $derived(page.params.thread);
 	let autoSent = $state(false);
 	let thread = $derived(threads.values.find((t) => t.id === slug));
-	let messages = $derived(thread?.messages ?? []);
+	let messages = $state<ChatMessage[]>([]);
+	let sortedMessages = $derived([...messages].sort((a, b) => a.timestamp - b.timestamp));
 	let lastAssistantId = $derived(
 		thread?.status === 'loading'
-			? ([...messages].reverse().find((m) => m.role === 'assistant')?.id ?? null)
+			? ([...sortedMessages].reverse().find((m) => m.role === 'assistant')?.id ?? null)
 			: null
 	);
 	let inputValue = $state('');
@@ -56,15 +61,22 @@
 		const model = getCurrentModel();
 		if (!model) return;
 
-		const userMsg = createUserMessage(promptToSend, model.modelString, model.providerName);
-		addMessage(thread, userMsg);
+		const userMsg = createUserMessage(
+			thread.id,
+			promptToSend,
+			model.modelString,
+			model.providerName
+		);
+		addMessage(userMsg);
+		messages = [...messages, userMsg];
 		inputValue = '';
 
-		const aiMsg = createAssistantMessage(model.modelString, model.providerName);
-		addMessage(thread, aiMsg);
+		const aiMsg = createAssistantMessage(thread.id, model.modelString, model.providerName);
+		addMessage(aiMsg);
+		messages = [...messages, aiMsg];
 		setThreadStatus(thread, 'loading');
 
-		const history = thread.messages.slice(0, -1);
+		const history = messages.slice(0, -1);
 
 		try {
 			const response = await fetch(`/chat/${slug}`, {
@@ -105,15 +117,9 @@
 						const json = JSON.parse(line);
 
 						if (json.type == 'delta' && json.delta) {
-							threads.values = threads.values.map((t) => {
-								if (t.id !== slug) return t;
-								return {
-									...t,
-									messages: t.messages.map((m) =>
-										m.id === aiMsg.id ? { ...m, content: m.content + json.delta } : m
-									)
-								};
-							});
+							messages = messages.map((m) =>
+								m.id === aiMsg.id ? { ...m, content: m.content + json.delta } : m
+							);
 						}
 
 						if (json.type === 'done') {
@@ -121,6 +127,8 @@
 								if (t.id !== slug) return t;
 								return { ...t, status: 'success' as const };
 							});
+							const finalMsg = messages.find((m) => m.id === aiMsg.id);
+							if (finalMsg) updateMessage(finalMsg.id, { content: finalMsg.content });
 						}
 
 						if (json.type === 'error') {
@@ -152,15 +160,26 @@
 		if (!model) return;
 
 		autoSent = true;
-		removeMessage(thread, lastMsg.id);
+		removeMessage(lastMsg.id);
+		messages = messages.slice(0, -1);
 		inputValue = lastMsg.content;
 		sendMessage();
 	}
 
 	onMount(() => {
+		if (slug) messages = loadThreadMessages(slug);
 		const inputElement = document.getElementById('input-element') as HTMLInputElement;
 		inputElement?.focus();
-		scrollToBottom(true);
+		scrollToBottom(messages, messagesContainer, true);
+
+		if (thread && thread.status === 'idle') {
+			fetch('/api/thread', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ id: thread.id, title: thread.title })
+			}).catch((e) => console.error('Failed to create thread on backend:', e));
+		}
+
 		tryAutoSend();
 	});
 
@@ -171,17 +190,8 @@
 	});
 
 	$effect(() => {
-		scrollToBottom();
+		scrollToBottom(messages, messagesContainer);
 	});
-
-	function scrollToBottom(instant: boolean = false) {
-		if (messages.length && messagesContainer) {
-			messagesContainer.scrollTo({
-				top: messagesContainer.scrollHeight,
-				behavior: instant ? 'instant' : 'smooth'
-			});
-		}
-	}
 </script>
 
 <svelte:window onclick={handleClickOutside} />
@@ -246,13 +256,13 @@
 	<!-- Messages -->
 	<div bind:this={messagesContainer} class="messages flex-1 overflow-y-auto px-6 py-8">
 		<div class="mx-auto max-w-4xl space-y-8">
-			{#if thread?.messages.length === 0}
+			{#if messages.length === 0}
 				<div class="flex h-full flex-col items-center justify-center text-center">
 					<Icon icon="lucide:sparkles" className="w-12 h-12 text-muted-foreground/20 mb-4" />
 					<p class="text-muted-foreground/50">Start the conversation...</p>
 				</div>
 			{:else}
-				{#each messages as message, index (message.id)}
+				{#each sortedMessages as message, index (message.id)}
 					<Message
 						{index}
 						role={message.role}
