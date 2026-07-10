@@ -37,10 +37,7 @@ export type ModelList = {
 };
 
 export type promptBody = {
-	prompt: string;
-	provider: 'groq' | 'gemini';
-	model: string;
-	mode: 'socratic' | 'direct';
-	history: ChatMessage[];
 	conversationId: Thread['id'];
+	messageClientId: string;
+	assistantClientId: string;
 };

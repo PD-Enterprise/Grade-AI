@@ -4,7 +4,7 @@ export async function POST({ request }) {
 	const body = await request.json();
 	const cookie = request.headers.get('cookie') || '';
 
-	const apiResponse = await getResponseFromLLM(body.promptBody, cookie);
+	const apiResponse = await getResponseFromLLM(body, cookie);
 	if (!apiResponse.ok) {
 		return new Response(apiResponse.body, {
 			status: apiResponse.status,

@@ -76,21 +76,18 @@
 		messages = [...messages, aiMsg];
 		setThreadStatus(thread, 'loading');
 
-		const history = messages.slice(0, -1);
-
 		try {
 			const response = await fetch(`/chat/${slug}`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
-					promptBody: {
-						prompt: promptToSend,
-						provider: model.providerName,
-						model: model.modelString,
-						mode: thread.mode,
-						history: history,
-						conversationId: thread.id
-					}
+					prompt: promptToSend,
+					provider: model.providerName,
+					model: model.modelString,
+					mode: thread.mode,
+					conversationId: thread.id,
+					messageClientId: userMsg.id,
+					assistantClientId: aiMsg.id
 				})
 			});
 
@@ -167,7 +164,40 @@
 	}
 
 	onMount(() => {
-		if (slug) messages = loadThreadMessages(slug);
+		if (slug) {
+			messages = loadThreadMessages(slug);
+
+			fetch(`/api/messages/${slug}`, {
+				method: 'GET',
+				headers: { 'Content-Type': 'application/json' }
+			})
+				.then((res) => res.json())
+				.then((result) => {
+					if (result.status === 200 && Array.isArray(result.data?.messages)) {
+						const seen = new Set(messages.map((m) => m.id));
+						const local: ChatMessage[] = [];
+						for (const m of result.data.messages) {
+							if (seen.has(m.clientUUID)) continue;
+							const msg: ChatMessage = {
+								id: m.clientUUID,
+								conversationId: slug,
+								role: m.role,
+								content: m.content,
+								model: m.model,
+								provider: m.provider,
+								timestamp: m.createdAt
+							};
+							local.push(msg);
+							addMessage(msg);
+						}
+						if (local.length > 0) {
+							messages = [...messages, ...local].sort((a, b) => a.timestamp - b.timestamp);
+						}
+					}
+				})
+				.catch((e) => console.error('Failed to load messages from backend:', e));
+		}
+
 		const inputElement = document.getElementById('input-element') as HTMLInputElement;
 		inputElement?.focus();
 		scrollToBottom(messages, messagesContainer, true);
