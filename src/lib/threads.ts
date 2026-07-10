@@ -6,11 +6,7 @@ function storageKey(id: string): string {
 	return `${STORAGE_PREFIX}${JSON.stringify(id)}`;
 }
 
-export function createThread(
-	id: string,
-	title: string,
-	mode: 'direct' | 'socratic'
-): Thread {
+export function createThread(id: string, title: string, mode: 'direct' | 'socratic'): Thread {
 	return {
 		id,
 		title,
@@ -22,7 +18,11 @@ export function createThread(
 	};
 }
 
-export function createUserMessage(content: string, model?: string, provider?: 'groq' | 'gemini'): ChatMessage {
+export function createUserMessage(
+	content: string,
+	model?: string,
+	provider?: 'groq' | 'gemini'
+): ChatMessage {
 	return {
 		id: crypto.randomUUID(),
 		role: 'user',
@@ -33,11 +33,13 @@ export function createUserMessage(content: string, model?: string, provider?: 'g
 	};
 }
 
-export function createAssistantMessage(): ChatMessage {
+export function createAssistantMessage(model?: string, provider?: 'groq' | 'gemini'): ChatMessage {
 	return {
 		id: crypto.randomUUID(),
 		role: 'assistant',
 		content: '',
+		model,
+		provider,
 		timestamp: Date.now()
 	};
 }

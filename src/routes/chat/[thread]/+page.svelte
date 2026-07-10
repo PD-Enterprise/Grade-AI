@@ -199,12 +199,11 @@
 			</div>
 			<div>
 				<h1 class="text-lg font-medium text-foreground">{thread?.title ?? 'Chat'}</h1>
-				<p class="text-sm text-muted-foreground">
-					{currentModel.value || 'No model selected'}
-					{#if thread?.mode}
-						· {thread.mode[0].toUpperCase() + thread.mode.slice(1)}
-					{/if}
-				</p>
+				{#if thread?.mode}
+					<p class="text-sm text-muted-foreground">
+						{thread.mode[0].toUpperCase() + thread.mode.slice(1)}
+					</p>
+				{/if}
 			</div>
 		</div>
 
@@ -258,6 +257,7 @@
 						{index}
 						role={message.role}
 						content={message.content}
+						model={message.model}
 						loading={message.id === lastAssistantId}
 					/>
 				{/each}
