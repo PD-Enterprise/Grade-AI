@@ -57,6 +57,30 @@
 	}
 	onMount(() => {
 		userModelDialogue = document.getElementById('user-profile-modal') as HTMLDialogElement;
+
+		fetch('/api/threads', { method: 'GET', headers: { 'Content-Type': 'application/json' } })
+			.then((res) => res.json())
+			.then((result) => {
+				if (result.status === 200 && Array.isArray(result.data)) {
+					const remote = result.data.map(
+						(t: { clientUUID: string; title: string; createdAt: number; updatedAt: number }) => ({
+							id: t.clientUUID,
+							title: t.title,
+							mode: 'direct' as const,
+							status: 'idle' as const,
+							createdAt: t.createdAt,
+							updatedAt: t.updatedAt
+						})
+					);
+					const seen = new Set(threads.values.map((t) => t.id));
+					const merged = [
+						...threads.values,
+						...remote.filter((t: { id: string }) => !seen.has(t.id))
+					];
+					threads.values = merged.sort((a, b) => b.updatedAt - a.updatedAt);
+				}
+			})
+			.catch((e) => console.error('Failed to load threads from backend:', e));
 	});
 	$effect(() => {
 		if (userData.value.image) {
