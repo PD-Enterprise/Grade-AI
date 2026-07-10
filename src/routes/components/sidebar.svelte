@@ -19,14 +19,29 @@
 	let academicLevelError: boolean = $state(false);
 	let editAcademicLevel: boolean = $state(false);
 	let userModelDialogue: HTMLDialogElement | undefined = $state();
+	let threadToDelete: string | null = $state(null);
+	let deleteModal: HTMLDialogElement | undefined = $state();
 
-	function deleteThread(threadId: string) {
-		const currentThread = threads.values.find((t) => t.id === threadId);
+	function confirmDelete(threadId: string) {
+		threadToDelete = threadId;
+		deleteModal?.showModal();
+	}
+
+	async function executeDelete() {
+		if (!threadToDelete) return;
+		const currentThread = threads.values.find((t) => t.id === threadToDelete);
 		if (currentThread) {
-			threads.values = threads.values.filter((t) => t.id !== threadId);
-			deleteStoredThread(threadId);
+			threads.values = threads.values.filter((t) => t.id !== threadToDelete);
+			deleteStoredThread(threadToDelete);
+			try {
+				await fetch(`/api/thread/${threadToDelete}`, { method: 'DELETE' });
+			} catch (e) {
+				console.error('Failed to delete thread on backend:', e);
+			}
+			deleteModal?.close();
 			goto(resolve('/'));
 		}
+		threadToDelete = null;
 	}
 	async function updateAcademicLevel() {
 		const response = await fetch('/', {
@@ -140,7 +155,7 @@
 							class="absolute top-1/2 right-2 -translate-y-1/2 rounded-lg p-1.5 text-sidebar-accent-foreground/50 transition-colors hover:bg-sidebar-accent-foreground/10 hover:text-sidebar-accent-foreground"
 							onclick={(e) => {
 								e.stopPropagation();
-								deleteThread(thread.id);
+								confirmDelete(thread.id);
 							}}
 						>
 							<Icon icon="lucide:x" class="h-3.5 w-3.5" />
@@ -270,6 +285,33 @@
 					>Close</button
 				>
 			</form>
+		</div>
+	</div>
+	<form method="dialog" class="modal-backdrop">
+		<button>close</button>
+	</form>
+</dialog>
+
+<dialog id="delete-confirm-modal" class="modal" bind:this={deleteModal}>
+	<div class="modal-box rounded-lg bg-card">
+		<h3 class="mb-4 text-lg font-bold">Delete conversation?</h3>
+		<p class="text-sm text-muted-foreground">
+			This action cannot be undone. The conversation will be permanently deleted.
+		</p>
+		<div class="modal-action">
+			<form method="dialog">
+				<button
+					class="rounded-lg border border-border px-4 py-2 text-sm text-sidebar-accent-foreground/60 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+				>
+					Cancel
+				</button>
+			</form>
+			<button
+				class="rounded-lg bg-error px-4 py-2 text-sm text-white transition-colors hover:bg-error/80"
+				onclick={executeDelete}
+			>
+				Delete
+			</button>
 		</div>
 	</div>
 	<form method="dialog" class="modal-backdrop">
