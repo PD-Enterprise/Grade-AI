@@ -107,7 +107,7 @@
 	});
 </script>
 
-<div class="flex h-screen overflow-hidden bg-background text-foreground">
+<div class="flex h-dvh overflow-hidden bg-background text-foreground">
 	{#if !isAuthenticated.value}
 		<NotLoggedIn />
 	{/if}
