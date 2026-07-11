@@ -58,15 +58,14 @@
 		}
 		const handler = (e: MediaQueryListEvent) => {
 			isMobile = e.matches;
-			if (e.matches) {
-				sidebarStatus.value = false;
-			}
+			sidebarStatus.value = !e.matches;
 		};
 		mql.addEventListener('change', handler);
 		return () => mql.removeEventListener('change', handler);
 	});
 
 	afterNavigate(async () => {
+		if (modelList.values.length > 0) return;
 		const models = await getModelListFromApi();
 		if (
 			models.length > 0 &&
