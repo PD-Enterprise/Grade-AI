@@ -71,7 +71,9 @@
 	<title>Grade AI</title>
 </svelte:head>
 
-<div class="flex flex-1 flex-col items-center justify-center bg-background px-4 py-20">
+<div
+	class="flex flex-1 flex-col items-center justify-center overflow-y-scroll bg-background px-4 py-20"
+>
 	<div class="w-full max-w-2xl min-w-[320px]">
 		<div
 			class={`logo-and-title mb-12 text-center transition-all duration-700  ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
@@ -124,7 +126,7 @@
 					>
 				</div>
 
-				<div class="relative">
+				<div bind:this={menuRef} class="relative">
 					<button
 						class="flex items-center gap-1.5 rounded-lg bg-secondary px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-secondary/80 hover:text-foreground"
 						onclick={() => {
@@ -137,7 +139,7 @@
 
 					{#if isModelSelectionMenuOpen}
 						<div
-							class="absolute top-full right-0 z-40 mt-2 min-w-40 overflow-hidden rounded-lg border border-border bg-card shadow-xl"
+							class="absolute top-full right-0 z-40 mt-2 h-[30vh] max-h-60 min-h-20 min-w-40 overflow-y-auto rounded-lg border border-border bg-card shadow-xl"
 						>
 							{#each modelList.values as model (model)}
 								<button
