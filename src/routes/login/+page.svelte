@@ -11,7 +11,7 @@
 </svelte:head>
 
 <div class="login flex h-full flex-col items-center justify-center gap-5">
-	<h1 class=" text-center text-3xl font-bold">Sign in to GradeAI</h1>
+	<h1 class="text-center text-2xl font-bold sm:text-3xl">Sign in to GradeAI</h1>
 
 	<div class="login-buttons flex h-auto w-[30%] justify-center rounded-2xl bg-base-300 p-4">
 		<div class="google-login-button">

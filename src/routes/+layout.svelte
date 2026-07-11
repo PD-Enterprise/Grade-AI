@@ -10,7 +10,6 @@
 	} from '$lib/stores/store.svelte';
 	import Sidebar from './components/sidebar.svelte';
 	import './layout.css';
-	import Icon from '@iconify/svelte';
 	import { resolve } from '$app/paths';
 	import NotLoggedIn from './components/notLoggedIn.svelte';
 	import { onMount } from 'svelte';
@@ -131,25 +130,6 @@
 			class={`transition-all duration-300 ease-out ${sidebarStatus.value ? 'w-72' : 'w-0'} overflow-hidden`}
 		>
 			<Sidebar />
-		</div>
-	{/if}
-
-	<!-- Sidebar Action Bar -->
-	{#if !sidebarStatus.value}
-		<div class="sidebar-action-bar fixed top-4 left-4 z-500 flex flex-col gap-1">
-			<button
-				onclick={() => (sidebarStatus.value = !sidebarStatus.value)}
-				class="rounded-full bg-secondary p-3 transition-colors hover:bg-secondary/80"
-				aria-label="Open sidebar"
-			>
-				<Icon icon="lucide:menu" class="h-4 w-4" />
-			</button>
-			<a
-				class="rounded-full bg-secondary p-3 transition-colors hover:bg-secondary/80"
-				href={resolve('/')}
-			>
-				<Icon icon="lucide:plus" class="h-4 w-4" />
-			</a>
 		</div>
 	{/if}
 

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
 	import { page } from '$app/state';
-	import { threads, currentModel, modelList } from '$lib/stores/store.svelte';
+	import { threads, currentModel, modelList, sidebarStatus } from '$lib/stores/store.svelte';
 	import type { ChatMessage } from '$lib/types';
 	import {
 		createUserMessage,
@@ -16,6 +16,7 @@
 	import { handleKeyDown } from '../../utils/sendMessageKeyboard';
 	import { grow } from '../../utils/growTextbox';
 	import Message from '../../components/message.svelte';
+	import ModelSelector from '../../components/ModelSelector.svelte';
 	import { scrollToBottom } from '$lib/utils/scrollToBottom';
 
 	let slug = $derived(page.params.thread);
@@ -24,8 +25,6 @@
 	let messages = $state<ChatMessage[]>([]);
 	let sortedMessages = $derived([...messages].sort((a, b) => a.timestamp - b.timestamp));
 	let inputValue = $state('');
-	let isModelSelectionMenuOpen: boolean = $state(false);
-	let menuRef: HTMLDivElement | undefined = $state();
 	let messagesContainer: HTMLDivElement | undefined = $state();
 
 	// Streaming
@@ -38,22 +37,6 @@
 
 	// Scroll detection
 	let isUserScrolledUp = $state(false);
-
-	function toggleModelSelectionMenu() {
-		isModelSelectionMenuOpen = !isModelSelectionMenuOpen;
-	}
-	function changeModel(modelName: string) {
-		currentModel.value = modelName;
-		isModelSelectionMenuOpen = false;
-	}
-	function handleClickOutside(event: MouseEvent) {
-		if (isModelSelectionMenuOpen && menuRef && !menuRef.contains(event.target as Node)) {
-			const toggleButton = (event.target as HTMLElement).closest('.current-model button');
-			if (!toggleButton) {
-				isModelSelectionMenuOpen = false;
-			}
-		}
-	}
 
 	function getCurrentModel() {
 		return modelList.values.find((m) => m.modelName === currentModel.value);
@@ -315,8 +298,6 @@
 	});
 </script>
 
-<svelte:window onclick={handleClickOutside} />
-
 <svelte:head>
 	<title>{thread?.title ?? 'Chat'}</title>
 </svelte:head>
@@ -325,11 +306,17 @@
 	<!-- Header -->
 	<div class="flex items-center justify-between border-b border-border bg-card/50 px-6 py-4">
 		<div class="flex items-center gap-4">
-			<div class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-				<Icon icon="lucide:sparkles" class="h-5 w-5 text-primary" />
-			</div>
+			{#if !sidebarStatus.value}
+				<button
+					onclick={() => (sidebarStatus.value = !sidebarStatus.value)}
+					class="opacity-60 transition-opacity hover:opacity-100"
+					aria-label="Open sidebar"
+				>
+					<Icon icon="lucide:menu" class="h-5 w-5" />
+				</button>
+			{/if}
 			<div>
-				<h1 class="text-lg font-medium text-foreground">{thread?.title ?? 'Chat'}</h1>
+				<h1 class="text-sm font-medium text-foreground sm:text-lg">{thread?.title ?? 'Chat'}</h1>
 				{#if thread?.mode}
 					<p class="text-sm text-muted-foreground">
 						{thread.mode[0].toUpperCase() + thread.mode.slice(1)}
@@ -338,40 +325,7 @@
 			</div>
 		</div>
 
-		<div class="flex gap-2">
-			<div bind:this={menuRef} class="relative">
-				<button
-					class="flex items-center gap-2 rounded-lg bg-secondary px-3 py-2 text-sm transition-colors hover:bg-secondary/80"
-					onclick={() => {
-						toggleModelSelectionMenu();
-					}}
-				>
-					{currentModel.value}
-					<Icon icon="lucide:chevron-down" class="h-3.5 w-3.5" />
-				</button>
-
-				{#if isModelSelectionMenuOpen}
-					<div
-						class="absolute top-full right-0 z-40 mt-2 max-h-60 min-w-48 overflow-y-auto rounded-lg border border-border bg-card shadow-xl"
-					>
-						{#each modelList.values as model (model)}
-							<button
-								class={`w-full px-4 py-2.5 text-left text-sm transition-colors ${
-									currentModel.value == model.modelName
-										? 'text-primary-foreground bg-primary'
-										: 'text-foreground hover:bg-secondary'
-								}`}
-								onclick={() => {
-									changeModel(model.modelName);
-								}}
-							>
-								{model.modelName}
-							</button>
-						{/each}
-					</div>
-				{/if}
-			</div>
-		</div>
+		<ModelSelector />
 	</div>
 
 	<!-- Messages -->
