@@ -8,6 +8,7 @@ export async function POST({ request }) {
 	const [success, error, message, data, errDetail] = await createNewThread(
 		body.id,
 		body.title,
+		body.prompt || '',
 		cookie
 	);
 

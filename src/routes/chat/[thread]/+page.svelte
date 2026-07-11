@@ -262,11 +262,24 @@
 
 			if (thread && thread.status === 'idle') {
 				try {
-					await fetch('/api/thread', {
+					const firstUserMsg = messages.find((m) => m.role === 'user');
+					const response = await fetch('/api/thread', {
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify({ id: thread.id, title: thread.title })
+						body: JSON.stringify({
+							id: thread.id,
+							title: thread.title,
+							prompt: firstUserMsg?.content || ''
+						})
 					});
+					const result = await response.json();
+					if (result.status === 200) {
+						thread.title = result.data.title;
+						saveThread(thread);
+						threads.values = threads.values.map((t) =>
+							t.id === thread.id ? { ...t, title: result.data.title } : t
+						);
+					}
 				} catch (e) {
 					console.error('Failed to create thread on backend:', e);
 				}

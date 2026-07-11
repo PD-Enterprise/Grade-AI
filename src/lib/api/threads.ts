@@ -2,7 +2,12 @@ import type { Thread } from '$lib/types';
 import config from '$lib/utils/apiConfig';
 import { functionReturn } from '$lib/utils/functionReturn';
 
-export async function createNewThread(id: Thread['id'], title: Thread['title'], cookie?: string) {
+export async function createNewThread(
+	id: Thread['id'],
+	title: Thread['title'],
+	prompt: string = '',
+	cookie?: string
+) {
 	const headers: Record<string, string> = { 'Content-Type': 'application/json' };
 	if (cookie) {
 		headers['Cookie'] = cookie;
@@ -13,7 +18,8 @@ export async function createNewThread(id: Thread['id'], title: Thread['title'], 
 		headers,
 		body: JSON.stringify({
 			title: title,
-			clientUUID: id
+			clientUUID: id,
+			...(prompt ? { prompt } : {})
 		})
 	});
 	const data = await response.json();
