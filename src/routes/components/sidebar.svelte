@@ -125,9 +125,6 @@
 			}}
 		>
 			<div class="flex items-center gap-3">
-				<div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-					<Icon icon="lucide:zap" class="h-4 w-4 text-primary" />
-				</div>
 				<h1 class="text-sm font-semibold text-sidebar-foreground sm:text-lg">Grade AI</h1>
 			</div>
 		</a>

@@ -69,11 +69,6 @@
 		<div
 			class={`logo-and-title mb-12 text-center transition-all duration-700  ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
 		>
-			<div class="mb-4 flex items-center justify-center gap-2">
-				<div class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-					<Icon icon="lucide:sparkles" class="h-5 w-5 text-primary" />
-				</div>
-			</div>
 			<h1 class="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl md:text-5xl">
 				Grade AI
 			</h1>
