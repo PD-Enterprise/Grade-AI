@@ -11,6 +11,8 @@
 	import Sidebar from './components/sidebar.svelte';
 	import './layout.css';
 	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
+	import Icon from '@iconify/svelte';
 	import NotLoggedIn from './components/notLoggedIn.svelte';
 	import { onMount } from 'svelte';
 	import { goto, afterNavigate } from '$app/navigation';
@@ -131,6 +133,16 @@
 		>
 			<Sidebar />
 		</div>
+	{/if}
+
+	{#if !sidebarStatus.value && page.url.pathname === '/'}
+		<button
+			onclick={() => (sidebarStatus.value = !sidebarStatus.value)}
+			class="fixed top-4 left-4 z-50 rounded-full bg-secondary p-3 transition-colors hover:bg-secondary/80"
+			aria-label="Open sidebar"
+		>
+			<Icon icon="lucide:menu" class="h-4 w-4" />
+		</button>
 	{/if}
 
 	<!-- Main Content -->
