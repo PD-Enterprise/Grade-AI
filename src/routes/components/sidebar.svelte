@@ -15,7 +15,7 @@
 	let image: string | undefined = $state('');
 	let slug = $derived(page.params.thread);
 	let selectedThread = $derived(threads.values.find((t) => t.id === slug));
-	let hoveredId: string = $state('');
+
 	let isK_12: string = $state('true');
 	let academicLevel: string | undefined = $state(undefined);
 	let academicLevelError: boolean = $state(false);
