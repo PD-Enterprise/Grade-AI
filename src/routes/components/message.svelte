@@ -5,7 +5,8 @@
 	import { KatexRenderer, markedKatex } from '@humanspeak/svelte-markdown/extensions';
 	import type { RendererComponent, Renderers } from '@humanspeak/svelte-markdown';
 	import Icon from '@iconify/svelte';
-	import { onMount } from 'svelte';
+
+	type SpeakStatus = 'idle' | 'loading' | 'playing' | 'paused';
 	interface props {
 		index: number;
 		role: ChatRole;
@@ -24,9 +25,6 @@
 	};
 	let isFirefox = $state();
 	let smallScreen = $state(typeof window !== 'undefined' && window.innerWidth < 770);
-
-	type SpeakStatus = 'idle' | 'loading' | 'playing' | 'paused';
-
 	let status = $state<SpeakStatus>('idle');
 	let utterance: SpeechSynthesisUtterance | null = null;
 	let currentContent = $state('');
