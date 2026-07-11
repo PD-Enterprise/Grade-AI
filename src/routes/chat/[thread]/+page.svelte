@@ -391,7 +391,7 @@
 					onkeydown={(e) => handleKeyDown(e, sendMessage)}
 					placeholder="Continue the conversation..."
 					rows="1"
-					class="w-full resize-none overflow-hidden border border-border bg-card px-4 py-4 text-foreground transition-colors placeholder:text-muted-foreground/40 focus:border-primary/50 focus:outline-none"
+					class="w-full resize-none overflow-hidden border border-border bg-card px-4 py-4 text-base text-foreground transition-colors placeholder:text-muted-foreground/40 focus:border-primary/50 focus:outline-none"
 					id="input-element"
 				></textarea>
 			</div>
