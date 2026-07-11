@@ -23,7 +23,6 @@
 		inlineKatex: KatexRenderer,
 		blockKatex: KatexRenderer
 	};
-	let isFirefox = $state();
 	let smallScreen = $state(typeof window !== 'undefined' && window.innerWidth < 770);
 	let status = $state<SpeakStatus>('idle');
 	let utterance: SpeechSynthesisUtterance | null = null;
@@ -97,8 +96,6 @@
 		smallScreen = window.innerWidth < 770;
 	}
 	$effect(() => {
-		isFirefox = navigator.userAgent.includes('Mozilla');
-
 		if (typeof window === 'undefined') return;
 		window.addEventListener('resize', onResize);
 		return () => window.removeEventListener('resize', onResize);
@@ -125,32 +122,30 @@
 							>{model}</span
 						>
 					{/if}
-					{#if !isFirefox}
-						{#if status === 'idle'}
-							<button
-								class="btn rounded px-1 btn-ghost btn-xs"
-								onclick={() => speak(content)}
-								title="Read aloud"
-							>
-								<Icon icon="lucide:volume-2" class="h-3.5 w-3.5" />
-							</button>
-						{:else if status === 'loading'}
-							<span class="loading loading-sm loading-dots"></span>
-						{:else if status === 'playing'}
-							<button class="btn rounded px-1 btn-ghost btn-xs" onclick={pause} title="Pause">
-								<Icon icon="lucide:pause" class="h-3.5 w-3.5" />
-							</button>
-							<button class="btn rounded px-1 btn-ghost btn-xs" onclick={stop} title="Stop">
-								<Icon icon="lucide:square" class="h-3.5 w-3.5" />
-							</button>
-						{:else if status === 'paused'}
-							<button class="btn rounded px-1 btn-ghost btn-xs" onclick={resume} title="Resume">
-								<Icon icon="lucide:play" class="h-3.5 w-3.5" />
-							</button>
-							<button class="btn rounded px-1 btn-ghost btn-xs" onclick={stop} title="Stop">
-								<Icon icon="lucide:square" class="h-3.5 w-3.5" />
-							</button>
-						{/if}
+					{#if status === 'idle'}
+						<button
+							class="btn rounded px-1 btn-ghost btn-xs"
+							onclick={() => speak(content)}
+							title="Read aloud"
+						>
+							<Icon icon="lucide:volume-2" class="h-3.5 w-3.5" />
+						</button>
+					{:else if status === 'loading'}
+						<span class="loading loading-sm loading-dots"></span>
+					{:else if status === 'playing'}
+						<button class="btn rounded px-1 btn-ghost btn-xs" onclick={pause} title="Pause">
+							<Icon icon="lucide:pause" class="h-3.5 w-3.5" />
+						</button>
+						<button class="btn rounded px-1 btn-ghost btn-xs" onclick={stop} title="Stop">
+							<Icon icon="lucide:square" class="h-3.5 w-3.5" />
+						</button>
+					{:else if status === 'paused'}
+						<button class="btn rounded px-1 btn-ghost btn-xs" onclick={resume} title="Resume">
+							<Icon icon="lucide:play" class="h-3.5 w-3.5" />
+						</button>
+						<button class="btn rounded px-1 btn-ghost btn-xs" onclick={stop} title="Stop">
+							<Icon icon="lucide:square" class="h-3.5 w-3.5" />
+						</button>
 					{/if}
 				</div>
 			{/if}
