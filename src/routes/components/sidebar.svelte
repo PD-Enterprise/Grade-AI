@@ -166,18 +166,17 @@
 			</div>
 		{:else}
 			{#each threads.values.toReversed() as thread (thread.id)}
-				<button
+				<div
 					onclick={() => {
 						if (isMobile) sidebarStatus.value = false;
 						goto(resolve(`/chat/${thread.id}`));
 					}}
-					onmouseenter={() => {
-						hoveredId = thread.id;
+					onkeydown={(e) => {
+						if (e.key === 'Enter') goto(resolve(`/chat/${thread.id}`));
 					}}
-					onmouseleave={() => {
-						hoveredId = '';
-					}}
-					class={`group relative w-full rounded-xl px-3 py-3 text-left text-sm transition-all ${selectedThread?.id === thread.id ? 'bg-sidebar-accent text-sidebar-accent-foreground' : 'text-sidebar-foreground hover:bg-sidebar-accent/50'}`}
+					role="button"
+					tabindex="0"
+					class={`group relative w-full cursor-pointer rounded-xl px-3 py-3 text-left text-sm transition-all ${selectedThread?.id === thread.id ? 'bg-sidebar-accent text-sidebar-accent-foreground' : 'text-sidebar-foreground hover:bg-sidebar-accent/50'}`}
 				>
 					<div class="flex items-center gap-3">
 						<Icon icon="lucide:message-square" class="h-4 w-4 shrink-0 opacity-50" />
@@ -185,19 +184,16 @@
 							{thread.title}
 						</span>
 					</div>
-					{#if hoveredId === thread.id}
-						<!-- svelte-ignore node_invalid_placement_ssr -->
-						<button
-							class="absolute top-1/2 right-2 -translate-y-1/2 rounded-lg p-1.5 text-sidebar-accent-foreground/50 transition-colors hover:bg-sidebar-accent-foreground/10 hover:text-sidebar-accent-foreground"
-							onclick={(e) => {
-								e.stopPropagation();
-								confirmDelete(thread.id);
-							}}
-						>
-							<Icon icon="lucide:x" class="h-3.5 w-3.5" />
-						</button>
-					{/if}
-				</button>
+					<button
+						class="absolute top-1/2 right-2 -translate-y-1/2 rounded-lg p-1.5 text-sidebar-accent-foreground/50 opacity-0 transition-colors group-hover:opacity-100 hover:bg-sidebar-accent-foreground/10 hover:text-sidebar-accent-foreground"
+						onclick={(e) => {
+							e.stopPropagation();
+							confirmDelete(thread.id);
+						}}
+					>
+						<Icon icon="lucide:x" class="h-3.5 w-3.5" />
+					</button>
+				</div>
 			{/each}
 		{/if}
 	</div>

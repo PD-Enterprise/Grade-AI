@@ -9,21 +9,20 @@
 		role: ChatRole;
 		content: string;
 		model?: string;
-		loading?: boolean;
 	}
 	interface KatexRenderers extends Renderers {
 		inlineKatex: RendererComponent;
 		blockKatex: RendererComponent;
 	}
 
-	const { index, role, content, loading = false, model = undefined }: props = $props();
+	const { index, role, content, model = undefined }: props = $props();
 	const renderers: Partial<KatexRenderers> = {
 		inlineKatex: KatexRenderer,
 		blockKatex: KatexRenderer
 	};
 </script>
 
-<div class="message animate-enter flex" style={`animation-delay: ${index * 30}ms; `}>
+<div class="message animate-enter flex" style={`animation-delay: ${Math.min(index * 30, 300)}ms; `}>
 	{#if role === 'user'}
 		<div class="ml-auto max-w-xl">
 			<div class="rounded-2xl bg-primary/10 px-5 py-3 text-sm leading-relaxed text-foreground">

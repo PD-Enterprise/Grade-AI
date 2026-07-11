@@ -5,6 +5,7 @@
 		currentModel,
 		defaultMode,
 		modelList,
+		modelsLoading,
 		userData,
 		isAuthenticated,
 		threads
@@ -111,53 +112,61 @@
 			</div>
 
 			<div class="mt-4 flex items-center justify-center gap-2">
-				<div class="flex rounded-lg bg-secondary p-1">
-					<button
-						class={`rounded-md px-3 py-1.5 text-sm font-medium transition-all ${defaultMode.value == 'direct' ? 'text-primary-foreground bg-card-foreground/10' : 'text-muted-foreground hover:text-foreground'}`}
-						onclick={() => {
-							defaultMode.value = 'direct';
-						}}>Direct Model</button
-					>
-					<button
-						class={`rounded-md px-3 py-1.5 text-sm font-medium transition-all ${defaultMode.value == 'socratic' ? 'text-primary-foreground bg-card-foreground/10' : 'text-muted-foreground hover:text-foreground'}`}
-						onclick={() => {
-							defaultMode.value = 'socratic';
-						}}>Socratic Models</button
-					>
-				</div>
-
-				<div bind:this={menuRef} class="relative">
-					<button
-						class="flex items-center gap-1.5 rounded-lg bg-secondary px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-secondary/80 hover:text-foreground"
-						onclick={() => {
-							toggleModelSelectionMenu();
-						}}
-					>
-						{currentModel.value}
-						<Icon icon="lucide:chevron-down" class="h-3 w-3" />
-					</button>
-
-					{#if isModelSelectionMenuOpen}
-						<div
-							class="absolute top-full right-0 z-40 mt-2 h-[30vh] max-h-60 min-h-20 min-w-40 overflow-y-auto rounded-lg border border-border bg-card shadow-xl"
+				{#if modelsLoading.value}
+					<div class="flex gap-2">
+						<div class="h-8 w-24 animate-pulse rounded-lg bg-secondary"></div>
+						<div class="h-8 w-28 animate-pulse rounded-lg bg-secondary"></div>
+						<div class="h-8 w-20 animate-pulse rounded-lg bg-secondary"></div>
+					</div>
+				{:else}
+					<div class="flex rounded-lg bg-secondary p-1">
+						<button
+							class={`rounded-md px-3 py-1.5 text-sm font-medium transition-all ${defaultMode.value == 'direct' ? 'text-primary-foreground bg-card-foreground/10' : 'text-muted-foreground hover:text-foreground'}`}
+							onclick={() => {
+								defaultMode.value = 'direct';
+							}}>Direct Model</button
 						>
-							{#each modelList.values as model (model)}
-								<button
-									class={`w-full px-4 py-2.5 text-left text-sm transition-colors ${
-										currentModel.value == model.modelName
-											? 'text-primary-foreground bg-primary'
-											: 'text-foreground hover:bg-secondary'
-									}`}
-									onclick={() => {
-										changeModel(model.modelName);
-									}}
-								>
-									{model.modelName}
-								</button>
-							{/each}
-						</div>
-					{/if}
-				</div>
+						<button
+							class={`rounded-md px-3 py-1.5 text-sm font-medium transition-all ${defaultMode.value == 'socratic' ? 'text-primary-foreground bg-card-foreground/10' : 'text-muted-foreground hover:text-foreground'}`}
+							onclick={() => {
+								defaultMode.value = 'socratic';
+							}}>Socratic Models</button
+						>
+					</div>
+
+					<div bind:this={menuRef} class="relative">
+						<button
+							class="flex items-center gap-1.5 rounded-lg bg-secondary px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-secondary/80 hover:text-foreground"
+							onclick={() => {
+								toggleModelSelectionMenu();
+							}}
+						>
+							{currentModel.value}
+							<Icon icon="lucide:chevron-down" class="h-3 w-3" />
+						</button>
+
+						{#if isModelSelectionMenuOpen}
+							<div
+								class="absolute top-full right-0 z-40 mt-2 h-[30vh] max-h-60 min-h-20 min-w-40 overflow-y-auto rounded-lg border border-border bg-card shadow-xl"
+							>
+								{#each modelList.values as model (model)}
+									<button
+										class={`w-full px-4 py-2.5 text-left text-sm transition-colors ${
+											currentModel.value == model.modelName
+												? 'text-primary-foreground bg-primary'
+												: 'text-foreground hover:bg-secondary'
+										}`}
+										onclick={() => {
+											changeModel(model.modelName);
+										}}
+									>
+										{model.modelName}
+									</button>
+								{/each}
+							</div>
+						{/if}
+					</div>
+				{/if}
 			</div>
 		</div>
 

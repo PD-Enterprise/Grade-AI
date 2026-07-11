@@ -10,8 +10,7 @@
 		setThreadStatus,
 		saveThread,
 		removeMessage,
-		loadThreadMessages,
-		updateMessage
+		loadThreadMessages
 	} from '$lib/threads';
 	import { onMount } from 'svelte';
 	import { handleKeyDown } from '../../utils/sendMessageKeyboard';
@@ -24,15 +23,21 @@
 	let thread = $derived(threads.values.find((t) => t.id === slug));
 	let messages = $state<ChatMessage[]>([]);
 	let sortedMessages = $derived([...messages].sort((a, b) => a.timestamp - b.timestamp));
-	let lastAssistantId = $derived(
-		thread?.status === 'loading'
-			? ([...sortedMessages].reverse().find((m) => m.role === 'assistant')?.id ?? null)
-			: null
-	);
 	let inputValue = $state('');
 	let isModelSelectionMenuOpen: boolean = $state(false);
 	let menuRef: HTMLDivElement | undefined = $state();
 	let messagesContainer: HTMLDivElement | undefined = $state();
+
+	// Streaming (decoupled from messages array)
+	let streamingContent = $state<string | null>(null);
+	let streamingMessageId = $state<string | null>(null);
+
+	// Error feedback
+	let streamError = $state<string | null>(null);
+	let lastPrompt = $state('');
+
+	// Scroll detection
+	let isUserScrolledUp = $state(false);
 
 	function toggleModelSelectionMenu() {
 		isModelSelectionMenuOpen = !isModelSelectionMenuOpen;
@@ -69,11 +74,13 @@
 		);
 		addMessage(userMsg);
 		messages = [...messages, userMsg];
+		lastPrompt = promptToSend;
 		inputValue = '';
+		streamError = null;
 
 		const aiMsg = createAssistantMessage(thread.id, model.modelString, model.providerName);
-		addMessage(aiMsg);
-		messages = [...messages, aiMsg];
+		streamingContent = '';
+		streamingMessageId = aiMsg.id;
 		setThreadStatus(thread, 'loading');
 
 		try {
@@ -91,7 +98,14 @@
 				})
 			});
 
-			if (!response.body) return;
+			if (!response.body) {
+				streamError = 'No response from server';
+				streamingContent = null;
+				streamingMessageId = null;
+				setThreadStatus(thread, 'error');
+				saveThread(thread);
+				return;
+			}
 
 			const reader = response.body.getReader();
 			const decoder = new TextDecoder();
@@ -114,22 +128,29 @@
 						const json = JSON.parse(line);
 
 						if (json.type == 'delta' && json.delta) {
-							messages = messages.map((m) =>
-								m.id === aiMsg.id ? { ...m, content: m.content + json.delta } : m
-							);
+							streamingContent += json.delta;
 						}
 
 						if (json.type === 'done') {
+							const finalMsg = {
+								...aiMsg,
+								content: streamingContent || ''
+							};
+							addMessage(finalMsg);
+							messages = [...messages, finalMsg];
+							streamingContent = null;
+							streamingMessageId = null;
 							threads.values = threads.values.map((t) => {
 								if (t.id !== slug) return t;
 								return { ...t, status: 'success' as const };
 							});
-							const finalMsg = messages.find((m) => m.id === aiMsg.id);
-							if (finalMsg) updateMessage(finalMsg.id, { content: finalMsg.content });
 						}
 
 						if (json.type === 'error') {
-							console.error(json.message);
+							streamError = json.message || 'An error occurred';
+							streamingContent = null;
+							streamingMessageId = null;
+							setThreadStatus(thread, 'error');
 						}
 					} catch (err) {
 						console.error('JSON parse error:', err, line);
@@ -138,29 +159,66 @@
 			}
 		} catch (error) {
 			console.error('Streaming Error:', error);
-			threads.values = threads.values.map((t) => {
-				if (t.id !== slug) return t;
-				return { ...t, status: 'error' as const };
-			});
+			streamError = 'Connection lost. Check your network and try again.';
+			streamingContent = null;
+			streamingMessageId = null;
+			setThreadStatus(thread, 'error');
 		}
 
 		const saved = threads.values.find((t) => t.id === slug);
 		if (saved) saveThread(saved);
 	}
 
+	function retryLastMessage() {
+		if (!lastPrompt || !thread) return;
+		inputValue = lastPrompt;
+		if (streamingMessageId) {
+			messages = messages.filter((m) => m.id !== streamingMessageId);
+		}
+		streamError = null;
+		streamingContent = null;
+		streamingMessageId = null;
+		sendMessage();
+	}
+
 	function tryAutoSend() {
 		if (autoSent) return;
 		if (!thread || messages.length === 0) return;
-		const lastMsg = messages[messages.length - 1];
-		if (lastMsg.role !== 'user' || thread.status !== 'idle') return;
 		const model = getCurrentModel();
 		if (!model) return;
 
-		autoSent = true;
-		removeMessage(lastMsg.id);
-		messages = messages.slice(0, -1);
-		inputValue = lastMsg.content;
-		sendMessage();
+		const lastMsg = messages[messages.length - 1];
+
+		// Case 1: user message never sent before
+		if (lastMsg.role === 'user' && thread.status === 'idle') {
+			autoSent = true;
+			removeMessage(lastMsg.id);
+			messages = messages.slice(0, -1);
+			inputValue = lastMsg.content;
+			sendMessage();
+			return;
+		}
+
+		// Case 2: LLM response was interrupted — resend the preceding user message
+		if (
+			lastMsg.role === 'assistant' &&
+			(thread.status === 'loading' || thread.status === 'error')
+		) {
+			removeMessage(lastMsg.id);
+			messages = messages.slice(0, -1);
+
+			const prevUserMsg = messages[messages.length - 1];
+			if (prevUserMsg && prevUserMsg.role === 'user') {
+				autoSent = true;
+				removeMessage(prevUserMsg.id);
+				messages = messages.slice(0, -1);
+				inputValue = prevUserMsg.content;
+				streamError = null;
+				streamingContent = null;
+				streamingMessageId = null;
+				sendMessage();
+			}
+		}
 	}
 
 	onMount(() => {
@@ -220,7 +278,13 @@
 	});
 
 	$effect(() => {
-		scrollToBottom(messages, messagesContainer);
+		void messages;
+		void streamingContent;
+		if (isUserScrolledUp) return;
+		const id = setTimeout(() => {
+			scrollToBottom(messages, messagesContainer);
+		}, 10);
+		return () => clearTimeout(id);
 	});
 </script>
 
@@ -248,7 +312,7 @@
 		</div>
 
 		<div class="flex gap-2">
-			<div class="relative">
+			<div bind:this={menuRef} class="relative">
 				<button
 					class="flex items-center gap-2 rounded-lg bg-secondary px-3 py-2 text-sm transition-colors hover:bg-secondary/80"
 					onclick={() => {
@@ -284,26 +348,57 @@
 	</div>
 
 	<!-- Messages -->
-	<div bind:this={messagesContainer} class="messages flex-1 overflow-y-auto px-6 py-8">
+	<div
+		bind:this={messagesContainer}
+		class="messages flex-1 overflow-y-auto px-6 py-8"
+		onscroll={() => {
+			if (!messagesContainer) return;
+			const { scrollTop, scrollHeight, clientHeight } = messagesContainer;
+			isUserScrolledUp = scrollTop + clientHeight < scrollHeight - 50;
+		}}
+	>
 		<div class="mx-auto max-w-4xl space-y-8">
-			{#if messages.length === 0}
+			{#if messages.length === 0 && streamingContent === null}
 				<div class="flex h-full flex-col items-center justify-center text-center">
 					<Icon icon="lucide:sparkles" className="w-12 h-12 text-muted-foreground/20 mb-4" />
 					<p class="text-muted-foreground/50">Start the conversation...</p>
 				</div>
 			{:else}
 				{#each sortedMessages as message, index (message.id)}
-					<Message
-						{index}
-						role={message.role}
-						content={message.content}
-						model={message.model}
-						loading={message.id === lastAssistantId}
-					/>
+					<Message {index} role={message.role} content={message.content} model={message.model} />
 				{/each}
+				{#if streamingContent !== null}
+					<div class="animate-enter" style="animation-delay: 0ms">
+						<Message index={sortedMessages.length} role="assistant" content={streamingContent} />
+					</div>
+				{/if}
 			{/if}
 		</div>
 	</div>
+
+	<!-- Error Banner -->
+	{#if streamError}
+		<div
+			class="mx-4 mb-2 flex items-center gap-3 rounded-lg border border-error/30 bg-error/10 px-4 py-3 text-sm text-error"
+		>
+			<Icon icon="lucide:alert-circle" class="h-4 w-4 shrink-0" />
+			<span class="flex-1">{streamError}</span>
+			<button
+				onclick={retryLastMessage}
+				class="shrink-0 rounded-md bg-error/20 px-3 py-1 font-medium transition-colors hover:bg-error/30"
+			>
+				Retry
+			</button>
+			<button
+				onclick={() => {
+					streamError = null;
+				}}
+				class="shrink-0 rounded-md p-1 transition-colors hover:bg-error/20"
+			>
+				<Icon icon="lucide:x" class="h-3.5 w-3.5" />
+			</button>
+		</div>
+	{/if}
 
 	<!-- Input -->
 	<div class="input-field border-t border-border bg-card/30 px-4 py-4">
@@ -321,7 +416,7 @@
 			</div>
 			<button
 				onclick={sendMessage}
-				disabled={!inputValue.trim()}
+				disabled={!inputValue.trim() || streamingContent !== null}
 				class="text-primary-foreground shrink-0 bg-primary p-3 transition-all hover:bg-primary/90 disabled:cursor-not-allowed disabled:border-primary-content/50 disabled:bg-primary/20 disabled:opacity-50"
 			>
 				<Icon icon="lucide:arrow-right" class="h-4 w-4" />

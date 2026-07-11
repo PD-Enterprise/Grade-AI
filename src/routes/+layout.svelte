@@ -6,7 +6,8 @@
 		userData,
 		currentModel,
 		defaultMode,
-		modelList
+		modelList,
+		modelsLoading
 	} from '$lib/stores/store.svelte';
 	import { loadAllThreads } from '$lib/threads';
 	import Sidebar from './components/sidebar.svelte';
@@ -23,6 +24,7 @@
 
 	async function getModelListFromApi() {
 		try {
+			modelsLoading.value = true;
 			const response = await fetch('/', {
 				method: 'GET',
 				headers: { 'Content-Type': 'application/json' }
@@ -34,6 +36,8 @@
 			}
 		} catch (e) {
 			console.error('Error fetching model list:', e);
+		} finally {
+			modelsLoading.value = false;
 		}
 		return [];
 	}
