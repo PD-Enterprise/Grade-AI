@@ -1,6 +1,8 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
 	import { isAuthenticated, sidebarStatus, userData } from '$lib/stores/store.svelte';
+
+	let { isMobile = false }: { isMobile?: boolean } = $props();
 	import { resolve } from '$app/paths';
 	import { threads } from '$lib/stores/store.svelte';
 	import { page } from '$app/state';
@@ -39,6 +41,7 @@
 				console.error('Failed to delete thread on backend:', e);
 			}
 			deleteModal?.close();
+			if (isMobile) sidebarStatus.value = false;
 			goto(resolve('/'));
 		}
 		threadToDelete = null;
@@ -107,7 +110,12 @@
 <div class="relative flex h-full w-72 shrink-0 flex-col border-r border-border bg-sidebar">
 	<!-- Header -->
 	<div class="flex justify-between border-b border-border p-5">
-		<a href={resolve('/')}>
+		<a
+			href={resolve('/')}
+			onclick={() => {
+				if (isMobile) sidebarStatus.value = false;
+			}}
+		>
 			<div class="flex items-center gap-3">
 				<div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
 					<Icon icon="lucide:zap" class="h-4 w-4 text-primary" />
@@ -132,6 +140,9 @@
 		<a
 			class="text-primary-foreground flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-medium transition-colors hover:bg-primary/90"
 			href={resolve('/')}
+			onclick={() => {
+				if (isMobile) sidebarStatus.value = false;
+			}}
 		>
 			<Icon icon="lucide:plus" class="h-4 w-4" />
 			<span>New Chat</span>
@@ -157,6 +168,7 @@
 			{#each threads.values.toReversed() as thread (thread.id)}
 				<button
 					onclick={() => {
+						if (isMobile) sidebarStatus.value = false;
 						goto(resolve(`/chat/${thread.id}`));
 					}}
 					onmouseenter={() => {

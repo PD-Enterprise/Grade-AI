@@ -19,6 +19,8 @@
 
 	let { data, children } = $props();
 
+	let isMobile = $state(false);
+
 	async function getModelListFromApi() {
 		try {
 			const response = await fetch('/', {
@@ -48,6 +50,20 @@
 		if (localCurrentModel) {
 			currentModel.value = localCurrentModel;
 		}
+
+		const mql = window.matchMedia('(max-width: 767px)');
+		isMobile = mql.matches;
+		if (mql.matches) {
+			sidebarStatus.value = false;
+		}
+		const handler = (e: MediaQueryListEvent) => {
+			isMobile = e.matches;
+			if (e.matches) {
+				sidebarStatus.value = false;
+			}
+		};
+		mql.addEventListener('change', handler);
+		return () => mql.removeEventListener('change', handler);
 	});
 
 	afterNavigate(async () => {
@@ -97,11 +113,27 @@
 	{/if}
 
 	<!-- Sidebar -->
-	<div
-		class={`transition-all duration-300 ease-out ${sidebarStatus.value ? 'w-72' : 'w-0'} overflow-hidden`}
-	>
-		<Sidebar />
-	</div>
+	{#if isMobile}
+		{#if sidebarStatus.value}
+			<button
+				class="fixed inset-0 z-40 cursor-default bg-black/50"
+				onclick={() => (sidebarStatus.value = false)}
+				onkeydown={(e) => {
+					if (e.key === 'Escape') sidebarStatus.value = false;
+				}}
+				aria-label="Close sidebar"
+			></button>
+			<div class="fixed top-0 left-0 z-50 h-full shadow-xl">
+				<Sidebar isMobile={true} />
+			</div>
+		{/if}
+	{:else}
+		<div
+			class={`transition-all duration-300 ease-out ${sidebarStatus.value ? 'w-72' : 'w-0'} overflow-hidden`}
+		>
+			<Sidebar />
+		</div>
+	{/if}
 
 	<!-- Sidebar Action Bar -->
 	{#if !sidebarStatus.value}
