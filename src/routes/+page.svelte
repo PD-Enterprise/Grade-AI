@@ -72,7 +72,7 @@
 </svelte:head>
 
 <div class="flex flex-1 flex-col items-center justify-center bg-background px-4 py-20">
-	<div class="w-full max-w-2xl">
+	<div class="w-full max-w-2xl min-w-[320px]">
 		<div
 			class={`logo-and-title mb-12 text-center transition-all duration-700  ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
 		>

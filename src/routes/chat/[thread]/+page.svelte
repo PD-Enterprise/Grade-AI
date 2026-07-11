@@ -261,7 +261,7 @@
 
 				{#if isModelSelectionMenuOpen}
 					<div
-						class="absolute top-full right-0 z-40 mt-2 min-w-48 overflow-hidden rounded-lg border border-border bg-card shadow-xl"
+						class="absolute top-full right-0 z-40 mt-2 max-h-60 min-w-48 overflow-y-auto rounded-lg border border-border bg-card shadow-xl"
 					>
 						{#each modelList.values as model (model)}
 							<button
