@@ -2,14 +2,12 @@
 	import {
 		isAuthenticated,
 		sidebarStatus,
-		threads,
 		userData,
 		currentModel,
 		defaultMode,
 		modelList,
 		modelsLoading
 	} from '$lib/stores/store.svelte';
-	import { loadAllThreads } from '$lib/threads';
 	import Sidebar from './components/sidebar.svelte';
 	import './layout.css';
 	import Icon from '@iconify/svelte';
@@ -43,8 +41,6 @@
 	}
 
 	onMount(() => {
-		threads.values = loadAllThreads();
-
 		const localDefaultMode = localStorage.getItem('defaultMode');
 		if (localDefaultMode) {
 			defaultMode.value = localDefaultMode as 'direct' | 'socratic';

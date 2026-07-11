@@ -10,7 +10,13 @@
 		isAuthenticated,
 		threads
 	} from '$lib/stores/store.svelte';
-	import { createThread, createUserMessage, addMessage } from '$lib/threads';
+	import {
+		createThread,
+		createUserMessage,
+		createAssistantMessage,
+		addMessage,
+		saveThread
+	} from '$lib/threads';
 	import { generateTitle } from '$lib/utils/generateTempTitle';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
@@ -52,8 +58,11 @@
 		const title = generateTitle(prompt);
 		const thread = createThread(threadId, title, defaultMode.value);
 		const userMsg = createUserMessage(threadId, prompt, model.modelString, model.providerName);
+		const aiMsg = createAssistantMessage(threadId, model.modelString, model.providerName);
 		addMessage(userMsg);
+		addMessage(aiMsg);
 		threads.values.push(thread);
+		saveThread(thread);
 
 		goto(resolve(`/chat/${threadId}`));
 	}

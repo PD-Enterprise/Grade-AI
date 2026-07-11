@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
+	import type { Thread } from '$lib/types';
 	import { isAuthenticated, sidebarStatus, userData } from '$lib/stores/store.svelte';
 
 	let { isMobile = false }: { isMobile?: boolean } = $props();
@@ -10,7 +11,7 @@
 	import { validateAcademicLevel } from '$lib/utils/validateAcademicLevel';
 	import { onMount } from 'svelte';
 	import { slide } from 'svelte/transition';
-	import { deleteThread as deleteStoredThread } from '$lib/threads';
+	import { deleteThread as deleteStoredThread, loadAllThreads, saveThread } from '$lib/threads';
 
 	let image: string | undefined = $state('');
 	let slug = $derived(page.params.thread);
@@ -61,11 +62,15 @@
 	onMount(() => {
 		userModelDialogue = document.getElementById('user-profile-modal') as HTMLDialogElement;
 
+		// Step 1: Immediately show localStorage threads
+		threads.values = loadAllThreads();
+
+		// Step 2: Fetch authoritative thread list from backend
 		fetch('/api/threads', { method: 'GET', headers: { 'Content-Type': 'application/json' } })
 			.then((res) => res.json())
 			.then((result) => {
 				if (result.status === 200 && Array.isArray(result.data)) {
-					const remote = result.data.map(
+					const remote: Thread[] = result.data.map(
 						(t: { clientUUID: string; title: string; createdAt: number; updatedAt: number }) => ({
 							id: t.clientUUID,
 							title: t.title,
@@ -75,12 +80,15 @@
 							updatedAt: t.updatedAt
 						})
 					);
-					const seen = new Set(threads.values.map((t) => t.id));
-					const merged = [
-						...threads.values,
-						...remote.filter((t: { id: string }) => !seen.has(t.id))
-					];
-					threads.values = merged.sort((a, b) => b.updatedAt - a.updatedAt);
+					// Step 3: Replace store and localStorage with server data
+					const STORAGE_PREFIX = 'thread:';
+					for (const t of threads.values) {
+						localStorage.removeItem(`${STORAGE_PREFIX}${JSON.stringify(t.id)}`);
+					}
+					for (const t of remote) {
+						saveThread(t);
+					}
+					threads.values = remote.sort((a, b) => b.updatedAt - a.updatedAt);
 				}
 			})
 			.catch((e) => console.error('Failed to load threads from backend:', e));

@@ -75,6 +75,19 @@ export function createAssistantMessage(
 	};
 }
 
+export function replaceThreadMessages(threadId: string, messages: ChatMessage[]): void {
+	const index = getMessageIndex(threadId);
+	for (const id of index) {
+		localStorage.removeItem(messageStorageKey(id));
+	}
+	saveMessageIndex(threadId, []);
+	for (const msg of messages) {
+		localStorage.setItem(messageStorageKey(msg.id), JSON.stringify(msg));
+	}
+	const newIndex = messages.map((m) => m.id);
+	saveMessageIndex(threadId, newIndex);
+}
+
 export function addMessage(message: ChatMessage): void {
 	localStorage.setItem(messageStorageKey(message.id), JSON.stringify(message));
 	const index = getMessageIndex(message.conversationId);

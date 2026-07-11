@@ -7,9 +7,9 @@
 		createUserMessage,
 		createAssistantMessage,
 		addMessage,
+		updateMessage,
 		setThreadStatus,
 		saveThread,
-		removeMessage,
 		loadThreadMessages
 	} from '$lib/threads';
 	import { onMount } from 'svelte';
@@ -28,7 +28,7 @@
 	let menuRef: HTMLDivElement | undefined = $state();
 	let messagesContainer: HTMLDivElement | undefined = $state();
 
-	// Streaming (decoupled from messages array)
+	// Streaming
 	let streamingContent = $state<string | null>(null);
 	let streamingMessageId = $state<string | null>(null);
 
@@ -59,26 +59,13 @@
 		return modelList.values.find((m) => m.modelName === currentModel.value);
 	}
 
-	async function sendMessage() {
-		if (!inputValue.trim() || !thread) return;
+	async function streamResponse(
+		userMsg: ChatMessage,
+		aiMsg: ChatMessage,
+		model: { providerName: string; modelString: string }
+	) {
+		if (!thread) return;
 
-		const promptToSend = inputValue;
-		const model = getCurrentModel();
-		if (!model) return;
-
-		const userMsg = createUserMessage(
-			thread.id,
-			promptToSend,
-			model.modelString,
-			model.providerName
-		);
-		addMessage(userMsg);
-		messages = [...messages, userMsg];
-		lastPrompt = promptToSend;
-		inputValue = '';
-		streamError = null;
-
-		const aiMsg = createAssistantMessage(thread.id, model.modelString, model.providerName);
 		streamingContent = '';
 		streamingMessageId = aiMsg.id;
 		setThreadStatus(thread, 'loading');
@@ -88,7 +75,7 @@
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
-					prompt: promptToSend,
+					prompt: userMsg.content,
 					provider: model.providerName,
 					model: model.modelString,
 					mode: thread.mode,
@@ -109,7 +96,6 @@
 
 			const reader = response.body.getReader();
 			const decoder = new TextDecoder();
-
 			let buffer = '';
 
 			while (true) {
@@ -132,12 +118,10 @@
 						}
 
 						if (json.type === 'done') {
-							const finalMsg = {
-								...aiMsg,
-								content: streamingContent || ''
-							};
-							addMessage(finalMsg);
-							messages = [...messages, finalMsg];
+							updateMessage(aiMsg.id, { content: streamingContent || '' });
+							messages = messages.map((m) =>
+								m.id === aiMsg.id ? { ...m, content: streamingContent || '' } : m
+							);
 							streamingContent = null;
 							streamingMessageId = null;
 							threads.values = threads.values.map((t) => {
@@ -169,6 +153,30 @@
 		if (saved) saveThread(saved);
 	}
 
+	async function sendMessage() {
+		if (!inputValue.trim() || !thread) return;
+
+		const promptToSend = inputValue;
+		const model = getCurrentModel();
+		if (!model) return;
+
+		const userMsg = createUserMessage(
+			thread.id,
+			promptToSend,
+			model.modelString,
+			model.providerName
+		);
+		const aiMsg = createAssistantMessage(thread.id, model.modelString, model.providerName);
+		addMessage(userMsg);
+		addMessage(aiMsg);
+		messages = [...messages, userMsg, aiMsg];
+		lastPrompt = promptToSend;
+		inputValue = '';
+		streamError = null;
+
+		await streamResponse(userMsg, aiMsg, model);
+	}
+
 	function retryLastMessage() {
 		if (!lastPrompt || !thread) return;
 		inputValue = lastPrompt;
@@ -181,47 +189,44 @@
 		sendMessage();
 	}
 
-	function tryAutoSend() {
-		if (autoSent) return;
-		if (!thread || messages.length === 0) return;
+	let pendingAutoSend = $state(false);
+
+	async function tryAutoSend() {
+		if (autoSent || !thread || messages.length === 0) return;
 		const model = getCurrentModel();
 		if (!model) return;
 
 		const lastMsg = messages[messages.length - 1];
 
-		// Case 1: user message never sent before
-		if (lastMsg.role === 'user' && thread.status === 'idle') {
-			autoSent = true;
-			removeMessage(lastMsg.id);
-			messages = messages.slice(0, -1);
-			inputValue = lastMsg.content;
-			sendMessage();
-			return;
+		if (lastMsg.role === 'assistant' && lastMsg.content === '' && thread.status === 'idle') {
+			const userMsg = messages[messages.length - 2];
+			if (userMsg && userMsg.role === 'user' && userMsg.content !== '') {
+				autoSent = true;
+				lastPrompt = userMsg.content;
+				streamError = null;
+				scrollToBottom(messages, messagesContainer, true);
+				await streamResponse(userMsg, lastMsg, model);
+				return;
+			}
 		}
 
-		// Case 2: LLM response was interrupted — resend the preceding user message
 		if (
 			lastMsg.role === 'assistant' &&
+			lastMsg.content === '' &&
 			(thread.status === 'loading' || thread.status === 'error')
 		) {
-			removeMessage(lastMsg.id);
-			messages = messages.slice(0, -1);
-
-			const prevUserMsg = messages[messages.length - 1];
-			if (prevUserMsg && prevUserMsg.role === 'user') {
+			const userMsg = messages[messages.length - 2];
+			if (userMsg && userMsg.role === 'user' && userMsg.content !== '') {
 				autoSent = true;
-				removeMessage(prevUserMsg.id);
-				messages = messages.slice(0, -1);
-				inputValue = prevUserMsg.content;
 				streamError = null;
 				streamingContent = null;
 				streamingMessageId = null;
-				sendMessage();
+				await streamResponse(userMsg, lastMsg, model);
 			}
 		}
 	}
 
-	onMount(() => {
+	onMount(async () => {
 		if (slug) {
 			messages = loadThreadMessages(slug);
 
@@ -254,25 +259,34 @@
 					}
 				})
 				.catch((e) => console.error('Failed to load messages from backend:', e));
+
+			if (thread && thread.status === 'idle') {
+				try {
+					await fetch('/api/thread', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ id: thread.id, title: thread.title })
+					});
+				} catch (e) {
+					console.error('Failed to create thread on backend:', e);
+				}
+			}
+
+			if (modelList.values.length > 0) {
+				await tryAutoSend();
+			} else if (!autoSent) {
+				pendingAutoSend = true;
+			}
 		}
 
 		const inputElement = document.getElementById('input-element') as HTMLInputElement;
 		inputElement?.focus();
 		scrollToBottom(messages, messagesContainer, true);
-
-		if (thread && thread.status === 'idle') {
-			fetch('/api/thread', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ id: thread.id, title: thread.title })
-			}).catch((e) => console.error('Failed to create thread on backend:', e));
-		}
-
-		tryAutoSend();
 	});
 
 	$effect(() => {
-		if (modelList.values.length > 0) {
+		if (modelList.values.length > 0 && pendingAutoSend) {
+			pendingAutoSend = false;
 			tryAutoSend();
 		}
 	});
@@ -364,7 +378,7 @@
 					<p class="text-muted-foreground/50">Start the conversation...</p>
 				</div>
 			{:else}
-				{#each sortedMessages as message, index (message.id)}
+				{#each sortedMessages.filter((m) => m.id !== streamingMessageId) as message, index (message.id)}
 					<Message {index} role={message.role} content={message.content} model={message.model} />
 				{/each}
 				{#if streamingContent !== null}
