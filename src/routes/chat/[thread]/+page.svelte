@@ -302,7 +302,7 @@
 	<title>{thread?.title ?? 'Chat'}</title>
 </svelte:head>
 
-<div class="thread-container flex h-full flex-col gap-2">
+<div class="thread-container flex h-full flex-col gap-2 overflow-hidden">
 	<!-- Header -->
 	<div class="flex items-center justify-between border-b border-border bg-card/50 px-6 py-4">
 		<div class="flex items-center gap-4">
@@ -382,7 +382,7 @@
 	{/if}
 
 	<!-- Input -->
-	<div class="input-field border-t border-border bg-card/30 px-4 py-4">
+	<div class="input-field border-t border-border bg-card/30 px-3 py-3 sm:px-4 sm:py-4">
 		<div class="flex items-center gap-3">
 			<div class="flex-1">
 				<textarea
@@ -391,14 +391,14 @@
 					onkeydown={(e) => handleKeyDown(e, sendMessage)}
 					placeholder="Continue the conversation..."
 					rows="1"
-					class="w-full resize-none overflow-hidden border border-border bg-card px-4 py-4 text-foreground transition-colors placeholder:text-muted-foreground/40 focus:border-primary/50 focus:outline-none"
+					class="min-h-[48px] w-full resize-none overflow-hidden border border-border bg-card px-3 py-3 text-foreground transition-colors placeholder:text-muted-foreground/40 focus:border-primary/50 focus:outline-none sm:min-h-[60px] sm:px-4 sm:py-4"
 					id="input-element"
 				></textarea>
 			</div>
 			<button
 				onclick={sendMessage}
 				disabled={!inputValue.trim() || streamingContent !== null}
-				class="text-primary-foreground shrink-0 bg-primary p-3 transition-all hover:bg-primary/90 disabled:cursor-not-allowed disabled:border-primary-content/50 disabled:bg-primary/20 disabled:opacity-50"
+				class="text-primary-foreground flex h-[48px] w-[48px] shrink-0 items-center justify-center rounded-[1.25rem] bg-primary p-0 transition-all hover:bg-primary/90 disabled:cursor-not-allowed disabled:border-primary-content/50 disabled:bg-primary/20 disabled:opacity-50 sm:h-[60px] sm:w-[60px]"
 			>
 				<Icon icon="lucide:arrow-right" class="h-4 w-4" />
 			</button>
@@ -412,10 +412,8 @@
 			-ms-overflow-style: none;
 			scrollbar-width: none;
 			border-radius: 1.5rem;
-			min-height: 60px;
 		}
 		button {
-			border-radius: 1rem;
 		}
 	}
 	.animate-enter {
