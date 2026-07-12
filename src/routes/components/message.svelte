@@ -115,12 +115,13 @@
 				<span class="loading loading-sm loading-dots"></span>
 			{:else}
 				<SvelteMarkdown source={content} extensions={[markedKatex()]} {renderers} />
-				<div class="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground/50">
+				<div
+					class="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground/50 transition-opacity {!smallScreen
+						? 'opacity-0 group-hover:opacity-100'
+						: ''}"
+				>
 					{#if model}
-						<span
-							class="transition-opacity {!smallScreen ? 'opacity-0 group-hover:opacity-100' : ''}"
-							>{model}</span
-						>
+						<span>{model}</span>
 					{/if}
 					{#if status === 'idle'}
 						<button
