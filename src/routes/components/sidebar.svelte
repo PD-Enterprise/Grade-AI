@@ -24,6 +24,7 @@
 	let userModelDialogue: HTMLDialogElement | undefined = $state();
 	let threadToDelete: string | null = $state(null);
 	let deleteModal: HTMLDialogElement | undefined = $state();
+	let deleting = $state(false);
 
 	function confirmDelete(threadId: string) {
 		threadToDelete = threadId;
@@ -32,6 +33,7 @@
 
 	async function executeDelete() {
 		if (!threadToDelete) return;
+		deleting = true;
 		const currentThread = threads.values.find((t) => t.id === threadToDelete);
 		if (currentThread) {
 			threads.values = threads.values.filter((t) => t.id !== threadToDelete);
@@ -43,9 +45,10 @@
 			}
 			deleteModal?.close();
 			if (isMobile) sidebarStatus.value = false;
-			goto(resolve('/'));
+			if (page.params.thread === threadToDelete) goto(resolve('/'));
 		}
 		threadToDelete = null;
+		deleting = false;
 	}
 	async function updateAcademicLevel() {
 		const response = await fetch('/', {
@@ -344,9 +347,13 @@
 				</button>
 			</form>
 			<button
-				class="rounded-lg bg-error px-4 py-2 text-sm text-white transition-colors hover:bg-error/80"
+				class="rounded-lg bg-error px-4 py-2 text-sm text-white transition-colors hover:bg-error/80 disabled:cursor-not-allowed disabled:opacity-50"
 				onclick={executeDelete}
+				disabled={deleting}
 			>
+				{#if deleting}
+					<span class="loading loading-sm loading-spinner"></span>
+				{/if}
 				Delete
 			</button>
 		</div>

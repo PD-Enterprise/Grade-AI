@@ -159,15 +159,15 @@ static/
 
 ## Scripts
 
-| Command | Description |
-|---|---|
-| `bun run dev` | Start dev server on port 3000 |
-| `bun run build` | Production build for Cloudflare Pages |
+| Command           | Description                                   |
+| ----------------- | --------------------------------------------- |
+| `bun run dev`     | Start dev server on port 3000                 |
+| `bun run build`   | Production build for Cloudflare Pages         |
 | `bun run preview` | Preview via `wrangler pages dev` on port 4173 |
-| `bun run check` | Type-check with `svelte-check` |
-| `bun run lint` | `prettier --check . && eslint .` |
-| `bun run format` | `prettier --write .` |
-| `bun run gen` | `wrangler types` — regenerate worker types |
+| `bun run check`   | Type-check with `svelte-check`                |
+| `bun run lint`    | `prettier --check . && eslint .`              |
+| `bun run format`  | `prettier --write .`                          |
+| `bun run gen`     | `wrangler types` — regenerate worker types    |
 
 ## Dependencies
 
