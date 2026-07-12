@@ -12,7 +12,7 @@
 		saveThread,
 		loadThreadMessages
 	} from '$lib/threads';
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import { handleKeyDown } from '../../utils/sendMessageKeyboard';
 	import { grow } from '../../utils/growTextbox';
 	import Message from '../../components/message.svelte';
@@ -209,16 +209,34 @@
 		}
 	}
 
-	onMount(async () => {
-		if (slug) {
-			messages = loadThreadMessages(slug);
+	onMount(() => {
+		const inputElement = document.getElementById('input-element') as HTMLInputElement;
+		inputElement?.focus();
+	});
 
-			fetch(`/api/messages/${slug}`, {
+	$effect(() => {
+		const currentSlug = slug;
+		if (!currentSlug) return;
+		let cancelled = false;
+
+		untrack(async () => {
+			messages = loadThreadMessages(currentSlug);
+			streamingContent = null;
+			streamingMessageId = null;
+			streamError = null;
+			autoSent = false;
+			lastPrompt = '';
+			inputValue = '';
+
+			const currentThread = threads.values.find((t) => t.id === currentSlug);
+
+			fetch(`/api/messages/${currentSlug}`, {
 				method: 'GET',
 				headers: { 'Content-Type': 'application/json' }
 			})
 				.then((res) => res.json())
 				.then((result) => {
+					if (cancelled) return;
 					if (result.status === 200 && Array.isArray(result.data?.messages)) {
 						const seen = new Set(messages.map((m) => m.id));
 						const local: ChatMessage[] = [];
@@ -226,7 +244,7 @@
 							if (seen.has(m.clientUUID)) continue;
 							const msg: ChatMessage = {
 								id: m.clientUUID,
-								conversationId: slug,
+								conversationId: currentSlug,
 								role: m.role,
 								content: m.content,
 								model: m.model,
@@ -243,41 +261,64 @@
 				})
 				.catch((e) => console.error('Failed to load messages from backend:', e));
 
-			if (thread && thread.status === 'idle') {
+			if (currentThread && currentThread.status === 'idle') {
+				const firstUserMsg = messages.find((m) => m.role === 'user');
 				try {
-					const firstUserMsg = messages.find((m) => m.role === 'user');
 					const response = await fetch('/api/thread', {
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
 						body: JSON.stringify({
-							id: thread.id,
-							title: thread.title,
+							id: currentThread.id,
+							title: currentThread.title,
 							prompt: firstUserMsg?.content || ''
 						})
 					});
 					const result = await response.json();
+					if (cancelled) return;
 					if (result.status === 200) {
-						thread.title = result.data.title;
-						saveThread(thread);
+						currentThread.title = result.data.title;
+						saveThread(currentThread);
 						threads.values = threads.values.map((t) =>
-							t.id === thread.id ? { ...t, title: result.data.title } : t
+							t.id === currentThread.id ? { ...t, title: result.data.title } : t
 						);
 					}
 				} catch (e) {
-					console.error('Failed to create thread on backend:', e);
+					if (!cancelled) console.error('Failed to create thread on backend:', e);
 				}
 			}
 
-			if (modelList.values.length > 0) {
-				await tryAutoSend();
-			} else if (!autoSent) {
+			if (cancelled) return;
+
+			if (messages.length > 0) {
+				const lastMsg = messages[messages.length - 1];
+				if (
+					lastMsg.role === 'assistant' &&
+					lastMsg.content === '' &&
+					currentThread &&
+					currentThread.status === 'idle'
+				) {
+					const userMsg = messages[messages.length - 2];
+					if (userMsg && userMsg.role === 'user' && userMsg.content !== '') {
+						const model = modelList.values.find((m) => m.modelName === currentModel.value);
+						if (model) {
+							autoSent = true;
+							lastPrompt = userMsg.content;
+							streamError = null;
+							scrollToBottom(messages, messagesContainer, true);
+							streamResponse(userMsg, lastMsg, model);
+						}
+					}
+				}
+			}
+
+			if (!autoSent && modelList.values.length === 0) {
 				pendingAutoSend = true;
 			}
-		}
+		});
 
-		const inputElement = document.getElementById('input-element') as HTMLInputElement;
-		inputElement?.focus();
-		scrollToBottom(messages, messagesContainer, true);
+		return () => {
+			cancelled = true;
+		};
 	});
 
 	$effect(() => {
