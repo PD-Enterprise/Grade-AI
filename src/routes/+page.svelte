@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
 	import { onMount } from 'svelte';
+
 	import {
 		currentModel,
 		defaultMode,
@@ -106,18 +107,26 @@
 						<div class="h-8 w-20 animate-pulse rounded-lg bg-secondary"></div>
 					</div>
 				{:else}
-					<div class="flex rounded-lg bg-secondary p-1">
+					<div class="relative flex rounded-lg bg-secondary p-1">
+						<div
+							class="absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-md bg-card-foreground/10 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
+							style="left: {defaultMode.value === 'direct' ? '4px' : 'calc(50%)'}"
+						></div>
 						<button
-							class={`rounded-md px-3 py-1.5 text-sm font-medium transition-all ${defaultMode.value == 'direct' ? 'text-primary-foreground bg-card-foreground/10' : 'text-muted-foreground hover:text-foreground'}`}
+							class="relative z-10 flex-1 rounded-md px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-colors duration-200"
+							class:text-primary-foreground={defaultMode.value === 'direct'}
+							class:text-muted-foreground={defaultMode.value !== 'direct'}
 							onclick={() => {
 								defaultMode.value = 'direct';
-							}}>Direct Model</button
+							}}>Direct Mode</button
 						>
 						<button
-							class={`rounded-md px-3 py-1.5 text-sm font-medium transition-all ${defaultMode.value == 'socratic' ? 'text-primary-foreground bg-card-foreground/10' : 'text-muted-foreground hover:text-foreground'}`}
+							class="relative z-10 flex-1 rounded-md px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-colors duration-200"
+							class:text-primary-foreground={defaultMode.value === 'socratic'}
+							class:text-muted-foreground={defaultMode.value !== 'socratic'}
 							onclick={() => {
 								defaultMode.value = 'socratic';
-							}}>Socratic Models</button
+							}}>Socratic Mode</button
 						>
 					</div>
 
