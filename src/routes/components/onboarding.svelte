@@ -38,7 +38,11 @@
 		<h3 class="text-lg font-bold">Hello {userData.value.name}, Welcome to Grade AI!</h3>
 		<p class="text-muted-foreground">Please select your academic level below:</p>
 		<div class="academicLevel mt-5 flex flex-row gap-5">
-			<select class="select-bordered metadata-input-field select" bind:value={isK_12} required>
+			<select
+				class="select-bordered metadata-input-field select bg-muted"
+				bind:value={isK_12}
+				required
+			>
 				<option value="true">K-12</option>
 				<option value="false">Not K-12</option>
 			</select>

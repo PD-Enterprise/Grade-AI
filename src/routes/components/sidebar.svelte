@@ -274,7 +274,7 @@
 			>
 				<div class="academicLevel flex flex-row gap-5">
 					<select
-						class="select-bordered metadata-input-field select bg-card-foreground/10"
+						class="select-bordered metadata-input-field select bg-muted"
 						bind:value={isK_12}
 						required
 					>

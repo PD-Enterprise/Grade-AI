@@ -24,10 +24,7 @@
 
 	function handleClickOutside(event: MouseEvent) {
 		if (isOpen && menuRef && !menuRef.contains(event.target as Node)) {
-			const toggleButton = (event.target as HTMLElement).closest('.model-selector-toggle');
-			if (!toggleButton) {
-				isOpen = false;
-			}
+			isOpen = false;
 		}
 	}
 </script>
@@ -51,8 +48,11 @@
 	</button>
 
 	{#if isOpen}
-		<div
+		<button
 			class="absolute top-full right-0 z-50 mt-2 max-h-60 min-w-48 overflow-y-auto rounded-lg border border-border bg-card shadow-xl"
+			onclick={() => {
+				isOpen = false;
+			}}
 		>
 			{#each sortedModels as model (model)}
 				<button
@@ -68,6 +68,6 @@
 					{model.modelName}
 				</button>
 			{/each}
-		</div>
+		</button>
 	{/if}
 </div>
