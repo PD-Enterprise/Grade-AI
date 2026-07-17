@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { signIn } from '@auth/sveltekit/client';
-	import { resolve } from '$app/paths';
 
 	async function login() {
 		signIn('google', { redirectTo: '/' });
