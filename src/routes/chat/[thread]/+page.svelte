@@ -2,7 +2,7 @@
 	import Icon from '@iconify/svelte';
 	import { page } from '$app/state';
 	import { threads, currentModel, modelList, sidebarStatus } from '$lib/stores/store.svelte';
-	import type { ChatMessage } from '$lib/types';
+	import type { ChatMessage, Thread } from '$lib/types';
 	import {
 		createUserMessage,
 		createAssistantMessage,
@@ -34,12 +34,87 @@
 	// Error feedback
 	let streamError = $state<string | null>(null);
 	let lastPrompt = $state('');
-
+	let pendingAutoSend = $state(false);
 	// Scroll detection
 	let isUserScrolledUp = $state(false);
 
 	function getCurrentModel() {
 		return modelList.values.find((m) => m.modelName === currentModel.value);
+	}
+
+	async function loadServerMessages(threadId: string, signal: { cancelled: boolean }) {
+		try {
+			const res = await fetch(`/api/messages/${threadId}`, {
+				method: 'GET',
+				headers: { 'Content-Type': 'application/json' }
+			});
+			const result = await res.json();
+			if (signal.cancelled) return;
+			if (result.status === 200 && Array.isArray(result.data?.messages)) {
+				const seen = new Set(messages.map((m) => m.id));
+				const local: ChatMessage[] = [];
+				for (const m of result.data.messages) {
+					if (seen.has(m.clientUUID)) continue;
+					const msg: ChatMessage = {
+						id: m.clientUUID,
+						conversationId: threadId,
+						role: m.role,
+						content: m.content,
+						model: m.model,
+						provider: m.provider,
+						timestamp: m.createdAt
+					};
+					local.push(msg);
+					addMessage(msg);
+				}
+				if (local.length > 0) {
+					messages = [...messages, ...local].sort((a, b) => a.timestamp - b.timestamp);
+				}
+			}
+		} catch (e) {
+			if (!signal.cancelled) console.error('Failed to load messages from backend:', e);
+		}
+	}
+
+	async function createThreadOnBackend(thread: Thread, signal: { cancelled: boolean }) {
+		const firstUserMsg = messages.find((m) => m.role === 'user');
+		try {
+			const response = await fetch('/api/thread', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					id: thread.id,
+					title: thread.title,
+					prompt: firstUserMsg?.content || ''
+				})
+			});
+			const result = await response.json();
+			if (signal.cancelled) return;
+			if (result.status === 200) {
+				thread.title = result.data.title;
+				saveThread(thread);
+				threads.values = threads.values.map((t) =>
+					t.id === thread.id ? { ...t, title: result.data.title } : t
+				);
+			}
+		} catch (e) {
+			if (!signal.cancelled) console.error('Failed to create thread on backend:', e);
+		}
+	}
+
+	async function autoResend(thread: Thread) {
+		if (messages.length === 0) return;
+		const lastMsg = messages[messages.length - 1];
+		if (lastMsg.role !== 'assistant' || lastMsg.content !== '' || thread.status !== 'idle') return;
+		const userMsg = messages[messages.length - 2];
+		if (!userMsg || userMsg.role !== 'user' || userMsg.content === '') return;
+		const model = modelList.values.find((m) => m.modelName === currentModel.value);
+		if (!model) return;
+		autoSent = true;
+		lastPrompt = userMsg.content;
+		streamError = null;
+		scrollToBottom(messages, messagesContainer, true);
+		streamResponse(userMsg, lastMsg, model);
 	}
 
 	async function streamResponse(
@@ -172,8 +247,6 @@
 		sendMessage();
 	}
 
-	let pendingAutoSend = $state(false);
-
 	async function tryAutoSend() {
 		if (autoSent || !thread || messages.length === 0) return;
 		const model = getCurrentModel();
@@ -230,86 +303,15 @@
 
 			const currentThread = threads.values.find((t) => t.id === currentSlug);
 
-			fetch(`/api/messages/${currentSlug}`, {
-				method: 'GET',
-				headers: { 'Content-Type': 'application/json' }
-			})
-				.then((res) => res.json())
-				.then((result) => {
-					if (cancelled) return;
-					if (result.status === 200 && Array.isArray(result.data?.messages)) {
-						const seen = new Set(messages.map((m) => m.id));
-						const local: ChatMessage[] = [];
-						for (const m of result.data.messages) {
-							if (seen.has(m.clientUUID)) continue;
-							const msg: ChatMessage = {
-								id: m.clientUUID,
-								conversationId: currentSlug,
-								role: m.role,
-								content: m.content,
-								model: m.model,
-								provider: m.provider,
-								timestamp: m.createdAt
-							};
-							local.push(msg);
-							addMessage(msg);
-						}
-						if (local.length > 0) {
-							messages = [...messages, ...local].sort((a, b) => a.timestamp - b.timestamp);
-						}
-					}
-				})
-				.catch((e) => console.error('Failed to load messages from backend:', e));
+			await loadServerMessages(currentSlug, { cancelled });
 
-			if (currentThread && currentThread.status === 'idle') {
-				const firstUserMsg = messages.find((m) => m.role === 'user');
-				try {
-					const response = await fetch('/api/thread', {
-						method: 'POST',
-						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify({
-							id: currentThread.id,
-							title: currentThread.title,
-							prompt: firstUserMsg?.content || ''
-						})
-					});
-					const result = await response.json();
-					if (cancelled) return;
-					if (result.status === 200) {
-						currentThread.title = result.data.title;
-						saveThread(currentThread);
-						threads.values = threads.values.map((t) =>
-							t.id === currentThread.id ? { ...t, title: result.data.title } : t
-						);
-					}
-				} catch (e) {
-					if (!cancelled) console.error('Failed to create thread on backend:', e);
-				}
+			if (currentThread?.status === 'idle') {
+				await createThreadOnBackend(currentThread, { cancelled });
 			}
 
 			if (cancelled) return;
 
-			if (messages.length > 0) {
-				const lastMsg = messages[messages.length - 1];
-				if (
-					lastMsg.role === 'assistant' &&
-					lastMsg.content === '' &&
-					currentThread &&
-					currentThread.status === 'idle'
-				) {
-					const userMsg = messages[messages.length - 2];
-					if (userMsg && userMsg.role === 'user' && userMsg.content !== '') {
-						const model = modelList.values.find((m) => m.modelName === currentModel.value);
-						if (model) {
-							autoSent = true;
-							lastPrompt = userMsg.content;
-							streamError = null;
-							scrollToBottom(messages, messagesContainer, true);
-							streamResponse(userMsg, lastMsg, model);
-						}
-					}
-				}
-			}
+			if (currentThread) await autoResend(currentThread);
 
 			if (!autoSent && modelList.values.length === 0) {
 				pendingAutoSend = true;
