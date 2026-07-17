@@ -48,11 +48,8 @@
 	</button>
 
 	{#if isOpen}
-		<button
+		<div
 			class="absolute top-full right-0 z-50 mt-2 max-h-60 min-w-48 overflow-y-auto rounded-lg border border-border bg-card shadow-xl"
-			onclick={() => {
-				isOpen = false;
-			}}
 		>
 			{#each sortedModels as model (model)}
 				<button
@@ -61,13 +58,14 @@
 							? 'text-primary-foreground bg-primary'
 							: 'text-foreground hover:bg-secondary'
 					}`}
-					onclick={() => {
+					onclick={(e) => {
+						e.stopPropagation();
 						changeModel(model.modelName);
 					}}
 				>
 					{model.modelName}
 				</button>
 			{/each}
-		</button>
+		</div>
 	{/if}
 </div>
