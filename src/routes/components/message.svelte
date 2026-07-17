@@ -8,6 +8,7 @@
 	import { markedHighlight } from 'marked-highlight';
 	import KatexBlock from './KatexBlock.svelte';
 	import TableBlock from './TableBlock.svelte';
+	import CodeBlock from './CodeBlock.svelte';
 	import type { RendererComponent, Renderers } from '@humanspeak/svelte-markdown';
 	import Icon from '@iconify/svelte';
 
@@ -27,8 +28,18 @@
 	const renderers: Partial<KatexRenderers> = {
 		inlineKatex: KatexRenderer,
 		blockKatex: KatexBlock,
-		table: TableBlock
+		table: TableBlock,
+		code: CodeBlock
 	};
+	const highlightExtension = markedHighlight({
+		langPrefix: 'hljs language-',
+		highlight(code: string, lang: string) {
+			if (lang && hljs.getLanguage(lang)) {
+				return hljs.highlight(code, { language: lang }).value;
+			}
+			return hljs.highlightAuto(code).value;
+		}
+	});
 	let smallScreen = $state(typeof window !== 'undefined' && window.innerWidth < 770);
 	let status = $state<SpeakStatus>('idle');
 	let utterance: SpeechSynthesisUtterance | null = null;
@@ -120,19 +131,27 @@
 	{#if role === 'user'}
 		<div class="ml-auto max-w-xl min-w-0">
 			<div
-				class="wrap-break-words rounded-2xl bg-primary/10 px-5 py-3 text-sm leading-relaxed text-foreground"
+				class="wrap-break-words markdown-content rounded-2xl bg-primary/10 px-5 py-3 text-sm leading-relaxed text-foreground"
 			>
-				<SvelteMarkdown source={content} extensions={[markedKatex()]} {renderers} />
+				<SvelteMarkdown
+					source={content}
+					extensions={[markedKatex(), highlightExtension]}
+					{renderers}
+				/>
 			</div>
 		</div>
 	{:else}
 		<div
-			class="group wrap-break-words w-full min-w-0 text-sm leading-relaxed text-foreground max-md:text-xs"
+			class="group wrap-break-words markdown-content w-full min-w-0 text-sm leading-relaxed text-foreground max-md:text-xs"
 		>
 			{#if content === ''}
 				<span class="loading loading-sm loading-dots"></span>
 			{:else}
-				<SvelteMarkdown source={content} extensions={[markedKatex()]} {renderers} />
+				<SvelteMarkdown
+					source={content}
+					extensions={[markedKatex(), highlightExtension]}
+					{renderers}
+				/>
 				<div
 					class="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground/50 transition-opacity {!smallScreen
 						? 'opacity-0 group-hover:opacity-100'

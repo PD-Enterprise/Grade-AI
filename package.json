@@ -45,7 +45,9 @@
 		"@auth/sveltekit": "^1.10.0",
 		"@humanspeak/svelte-markdown": "^1.4.5",
 		"dompurify": "^3.4.1",
+		"highlight.js": "^11.11.1",
 		"katex": "^0.16.45",
+		"marked-highlight": "^2.2.4",
 		"nanoid": "^5.1.9"
 	}
 }
