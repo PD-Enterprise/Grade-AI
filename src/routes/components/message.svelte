@@ -90,6 +90,11 @@
 	}
 	function resume() {
 		window.speechSynthesis?.resume();
+		if (window.speechSynthesis?.paused) {
+			const dummy = new SpeechSynthesisUtterance('');
+			dummy.volume = 0;
+			window.speechSynthesis.speak(dummy);
+		}
 		status = 'playing';
 	}
 	function onResize() {
