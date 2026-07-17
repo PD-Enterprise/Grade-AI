@@ -215,5 +215,5 @@ export function loadAllThreads(): Thread[] {
 			}
 		}
 	}
-	return threads;
+	return threads.sort((a, b) => b.createdAt - a.createdAt);
 }
