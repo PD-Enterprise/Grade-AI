@@ -14,6 +14,14 @@
 		isOpen = !isOpen;
 	}
 
+	let sortedModels = $derived(
+		[...modelList.values].sort((a, b) => {
+			if (a.modelName === currentModel.value) return -1;
+			if (b.modelName === currentModel.value) return 1;
+			return 0;
+		})
+	);
+
 	function handleClickOutside(event: MouseEvent) {
 		if (isOpen && menuRef && !menuRef.contains(event.target as Node)) {
 			const toggleButton = (event.target as HTMLElement).closest('.model-selector-toggle');
@@ -46,7 +54,7 @@
 		<div
 			class="absolute top-full right-0 z-50 mt-2 max-h-60 min-w-48 overflow-y-auto rounded-lg border border-border bg-card shadow-xl"
 		>
-			{#each modelList.values as model (model)}
+			{#each sortedModels as model (model)}
 				<button
 					class={`w-full px-4 py-2.5 text-left text-sm transition-colors ${
 						currentModel.value == model.modelName
