@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { signOut } from '@auth/sveltekit/client';
+	import { clearAllData } from '$lib/threads';
 
 	async function logout() {
-		signOut();
+		clearAllData();
+		await signOut();
 	}
 </script>
 
