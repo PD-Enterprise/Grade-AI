@@ -166,6 +166,21 @@ export function setThreadStatus(thread: Thread, status: ThreadStatus): Thread {
 	return thread;
 }
 
+export function clearAllData(): void {
+	const keys = Object.keys(localStorage);
+	for (const key of keys) {
+		if (
+			key.startsWith(STORAGE_PREFIX) ||
+			key.startsWith(MESSAGE_STORAGE_PREFIX) ||
+			key.startsWith(MESSAGE_INDEX_PREFIX) ||
+			key === 'CurrentModel' ||
+			key === 'defaultMode'
+		) {
+			localStorage.removeItem(key);
+		}
+	}
+}
+
 export function deleteThread(threadId: string): void {
 	const index = getMessageIndex(threadId);
 	for (const id of index) {
