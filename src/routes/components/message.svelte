@@ -1,8 +1,13 @@
 <script lang="ts">
 	import type { ChatRole } from '$lib/types';
 	import 'katex/dist/katex.min.css';
+	import 'highlight.js/styles/github-dark.css';
 	import SvelteMarkdown from '@humanspeak/svelte-markdown';
 	import { KatexRenderer, markedKatex } from '@humanspeak/svelte-markdown/extensions';
+	import hljs from 'highlight.js';
+	import { markedHighlight } from 'marked-highlight';
+	import KatexBlock from './KatexBlock.svelte';
+	import TableBlock from './TableBlock.svelte';
 	import type { RendererComponent, Renderers } from '@humanspeak/svelte-markdown';
 	import Icon from '@iconify/svelte';
 
@@ -21,7 +26,8 @@
 	const { index, role, content, model = undefined }: props = $props();
 	const renderers: Partial<KatexRenderers> = {
 		inlineKatex: KatexRenderer,
-		blockKatex: KatexRenderer
+		blockKatex: KatexBlock,
+		table: TableBlock
 	};
 	let smallScreen = $state(typeof window !== 'undefined' && window.innerWidth < 770);
 	let status = $state<SpeakStatus>('idle');
@@ -107,15 +113,22 @@
 	});
 </script>
 
-<div class="message animate-enter flex" style={`animation-delay: ${Math.min(index * 30, 300)}ms; `}>
+<div
+	class="message animate-enter flex w-full min-w-0"
+	style={`animation-delay: ${Math.min(index * 30, 300)}ms; `}
+>
 	{#if role === 'user'}
-		<div class="ml-auto max-w-xl">
-			<div class="rounded-2xl bg-primary/10 px-5 py-3 text-sm leading-relaxed text-foreground">
+		<div class="ml-auto max-w-xl min-w-0">
+			<div
+				class="wrap-break-words rounded-2xl bg-primary/10 px-5 py-3 text-sm leading-relaxed text-foreground"
+			>
 				<SvelteMarkdown source={content} extensions={[markedKatex()]} {renderers} />
 			</div>
 		</div>
 	{:else}
-		<div class="group text-sm leading-relaxed text-foreground max-md:text-xs">
+		<div
+			class="group wrap-break-words w-full min-w-0 text-sm leading-relaxed text-foreground max-md:text-xs"
+		>
 			{#if content === ''}
 				<span class="loading loading-sm loading-dots"></span>
 			{:else}
