@@ -290,7 +290,7 @@
 	$effect(() => {
 		const currentSlug = slug;
 		if (!currentSlug) return;
-		let cancelled = false;
+		const signal = { cancelled: false };
 
 		untrack(async () => {
 			messages = loadThreadMessages(currentSlug);
@@ -303,13 +303,13 @@
 
 			const currentThread = threads.values.find((t) => t.id === currentSlug);
 
-			await loadServerMessages(currentSlug, { cancelled });
+			await loadServerMessages(currentSlug, signal);
 
 			if (currentThread?.status === 'idle') {
-				await createThreadOnBackend(currentThread, { cancelled });
+				await createThreadOnBackend(currentThread, signal);
 			}
 
-			if (cancelled) return;
+			if (signal.cancelled) return;
 
 			if (currentThread) await autoResend(currentThread);
 
@@ -319,7 +319,7 @@
 		});
 
 		return () => {
-			cancelled = true;
+			signal.cancelled = true;
 		};
 	});
 
