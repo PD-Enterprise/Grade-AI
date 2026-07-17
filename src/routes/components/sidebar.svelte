@@ -62,39 +62,44 @@
 		}
 		userModelDialogue?.close();
 	}
+	async function loadThreadsFromApi() {
+		try {
+			const response = await fetch('/api/threads', {
+				method: 'GET',
+				headers: { 'Content-Type': 'application/json' }
+			});
+			const result = await response.json();
+			if (result.status === 200 && Array.isArray(result.data)) {
+				const remote: Thread[] = result.data.map(
+					(t: { clientUUID: string; title: string; createdAt: number; updatedAt: number }) => ({
+						id: t.clientUUID,
+						title: t.title,
+						mode: 'direct' as const,
+						status: 'idle' as const,
+						createdAt: t.createdAt,
+						updatedAt: t.updatedAt
+					})
+				);
+				const STORAGE_PREFIX = 'thread:';
+				for (const t of threads.values) {
+					localStorage.removeItem(`${STORAGE_PREFIX}${JSON.stringify(t.id)}`);
+				}
+				for (const t of remote) {
+					saveThread(t);
+				}
+				threads.values = remote.sort((a, b) => b.updatedAt - a.updatedAt);
+			}
+		} catch (e) {
+			console.error('Failed to load threads from backend:', e);
+		}
+	}
+
 	onMount(() => {
 		userModelDialogue = document.getElementById('user-profile-modal') as HTMLDialogElement;
 
-		// Step 1: Immediately show localStorage threads
+		if (threads.values.length > 0) return;
 		threads.values = loadAllThreads();
-
-		// Step 2: Fetch authoritative thread list from backend
-		fetch('/api/threads', { method: 'GET', headers: { 'Content-Type': 'application/json' } })
-			.then((res) => res.json())
-			.then((result) => {
-				if (result.status === 200 && Array.isArray(result.data)) {
-					const remote: Thread[] = result.data.map(
-						(t: { clientUUID: string; title: string; createdAt: number; updatedAt: number }) => ({
-							id: t.clientUUID,
-							title: t.title,
-							mode: 'direct' as const,
-							status: 'idle' as const,
-							createdAt: t.createdAt,
-							updatedAt: t.updatedAt
-						})
-					);
-					// Step 3: Replace store and localStorage with server data
-					const STORAGE_PREFIX = 'thread:';
-					for (const t of threads.values) {
-						localStorage.removeItem(`${STORAGE_PREFIX}${JSON.stringify(t.id)}`);
-					}
-					for (const t of remote) {
-						saveThread(t);
-					}
-					threads.values = remote.sort((a, b) => b.updatedAt - a.updatedAt);
-				}
-			})
-			.catch((e) => console.error('Failed to load threads from backend:', e));
+		loadThreadsFromApi();
 	});
 	$effect(() => {
 		if (userData.value.image) {
