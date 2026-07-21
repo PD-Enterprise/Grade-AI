@@ -109,7 +109,7 @@
 				{:else}
 					<div class="relative flex rounded-lg bg-secondary p-1">
 						<div
-							class="absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-md bg-card-foreground/10 transition-all duration-300 ease-in-out"
+							class="absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-md bg-card-foreground/10 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
 							style="left: {defaultMode.value === 'direct' ? '4px' : 'calc(50%)'}"
 						></div>
 						<button
