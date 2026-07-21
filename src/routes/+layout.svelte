@@ -6,7 +6,8 @@
 		currentModel,
 		defaultMode,
 		modelList,
-		modelsLoading
+		modelsLoading,
+		pageLoading
 	} from '$lib/stores/store.svelte';
 	import Sidebar from './components/sidebar.svelte';
 	import './layout.css';
@@ -14,11 +15,13 @@
 	import { page } from '$app/state';
 	import Icon from '@iconify/svelte';
 	import NotLoggedIn from './components/notLoggedIn.svelte';
+	import Loader from './components/loader.svelte';
 	import { onMount } from 'svelte';
-	import { goto, afterNavigate } from '$app/navigation';
+	import { goto, afterNavigate, onNavigate } from '$app/navigation';
 
 	let { data, children } = $props();
 
+	let isLoaded = $state(false);
 	let isMobile = $state(false);
 
 	async function getModelListFromApi() {
@@ -42,6 +45,10 @@
 	}
 
 	onMount(() => {
+		setTimeout(() => {
+			isLoaded = true;
+		}, 50);
+
 		const localDefaultMode = localStorage.getItem('defaultMode');
 		if (localDefaultMode) {
 			defaultMode.value = localDefaultMode as 'direct' | 'socratic';
@@ -86,6 +93,10 @@
 		}
 	});
 
+	onNavigate(() => {
+		pageLoading.value = true;
+	});
+
 	$effect(() => {
 		if (!data.session) {
 			isAuthenticated.value = false;
@@ -107,7 +118,13 @@
 	});
 </script>
 
-<div class="flex h-dvh overflow-hidden bg-background text-foreground">
+{#if !isLoaded || pageLoading.value}
+	<Loader title="Loading Grade AI..." />
+{/if}
+
+<div
+	class="flex h-dvh overflow-hidden bg-background text-foreground {isLoaded && !pageLoading.value ? 'opacity-100' : 'opacity-0'} transition-opacity duration-400"
+>
 	{#if !isAuthenticated.value}
 		<NotLoggedIn />
 	{/if}

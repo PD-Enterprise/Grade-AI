@@ -7,7 +7,7 @@
 	import { resolve } from '$app/paths';
 	import { threads } from '$lib/stores/store.svelte';
 	import { page } from '$app/state';
-	import { goto } from '$app/navigation';
+	import { goto, preloadCode } from '$app/navigation';
 	import { validateAcademicLevel } from '$lib/utils/validateAcademicLevel';
 	import { onMount } from 'svelte';
 	import { slide } from 'svelte/transition';
@@ -187,6 +187,7 @@
 					onkeydown={(e) => {
 						if (e.key === 'Enter') goto(resolve(`/chat/${thread.id}`));
 					}}
+					onmouseenter={() => preloadCode(resolve(`/chat/${thread.id}`))}
 					role="button"
 					tabindex="0"
 					class={`group relative w-full cursor-pointer rounded-xl px-3 py-3 text-left text-sm transition-all ${selectedThread?.id === thread.id ? 'bg-sidebar-accent text-sidebar-accent-foreground' : 'text-sidebar-foreground hover:bg-sidebar-accent/50'}`}

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
 	import { page } from '$app/state';
-	import { threads, currentModel, modelList, sidebarStatus } from '$lib/stores/store.svelte';
+	import { threads, currentModel, modelList, sidebarStatus, pageLoading } from '$lib/stores/store.svelte';
 	import type { ChatMessage, Thread } from '$lib/types';
 	import {
 		createUserMessage,
@@ -294,6 +294,7 @@
 
 		untrack(async () => {
 			messages = loadThreadMessages(currentSlug);
+			pageLoading.value = false;
 			streamingContent = null;
 			streamingMessageId = null;
 			streamError = null;

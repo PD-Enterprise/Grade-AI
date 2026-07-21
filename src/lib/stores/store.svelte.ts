@@ -22,3 +22,4 @@ export const currentModel = $state({ value: '' });
 export const defaultMode = $state<{ value: 'direct' | 'socratic' }>({ value: 'direct' });
 export const modelList = $state<{ values: ModelList[] }>({ values: [] });
 export const modelsLoading = $state({ value: true });
+export const pageLoading = $state({ value: false });
