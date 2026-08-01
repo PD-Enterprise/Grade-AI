@@ -6,8 +6,9 @@ import { defineConfig } from 'vite';
 export default defineConfig({
 	plugins: [
 		sentrySvelteKit({
-			org: 'pd-enterprise',
-			project: 'grade-ai'
+			org: process.env.SENTRY_ORG,
+			project: process.env.SENTRY_PROJECT,
+			authToken: process.env.SENTRY_AUTH_TOKEN,
 		}),
 		tailwindcss(),
 		sveltekit()
