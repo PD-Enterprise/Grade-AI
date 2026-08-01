@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/sveltekit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { handle as authHandle } from '$lib/utils/auth';
 
@@ -14,4 +15,5 @@ const loginRedirectHandle = (async ({ event, resolve }) => {
 	return resolve(event);
 }) satisfies import('@sveltejs/kit').Handle;
 
-export const handle = sequence(authHandle, loginRedirectHandle);
+export const handle = sequence(Sentry.sentryHandle(), sequence(authHandle, loginRedirectHandle));
+export const handleError = Sentry.handleErrorWithSentry();
