@@ -15,7 +15,8 @@ Sentry.init({
 		// https://docs.sentry.io/platforms/javascript/guides/sveltekit/configuration/options/#dataCollection
 		userInfo: false,
 		httpBodies: [],
-	}
+	},
+	environment: import.meta.env.MODE,
 });
 
 // If you have a custom error handler, pass it to `handleErrorWithSentry`
