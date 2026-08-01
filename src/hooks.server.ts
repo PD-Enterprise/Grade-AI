@@ -15,5 +15,5 @@ const loginRedirectHandle = (async ({ event, resolve }) => {
 	return resolve(event);
 }) satisfies import('@sveltejs/kit').Handle;
 
-export const handle = sequence(Sentry.sentryHandle(), sequence(authHandle, loginRedirectHandle));
+export const handle = sequence(Sentry.sentryHandle(), authHandle, loginRedirectHandle);
 export const handleError = Sentry.handleErrorWithSentry();
