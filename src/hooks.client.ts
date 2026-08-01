@@ -1,8 +1,9 @@
 import { handleErrorWithSentry } from '@sentry/sveltekit';
 import * as Sentry from '@sentry/sveltekit';
+import { PUBLIC_SENTRY_DSN } from '$env/static/public';
 
 Sentry.init({
-	dsn: 'https://ac05b76e8c9268e50762e361b55fb324@o4508974910406656.ingest.us.sentry.io/4511837058564096',
+	dsn: PUBLIC_SENTRY_DSN,
 
 	tracesSampleRate: 1.0,
 
