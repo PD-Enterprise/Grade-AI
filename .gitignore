@@ -25,5 +25,3 @@ vite.config.ts.timestamp-*
 /worker-configuration.d.ts
 
 bun.lock
-# Sentry Config File
-.env.sentry-build-plugin
