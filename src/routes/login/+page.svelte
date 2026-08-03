@@ -1,5 +1,11 @@
 <script lang="ts">
 	import { signIn } from '@auth/sveltekit/client';
+	import { onMount } from 'svelte';
+	import { pageLoading } from '$lib/stores/store.svelte';
+
+	onMount(() => {
+		pageLoading.value = false;
+	});
 
 	async function login() {
 		signIn('google', { redirectTo: '/' });

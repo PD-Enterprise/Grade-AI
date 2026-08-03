@@ -1,6 +1,12 @@
 <script lang="ts">
 	import { signOut } from '@auth/sveltekit/client';
 	import { clearAllData } from '$lib/threads';
+	import { onMount } from 'svelte';
+	import { pageLoading } from '$lib/stores/store.svelte';
+
+	onMount(() => {
+		pageLoading.value = false;
+	});
 
 	async function logout() {
 		clearAllData();
