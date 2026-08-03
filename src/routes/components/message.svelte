@@ -18,13 +18,24 @@
 		role: ChatRole;
 		content: string;
 		model?: string;
+		busy?: boolean;
+		onResend?: () => void;
+		activity?: string[];
 	}
 	interface KatexRenderers extends Renderers {
 		inlineKatex: RendererComponent;
 		blockKatex: RendererComponent;
 	}
 
-	const { index, role, content, model = undefined }: props = $props();
+	const {
+		index,
+		role,
+		content,
+		model = undefined,
+		busy = false,
+		onResend,
+		activity = []
+	}: props = $props();
 	const renderers: Partial<KatexRenderers> = {
 		inlineKatex: KatexRenderer,
 		blockKatex: KatexBlock,
@@ -144,8 +155,20 @@
 		<div
 			class="group wrap-break-words markdown-content w-full min-w-0 text-sm leading-relaxed text-foreground max-md:text-xs"
 		>
+			{#if activity.length > 0}
+				<div class="mb-3 space-y-1.5 text-xs text-muted-foreground/70">
+					{#each activity as a, i (i)}
+						<div class="flex items-center gap-2">
+							<span class="loading loading-xs loading-spinner"></span>
+							<span>{a}</span>
+						</div>
+					{/each}
+				</div>
+			{/if}
 			{#if content === ''}
-				<span class="loading loading-sm loading-dots"></span>
+				{#if activity.length === 0}
+					<span class="loading loading-sm loading-dots"></span>
+				{/if}
 			{:else}
 				<SvelteMarkdown
 					source={content}
@@ -159,6 +182,16 @@
 				>
 					{#if model}
 						<span>{model}</span>
+					{/if}
+					{#if onResend}
+						<button
+							class="btn rounded px-1 btn-ghost btn-xs disabled:cursor-not-allowed disabled:opacity-50"
+							onclick={onResend}
+							disabled={busy}
+							title="Resend"
+						>
+							<Icon icon="lucide:rotate-ccw" class="h-3.5 w-3.5" />
+						</button>
 					{/if}
 					{#if status === 'idle'}
 						<button
