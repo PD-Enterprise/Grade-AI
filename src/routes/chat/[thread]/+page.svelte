@@ -140,8 +140,8 @@
 		streamingMessageId = aiMsg.id;
 		failedMessageId = null;
 		streamActivities = [];
+		let receivedDone = false;
 		setThreadStatus(thread, 'loading');
-
 		try {
 			const response = await fetch(`/chat/${slug}`, {
 				method: 'POST',
@@ -197,12 +197,15 @@
 							const name = json.tool.name || 'tool';
 							if (json.tool.status === 'completed') {
 								pushActivity(`Done using tool: ${name}`);
+							} else if (json.tool.status === 'failed') {
+								pushActivity(`Tool failed: ${name}`);
 							} else {
 								pushActivity(`Using tool: ${name}...`);
 							}
 						}
 
 						if (json.type === 'done') {
+							receivedDone = true;
 							updateMessage(aiMsg.id, { content: streamingContent || '' });
 							messages = messages.map((m) =>
 								m.id === aiMsg.id ? { ...m, content: streamingContent || '' } : m
@@ -216,10 +219,7 @@
 						}
 
 						if (json.type === 'error') {
-							failedMessageId = aiMsg.id;
-							streamingContent = null;
-							streamingMessageId = null;
-							setThreadStatus(thread, 'error');
+							pushActivity('Something went wrong while answering.');
 						}
 					} catch (err) {
 						console.error('JSON parse error:', err, line);
@@ -228,6 +228,13 @@
 			}
 		} catch (error) {
 			console.error('Streaming Error:', error);
+			failedMessageId = aiMsg.id;
+			streamingContent = null;
+			streamingMessageId = null;
+			setThreadStatus(thread, 'error');
+		}
+
+		if (!receivedDone) {
 			failedMessageId = aiMsg.id;
 			streamingContent = null;
 			streamingMessageId = null;
