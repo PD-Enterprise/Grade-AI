@@ -1,4 +1,4 @@
-import type { UserData, Thread, ModelList } from '$lib/types';
+import type { UserData, Thread, ModelList, ChatMessage } from '$lib/types';
 
 export const sidebarStatus = $state({ value: true });
 
@@ -16,6 +16,10 @@ export const userAcademicLevel = $state<{ value: string }>({ value: '' });
 
 export const threads = $state<{ values: Thread[] }>({
 	values: []
+});
+
+export const threadMessages = $state<{ values: Record<string, ChatMessage[]> }>({
+	values: {}
 });
 
 export const currentModel = $state({ value: '' });

@@ -12,6 +12,7 @@
 	import { onMount } from 'svelte';
 	import { slide } from 'svelte/transition';
 	import { deleteThread as deleteStoredThread, loadAllThreads, saveThread } from '$lib/threads';
+	import { preloadThreadMessages } from '$lib/utils/preloadThreadMessages';
 
 	let image: string | undefined = $state('');
 	let slug = $derived(page.params.thread);
@@ -187,7 +188,10 @@
 					onkeydown={(e) => {
 						if (e.key === 'Enter') goto(resolve(`/chat/${thread.id}`));
 					}}
-					onmouseenter={() => preloadCode(resolve(`/chat/${thread.id}`))}
+					onmouseenter={() => {
+						preloadCode(resolve(`/chat/${thread.id}`));
+						preloadThreadMessages(thread.id);
+					}}
 					role="button"
 					tabindex="0"
 					class={`group relative w-full cursor-pointer rounded-xl px-3 py-3 text-left text-sm transition-all ${selectedThread?.id === thread.id ? 'bg-sidebar-accent text-sidebar-accent-foreground' : 'text-sidebar-foreground hover:bg-sidebar-accent/50'}`}
