@@ -46,7 +46,7 @@
 		const aiMsg = createAssistantMessage(threadId, model.modelString, model.providerName);
 		addMessage(userMsg);
 		addMessage(aiMsg);
-		threads.values.push(thread);
+		threads.values.unshift(thread);
 		saveThread(thread);
 
 		goto(resolve(`/chat/${threadId}`));

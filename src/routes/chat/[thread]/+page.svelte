@@ -1,7 +1,13 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
 	import { page } from '$app/state';
-	import { threads, currentModel, modelList, sidebarStatus, pageLoading } from '$lib/stores/store.svelte';
+	import {
+		threads,
+		currentModel,
+		modelList,
+		sidebarStatus,
+		pageLoading
+	} from '$lib/stores/store.svelte';
 	import type { ChatMessage, Thread } from '$lib/types';
 	import {
 		createUserMessage,
@@ -24,22 +30,28 @@
 	let thread = $derived(threads.values.find((t) => t.id === slug));
 	let messages = $state<ChatMessage[]>([]);
 	let sortedMessages = $derived([...messages].sort((a, b) => a.timestamp - b.timestamp));
+	let lastMessage = $derived(sortedMessages[sortedMessages.length - 1]);
 	let inputValue = $state('');
 	let messagesContainer: HTMLDivElement | undefined = $state();
 
 	// Streaming
 	let streamingContent = $state<string | null>(null);
 	let streamingMessageId = $state<string | null>(null);
-
+	let streamActivities = $state<string[]>([]);
 	// Error feedback
-	let streamError = $state<string | null>(null);
-	let lastPrompt = $state('');
+	let failedMessageId = $state<string | null>(null);
+	// Auto-send
 	let pendingAutoSend = $state(false);
 	// Scroll detection
 	let isUserScrolledUp = $state(false);
 
 	function getCurrentModel() {
 		return modelList.values.find((m) => m.modelName === currentModel.value);
+	}
+
+	function pushActivity(text: string) {
+		if (streamActivities[streamActivities.length - 1] === text) return;
+		streamActivities = [...streamActivities, text].slice(-8);
 	}
 
 	async function loadServerMessages(threadId: string, signal: { cancelled: boolean }) {
@@ -62,6 +74,7 @@
 						content: m.content,
 						model: m.model,
 						provider: m.provider,
+						previousVersions: m.previousVersions,
 						timestamp: m.createdAt
 					};
 					local.push(msg);
@@ -111,8 +124,7 @@
 		const model = modelList.values.find((m) => m.modelName === currentModel.value);
 		if (!model) return;
 		autoSent = true;
-		lastPrompt = userMsg.content;
-		streamError = null;
+		failedMessageId = null;
 		scrollToBottom(messages, messagesContainer, true);
 		streamResponse(userMsg, lastMsg, model);
 	}
@@ -126,6 +138,8 @@
 
 		streamingContent = '';
 		streamingMessageId = aiMsg.id;
+		failedMessageId = null;
+		streamActivities = [];
 		setThreadStatus(thread, 'loading');
 
 		try {
@@ -144,7 +158,7 @@
 			});
 
 			if (!response.body) {
-				streamError = 'No response from server';
+				failedMessageId = aiMsg.id;
 				streamingContent = null;
 				streamingMessageId = null;
 				setThreadStatus(thread, 'error');
@@ -175,6 +189,19 @@
 							streamingContent += json.delta;
 						}
 
+						if (json.type === 'thinking') {
+							pushActivity('Thinking...');
+						}
+
+						if (json.type === 'tool' && json.tool) {
+							const name = json.tool.name || 'tool';
+							if (json.tool.status === 'completed') {
+								pushActivity(`Done using tool: ${name}`);
+							} else {
+								pushActivity(`Using tool: ${name}...`);
+							}
+						}
+
 						if (json.type === 'done') {
 							updateMessage(aiMsg.id, { content: streamingContent || '' });
 							messages = messages.map((m) =>
@@ -189,7 +216,7 @@
 						}
 
 						if (json.type === 'error') {
-							streamError = json.message || 'An error occurred';
+							failedMessageId = aiMsg.id;
 							streamingContent = null;
 							streamingMessageId = null;
 							setThreadStatus(thread, 'error');
@@ -201,7 +228,7 @@
 			}
 		} catch (error) {
 			console.error('Streaming Error:', error);
-			streamError = 'Connection lost. Check your network and try again.';
+			failedMessageId = aiMsg.id;
 			streamingContent = null;
 			streamingMessageId = null;
 			setThreadStatus(thread, 'error');
@@ -228,23 +255,34 @@
 		addMessage(userMsg);
 		addMessage(aiMsg);
 		messages = [...messages, userMsg, aiMsg];
-		lastPrompt = promptToSend;
 		inputValue = '';
-		streamError = null;
+		failedMessageId = null;
 
 		await streamResponse(userMsg, aiMsg, model);
 	}
 
-	function retryLastMessage() {
-		if (!lastPrompt || !thread) return;
-		inputValue = lastPrompt;
-		if (streamingMessageId) {
-			messages = messages.filter((m) => m.id !== streamingMessageId);
-		}
-		streamError = null;
-		streamingContent = null;
-		streamingMessageId = null;
-		sendMessage();
+	async function resendMessage(message: ChatMessage) {
+		if (!thread || streamingContent !== null || message.role !== 'assistant') return;
+		const index = sortedMessages.findIndex((m) => m.id === message.id);
+		if (index < 1) return;
+		const userMsg = sortedMessages[index - 1];
+		if (userMsg.role !== 'user' || userMsg.content === '') return;
+
+		const current = getCurrentModel();
+		const model = {
+			providerName: message.provider ?? current?.providerName ?? 'groq',
+			modelString: message.model ?? current?.modelString ?? ''
+		};
+		if (!model.modelString) return;
+
+		failedMessageId = null;
+		const previousVersions = [...(message.previousVersions ?? []), message.content];
+		updateMessage(message.id, { content: '', previousVersions });
+		messages = messages.map((m) =>
+			m.id === message.id ? { ...m, content: '', previousVersions } : m
+		);
+
+		await streamResponse(userMsg, { ...message, content: '', previousVersions }, model);
 	}
 
 	async function tryAutoSend() {
@@ -258,8 +296,7 @@
 			const userMsg = messages[messages.length - 2];
 			if (userMsg && userMsg.role === 'user' && userMsg.content !== '') {
 				autoSent = true;
-				lastPrompt = userMsg.content;
-				streamError = null;
+				failedMessageId = null;
 				scrollToBottom(messages, messagesContainer, true);
 				await streamResponse(userMsg, lastMsg, model);
 				return;
@@ -274,7 +311,7 @@
 			const userMsg = messages[messages.length - 2];
 			if (userMsg && userMsg.role === 'user' && userMsg.content !== '') {
 				autoSent = true;
-				streamError = null;
+				failedMessageId = null;
 				streamingContent = null;
 				streamingMessageId = null;
 				await streamResponse(userMsg, lastMsg, model);
@@ -297,9 +334,8 @@
 			pageLoading.value = false;
 			streamingContent = null;
 			streamingMessageId = null;
-			streamError = null;
+			failedMessageId = null;
 			autoSent = false;
-			lastPrompt = '';
 			inputValue = '';
 
 			const currentThread = threads.values.find((t) => t.id === currentSlug);
@@ -334,6 +370,7 @@
 	$effect(() => {
 		void messages;
 		void streamingContent;
+		void streamActivities;
 		if (isUserScrolledUp) return;
 		const id = setTimeout(() => {
 			scrollToBottom(messages, messagesContainer);
@@ -390,40 +427,37 @@
 				</div>
 			{:else}
 				{#each sortedMessages.filter((m) => m.id !== streamingMessageId) as message, index (message.id)}
-					<Message {index} role={message.role} content={message.content} model={message.model} />
+					<Message
+						{index}
+						role={message.role}
+						content={message.content}
+						model={message.model}
+						busy={streamingContent !== null}
+						error={message.id === failedMessageId}
+						onRetry={message.id === failedMessageId ? () => resendMessage(message) : undefined}
+						onDismiss={message.id === failedMessageId
+							? () => {
+									failedMessageId = null;
+								}
+							: undefined}
+						onResend={message.role === 'assistant' && message.id === lastMessage?.id
+							? () => resendMessage(message)
+							: undefined}
+					/>
 				{/each}
 				{#if streamingContent !== null}
 					<div class="animate-enter" style="animation-delay: 0ms">
-						<Message index={sortedMessages.length} role="assistant" content={streamingContent} />
+						<Message
+							index={sortedMessages.length}
+							role="assistant"
+							content={streamingContent}
+							activity={streamActivities}
+						/>
 					</div>
 				{/if}
 			{/if}
 		</div>
 	</div>
-
-	<!-- Error Banner -->
-	{#if streamError}
-		<div
-			class="mx-4 mb-2 flex items-center gap-3 rounded-lg border border-error/30 bg-error/10 px-4 py-3 text-sm text-error"
-		>
-			<Icon icon="lucide:alert-circle" class="h-4 w-4 shrink-0" />
-			<span class="flex-1">{streamError}</span>
-			<button
-				onclick={retryLastMessage}
-				class="shrink-0 rounded-md bg-error/20 px-3 py-1 font-medium transition-colors hover:bg-error/30"
-			>
-				Retry
-			</button>
-			<button
-				onclick={() => {
-					streamError = null;
-				}}
-				class="shrink-0 rounded-md p-1 transition-colors hover:bg-error/20"
-			>
-				<Icon icon="lucide:x" class="h-3.5 w-3.5" />
-			</button>
-		</div>
-	{/if}
 
 	<!-- Input -->
 	<div class="input-field border-t border-border bg-card/30 px-4 py-4">

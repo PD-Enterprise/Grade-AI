@@ -21,6 +21,9 @@
 		busy?: boolean;
 		onResend?: () => void;
 		activity?: string[];
+		error?: boolean;
+		onRetry?: () => void;
+		onDismiss?: () => void;
 	}
 	interface KatexRenderers extends Renderers {
 		inlineKatex: RendererComponent;
@@ -34,7 +37,10 @@
 		model = undefined,
 		busy = false,
 		onResend,
-		activity = []
+		activity = [],
+		error = false,
+		onRetry,
+		onDismiss
 	}: props = $props();
 	const renderers: Partial<KatexRenderers> = {
 		inlineKatex: KatexRenderer,
@@ -165,7 +171,31 @@
 					{/each}
 				</div>
 			{/if}
-			{#if content === ''}
+			{#if error}
+				<div
+					class="flex items-center gap-3 rounded-lg border border-error/30 bg-error/10 px-4 py-3 text-sm text-error"
+				>
+					<Icon icon="lucide:alert-circle" class="h-4 w-4 shrink-0" />
+					<span class="flex-1">There was an error</span>
+					{#if onRetry}
+						<button
+							onclick={onRetry}
+							class="shrink-0 rounded-md bg-error/20 px-3 py-1 font-medium transition-colors hover:bg-error/30"
+						>
+							Retry
+						</button>
+					{/if}
+					{#if onDismiss}
+						<button
+							onclick={onDismiss}
+							class="shrink-0 rounded-md p-1 transition-colors hover:bg-error/20"
+							aria-label="Dismiss error"
+						>
+							<Icon icon="lucide:x" class="h-3.5 w-3.5" />
+						</button>
+					{/if}
+				</div>
+			{:else if content === ''}
 				{#if activity.length === 0}
 					<span class="loading loading-sm loading-dots"></span>
 				{/if}
