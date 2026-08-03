@@ -5,6 +5,12 @@ const config = {
 	kit: {
 		adapter: adapter(),
 
+		serviceWorker: {
+			files(file) {
+				return !file.startsWith('icons/apple-splash-');
+			}
+		},
+
 		experimental: {
 			tracing: {
 				server: true

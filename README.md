@@ -87,7 +87,8 @@ bun run preview
 
 ```
 src/
-  app.html                 # HTML shell (dark theme, PWA manifest, service worker)
+  app.html                 # HTML shell (dark theme, PWA manifest)
+  service-worker.ts        # Service worker (offline support, asset precaching)
   hooks.server.ts          # Auth.js server hooks
   routes/
     +layout.svelte         # Root layout (sidebar, auth check, model list)
@@ -144,7 +145,6 @@ src/
       sendMessageKeyboard.ts # Enter-to-send handler
 static/
   manifest.json            # PWA manifest
-  sw.js                    # Service worker (offline support)
   icons/                   # PWA icons and Apple splash screens
   logo.webp                # Favicon
   robots.txt               # Crawler rules
