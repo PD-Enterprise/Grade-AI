@@ -41,16 +41,19 @@
 	function onKeydown(e: KeyboardEvent) {
 		if (e.key === 'Escape') close();
 	}
+	function openExternal() {
+		if (!href || typeof window === 'undefined') return;
+		window.open(href, '_blank', 'noopener,noreferrer');
+	}
 </script>
 
 <svelte:window onkeydown={onKeydown} />
 
 {#if !safe}
-	<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- external source link -->
-	<a {href} target="_blank" rel="noopener noreferrer" class="chat-image-fallback">
+	<button type="button" onclick={openExternal} class="chat-image-fallback">
 		<Icon icon="lucide:external-link" class="h-3.5 w-3.5" />
 		<span>{caption || href || 'Image link'}</span>
-	</a>
+	</button>
 {:else}
 	<figure class="chat-image">
 		{#if !loaded}
@@ -62,8 +65,9 @@
 			<div class="chat-image-error">
 				<Icon icon="lucide:image-off" class="h-6 w-6 opacity-60" />
 				<p>{caption || 'Image unavailable'}</p>
-				<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- external source link -->
-				<a {href} target="_blank" rel="noopener noreferrer">Open source</a>
+				<button type="button" onclick={openExternal} class="chat-image-link-button"
+					>Open source</button
+				>
 			</div>
 		{:else}
 			<button type="button" class="chat-image-button" onclick={open} aria-label="Expand image">
@@ -104,16 +108,12 @@
 					decoding="async"
 					referrerpolicy="no-referrer"
 					crossorigin="anonymous"
+					class="mt-0 mb-0"
 				/>
 				<div class="chat-image-lightbox-bar">
 					{#if caption}
 						<span>{caption}</span>
 					{/if}
-					<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- external source link -->
-					<a {href} target="_blank" rel="noopener noreferrer">Source</a>
-					<button type="button" onclick={close} aria-label="Close">
-						<Icon icon="lucide:x" class="h-4 w-4" />
-					</button>
 				</div>
 			</div>
 		</div>
@@ -171,14 +171,31 @@
 		font-size: 0.8rem;
 		color: var(--muted-foreground);
 	}
-	.chat-image-error a {
+	.chat-image-error .chat-image-link-button {
 		color: #60a5fa;
+		background: transparent;
+		border: none;
+		padding: 0;
+		cursor: pointer;
+		font: inherit;
+	}
+	.chat-image-error .chat-image-link-button:hover {
+		text-decoration: underline;
 	}
 	.chat-image-fallback {
 		display: inline-flex;
 		align-items: center;
 		gap: 0.4rem;
 		color: #60a5fa;
+		background: transparent;
+		border: none;
+		padding: 0;
+		cursor: pointer;
+		font: inherit;
+		text-align: left;
+	}
+	.chat-image-fallback:hover {
+		text-decoration: underline;
 	}
 	.chat-image-lightbox {
 		position: fixed;
@@ -221,16 +238,17 @@
 		font-size: 0.8rem;
 		color: var(--muted-foreground);
 	}
-	.chat-image-lightbox-bar a {
+	.chat-image-lightbox-bar .chat-image-lightbox-close {
 		margin-left: auto;
-		color: #60a5fa;
-	}
-	.chat-image-lightbox-bar button {
 		display: flex;
 		padding: 0.25rem;
 		border-radius: 0.375rem;
+		background: transparent;
+		border: none;
+		cursor: pointer;
+		color: inherit;
 	}
-	.chat-image-lightbox-bar button:hover {
+	.chat-image-lightbox-bar .chat-image-lightbox-close:hover {
 		background: var(--muted);
 	}
 </style>
