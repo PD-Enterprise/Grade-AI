@@ -1,4 +1,5 @@
 import type { Session, User } from 'better-auth';
+import 'unplugin-icons/types/svelte';
 
 // See https://svelte.dev/docs/kit/types#app.d.ts
 // for information about these interfaces
