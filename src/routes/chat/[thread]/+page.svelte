@@ -1,5 +1,7 @@
 <script lang="ts">
-	import Icon from '@iconify/svelte';
+	import IconMenu from '~icons/lucide/menu';
+	import IconSparkles from '~icons/lucide/sparkles';
+	import IconArrowRight from '~icons/lucide/arrow-right';
 	import { page } from '$app/state';
 	import {
 		threads,
@@ -16,7 +18,9 @@
 		updateMessage,
 		setThreadStatus,
 		saveThread,
-		loadThreadMessages
+		loadThreadMessages,
+		isResponseTimedOut,
+		RESPONSE_TIMEOUT_MS
 	} from '$lib/threads';
 	import { onMount, untrack } from 'svelte';
 	import { handleKeyDown } from '../../utils/sendMessageKeyboard';
@@ -52,6 +56,20 @@
 	function pushActivity(text: string) {
 		if (streamActivities[streamActivities.length - 1] === text) return;
 		streamActivities = [...streamActivities, text].slice(-8);
+	}
+
+	function failStuckMessage(messageId: string) {
+		failedMessageId = messageId;
+		streamingContent = null;
+		streamingMessageId = null;
+		if (thread) {
+			setThreadStatus(thread, 'error');
+			threads.values = threads.values.map((t) =>
+				t.id === thread?.id ? { ...t, status: 'error' as const } : t
+			);
+			const saved = threads.values.find((t) => t.id === slug);
+			if (saved) saveThread(saved);
+		}
 	}
 
 	async function loadServerMessages(threadId: string, signal: { cancelled: boolean }) {
@@ -142,10 +160,15 @@
 		streamActivities = [];
 		let receivedDone = false;
 		setThreadStatus(thread, 'loading');
+		const controller = new AbortController();
+		const timeoutId = setTimeout(() => {
+			controller.abort(new DOMException('Response timed out', 'AbortError'));
+		}, RESPONSE_TIMEOUT_MS);
 		try {
 			const response = await fetch(`/chat/${slug}`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
+				signal: controller.signal,
 				body: JSON.stringify({
 					prompt: userMsg.content,
 					provider: model.providerName,
@@ -158,6 +181,7 @@
 			});
 
 			if (!response.body) {
+				clearTimeout(timeoutId);
 				failedMessageId = aiMsg.id;
 				streamingContent = null;
 				streamingMessageId = null;
@@ -232,6 +256,8 @@
 			streamingContent = null;
 			streamingMessageId = null;
 			setThreadStatus(thread, 'error');
+		} finally {
+			clearTimeout(timeoutId);
 		}
 
 		if (!receivedDone) {
@@ -284,9 +310,10 @@
 
 		failedMessageId = null;
 		const previousVersions = [...(message.previousVersions ?? []), message.content];
-		updateMessage(message.id, { content: '', previousVersions });
+		const retriedAt = Date.now();
+		updateMessage(message.id, { content: '', previousVersions, timestamp: retriedAt });
 		messages = messages.map((m) =>
-			m.id === message.id ? { ...m, content: '', previousVersions } : m
+			m.id === message.id ? { ...m, content: '', previousVersions, timestamp: retriedAt } : m
 		);
 
 		await streamResponse(userMsg, { ...message, content: '', previousVersions }, model);
@@ -299,6 +326,19 @@
 
 		const lastMsg = messages[messages.length - 1];
 
+		if (lastMsg.role === 'assistant' && lastMsg.content === '') {
+			if (isResponseTimedOut(lastMsg.timestamp)) {
+				failStuckMessage(lastMsg.id);
+				autoSent = true;
+				return;
+			}
+			if (thread.status === 'error') {
+				failedMessageId = lastMsg.id;
+				autoSent = true;
+				return;
+			}
+		}
+
 		if (lastMsg.role === 'assistant' && lastMsg.content === '' && thread.status === 'idle') {
 			const userMsg = messages[messages.length - 2];
 			if (userMsg && userMsg.role === 'user' && userMsg.content !== '') {
@@ -310,11 +350,7 @@
 			}
 		}
 
-		if (
-			lastMsg.role === 'assistant' &&
-			lastMsg.content === '' &&
-			(thread.status === 'loading' || thread.status === 'error')
-		) {
+		if (lastMsg.role === 'assistant' && lastMsg.content === '' && thread.status === 'loading') {
 			const userMsg = messages[messages.length - 2];
 			if (userMsg && userMsg.role === 'user' && userMsg.content !== '') {
 				autoSent = true;
@@ -355,7 +391,26 @@
 
 			if (signal.cancelled) return;
 
-			if (currentThread) await autoResend(currentThread);
+			const lastLoaded = messages[messages.length - 1];
+			if (lastLoaded?.role === 'assistant' && lastLoaded.content === '') {
+				if (currentThread?.status === 'error') {
+					failedMessageId = lastLoaded.id;
+					autoSent = true;
+				} else if (
+					currentThread?.status === 'loading' &&
+					isResponseTimedOut(lastLoaded.timestamp)
+				) {
+					setThreadStatus(currentThread, 'error');
+					threads.values = threads.values.map((t) =>
+						t.id === currentThread.id ? { ...t, status: 'error' as const } : t
+					);
+					saveThread(currentThread);
+					failedMessageId = lastLoaded.id;
+					autoSent = true;
+				}
+			}
+
+			if (!autoSent && currentThread) await autoResend(currentThread);
 
 			if (!autoSent && modelList.values.length === 0) {
 				pendingAutoSend = true;
@@ -372,6 +427,27 @@
 			pendingAutoSend = false;
 			tryAutoSend();
 		}
+	});
+
+	// Flip a stuck empty assistant message to error once it exceeds the timeout,
+	// even if no stream is running (e.g. tab left open, fetch hung without settling).
+	$effect(() => {
+		const last = messages[messages.length - 1];
+		if (!last || last.role !== 'assistant' || last.content !== '') return;
+		if (streamingContent !== null || streamingMessageId !== null) return;
+		if (failedMessageId === last.id) return;
+		const remaining = RESPONSE_TIMEOUT_MS - (Date.now() - last.timestamp);
+		if (remaining <= 0) {
+			failStuckMessage(last.id);
+			return;
+		}
+		const id = setTimeout(() => {
+			const current = messages[messages.length - 1];
+			if (!current || current.id !== last.id || current.content !== '') return;
+			if (streamingContent !== null || streamingMessageId !== null) return;
+			failStuckMessage(last.id);
+		}, remaining);
+		return () => clearTimeout(id);
 	});
 
 	$effect(() => {
@@ -400,7 +476,7 @@
 					class="opacity-60 transition-opacity hover:opacity-100"
 					aria-label="Open sidebar"
 				>
-					<Icon icon="lucide:menu" class="h-5 w-5" />
+					<IconMenu class="h-5 w-5" />
 				</button>
 			{/if}
 			<div>
@@ -429,7 +505,7 @@
 		<div class="mx-auto max-w-4xl space-y-8">
 			{#if messages.length === 0 && streamingContent === null}
 				<div class="flex h-full flex-col items-center justify-center text-center">
-					<Icon icon="lucide:sparkles" className="w-12 h-12 text-muted-foreground/20 mb-4" />
+					<IconSparkles class="mb-4 h-12 w-12 text-muted-foreground/20" />
 					<p class="text-muted-foreground/50">Start the conversation...</p>
 				</div>
 			{:else}
@@ -485,7 +561,7 @@
 				disabled={!inputValue.trim() || streamingContent !== null}
 				class="text-primary-foreground flex h-[60px] w-[60px] shrink-0 items-center justify-center rounded-[1.25rem] bg-primary p-0 transition-all hover:bg-primary/90 disabled:cursor-not-allowed disabled:border-primary-content/50 disabled:bg-primary/20 disabled:opacity-50"
 			>
-				<Icon icon="lucide:arrow-right" class="h-4 w-4" />
+				<IconArrowRight class="h-4 w-4" />
 			</button>
 		</div>
 	</div>

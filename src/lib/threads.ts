@@ -4,6 +4,13 @@ const STORAGE_PREFIX = 'thread:';
 const MESSAGE_STORAGE_PREFIX = 'message:';
 const MESSAGE_INDEX_PREFIX = 'message-index:';
 
+/** How long an empty assistant message may stay in `loading` before it is treated as failed. */
+export const RESPONSE_TIMEOUT_MS = 120_000;
+
+export function isResponseTimedOut(timestamp: number, now: number = Date.now()): boolean {
+	return now - timestamp > RESPONSE_TIMEOUT_MS;
+}
+
 function storageKey(id: string): string {
 	return `${STORAGE_PREFIX}${JSON.stringify(id)}`;
 }
