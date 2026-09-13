@@ -50,6 +50,30 @@ export async function getThreads(cookie?: string) {
 	}
 }
 
+export async function updateThreadTitle(
+	id: Thread['id'],
+	update: { title?: Thread['title']; regenerate?: boolean; prompt?: string },
+	cookie?: string
+) {
+	const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+	if (cookie) {
+		headers['Cookie'] = cookie;
+	}
+
+	const response = await fetch(`${config.apiUrl}/grade-ai/thread/${id}`, {
+		method: 'PATCH',
+		headers,
+		body: JSON.stringify(update)
+	});
+	const data = await response.json();
+
+	if (data.status !== 200) {
+		return functionReturn(false, true, data.message, null, data.error);
+	} else {
+		return functionReturn(true, false, data.message, data.data, null);
+	}
+}
+
 export async function deleteThread(id: Thread['id'], cookie?: string) {
 	const headers: Record<string, string> = { 'Content-Type': 'application/json' };
 	if (cookie) {

@@ -2,7 +2,9 @@
 	import IconChevronLeft from '~icons/lucide/chevron-left';
 	import IconPlus from '~icons/lucide/plus';
 	import IconMessageSquare from '~icons/lucide/message-square';
-	import IconX from '~icons/lucide/x';
+	import IconEllipsis from '~icons/lucide/ellipsis';
+	import IconRefreshCw from '~icons/lucide/refresh-cw';
+	import IconTrash2 from '~icons/lucide/trash-2';
 	import IconEdit from '~icons/lucide/square-pen';
 	import type { Thread } from '$lib/types';
 	import { isAuthenticated, sidebarStatus, userData } from '$lib/stores/store.svelte';
@@ -16,6 +18,8 @@
 	import { onMount } from 'svelte';
 	import { slide } from 'svelte/transition';
 	import { deleteThread as deleteStoredThread, loadAllThreads, saveThread } from '$lib/threads';
+	import { loadThreadMessages } from '$lib/threads';
+	import { generateTitle } from '$lib/utils/generateTempTitle';
 	import { preloadThreadMessages } from '$lib/utils/preloadThreadMessages';
 
 	let image: string | undefined = $state('');
@@ -30,6 +34,63 @@
 	let threadToDelete: string | null = $state(null);
 	let deleteModal: HTMLDialogElement | undefined = $state();
 	let deleting = $state(false);
+	let openMenuId: string | null = $state(null);
+	let regeneratingId: string | null = $state(null);
+
+	function toggleMenu(threadId: string) {
+		openMenuId = openMenuId === threadId ? null : threadId;
+	}
+
+	function closeMenu() {
+		openMenuId = null;
+	}
+
+	async function regenerateTitle(threadId: string) {
+		if (regeneratingId) return;
+		closeMenu();
+		regeneratingId = threadId;
+		try {
+			let newTitle: string | null = null;
+			const messages = loadThreadMessages(threadId);
+			const firstUserMessage = messages.find((m) => m.role === 'user' && m.content.trim());
+			const source = firstUserMessage?.content.trim();
+			if (!source) return;
+			try {
+				const response = await fetch(`/api/thread/${threadId}`, {
+					method: 'PATCH',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ regenerate: true, prompt: source })
+				});
+				const result = await response.json();
+				const backendTitle = result.data?.title;
+				if (result.status === 200 && typeof backendTitle === 'string' && backendTitle.trim()) {
+					newTitle = backendTitle.trim();
+				}
+			} catch (e) {
+				console.error('Failed to regenerate title on backend:', e);
+			}
+			if (!newTitle) {
+				newTitle = generateTitle(source);
+				try {
+					await fetch(`/api/thread/${threadId}`, {
+						method: 'PATCH',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ title: newTitle })
+					});
+				} catch (e) {
+					console.error('Failed to sync regenerated title to backend:', e);
+				}
+			}
+			const now = Date.now();
+			threads.values = threads.values.map((t) =>
+				t.id === threadId ? { ...t, title: newTitle as string, updatedAt: now } : t
+			);
+			const updated = threads.values.find((t) => t.id === threadId);
+			if (updated) saveThread(updated);
+		} finally {
+			regeneratingId = null;
+		}
+	}
 
 	function confirmDelete(threadId: string) {
 		threadToDelete = threadId;
@@ -114,6 +175,10 @@
 		}
 	});
 	$effect(() => {
+		void slug;
+		closeMenu();
+	});
+	$effect(() => {
 		if (academicLevel == undefined) {
 			academicLevel = userData.value.academicLevel;
 		}
@@ -127,6 +192,15 @@
 		}
 	});
 </script>
+
+<svelte:window
+	onclick={(e) => {
+		if (openMenuId && !(e.target as HTMLElement).closest?.('[data-thread-menu]')) closeMenu();
+	}}
+	onkeydown={(e) => {
+		if (e.key === 'Escape') closeMenu();
+	}}
+/>
 
 <div class="relative flex h-full w-72 shrink-0 flex-col border-r border-border bg-sidebar">
 	<!-- Header -->
@@ -196,23 +270,69 @@
 					}}
 					role="button"
 					tabindex="0"
-					class={`group relative w-full cursor-pointer rounded-xl px-3 py-3 text-left text-sm transition-all ${selectedThread?.id === thread.id ? 'bg-sidebar-accent text-sidebar-accent-foreground' : 'text-sidebar-foreground hover:bg-sidebar-accent/50'}`}
+					class={`group relative w-full cursor-pointer rounded-xl px-3 py-3 text-left text-sm transition-all ${openMenuId === thread.id ? 'z-20' : ''} ${selectedThread?.id === thread.id ? 'bg-sidebar-accent text-sidebar-accent-foreground' : 'text-sidebar-foreground hover:bg-sidebar-accent/50'}`}
 				>
-					<div class="flex items-center gap-3">
+					<div
+						class="flex items-center gap-3 pr-0 transition-[padding] duration-200 group-hover:pr-8"
+					>
 						<IconMessageSquare class="h-4 w-4 shrink-0 opacity-50" />
 						<span class="truncate">
 							{thread.title}
 						</span>
+						{#if regeneratingId === thread.id}
+							<span class="loading loading-xs shrink-0 loading-spinner"></span>
+						{/if}
 					</div>
-					<button
-						class="absolute top-1/2 right-2 -translate-y-1/2 rounded-lg p-1.5 text-sidebar-accent-foreground/50 opacity-0 transition-colors group-hover:opacity-100 hover:bg-sidebar-accent-foreground/10 hover:text-sidebar-accent-foreground"
-						onclick={(e) => {
-							e.stopPropagation();
-							confirmDelete(thread.id);
-						}}
-					>
-						<IconX class="h-3.5 w-3.5" />
-					</button>
+					<div class="absolute top-1/2 right-2 -translate-y-1/2" data-thread-menu>
+						<button
+							class={`rounded-lg p-1.5 text-sidebar-accent-foreground/50 transition-colors hover:bg-sidebar-accent-foreground/10 hover:text-sidebar-accent-foreground ${openMenuId === thread.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100'}`}
+							onclick={(e) => {
+								e.stopPropagation();
+								toggleMenu(thread.id);
+							}}
+							aria-label="Thread options"
+							aria-haspopup="menu"
+							aria-expanded={openMenuId === thread.id}
+						>
+							<IconEllipsis class="h-3.5 w-3.5" />
+						</button>
+						{#if openMenuId === thread.id}
+							<div
+								role="menu"
+								class="absolute top-full right-0 z-50 mt-2 w-52 overflow-hidden rounded-lg border border-border bg-card shadow-xl"
+								onclick={(e) => e.stopPropagation()}
+								onkeydown={(e) => {
+									if (e.key === 'Escape') closeMenu();
+								}}
+							>
+								<button
+									role="menuitem"
+									class="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-sidebar-foreground transition-colors hover:bg-sidebar-accent disabled:cursor-not-allowed disabled:opacity-50"
+									disabled={regeneratingId !== null}
+									onclick={() => regenerateTitle(thread.id)}
+								>
+									{#if regeneratingId === thread.id}
+										<span class="loading loading-xs loading-spinner"></span>
+										<span>Regenerating…</span>
+									{:else}
+										<IconRefreshCw class="h-3.5 w-3.5 shrink-0" />
+										<span>Regenerate title</span>
+									{/if}
+								</button>
+								<button
+									role="menuitem"
+									class="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-error transition-colors hover:bg-error/10"
+									onclick={() => {
+										closeMenu();
+										confirmDelete(thread.id);
+									}}
+								>
+									<IconTrash2 class="h-3.5 w-3.5 shrink-0" />
+									<span>Delete thread</span>
+								</button>
+							</div>
+						{/if}
+					</div>
 				</div>
 			{/each}
 		{/if}
