@@ -1,5 +1,6 @@
 <script lang="ts">
-	import Icon from '@iconify/svelte';
+	import IconExternalLink from '~icons/lucide/external-link';
+	import IconImageOff from '~icons/lucide/image-off';
 
 	interface Props {
 		href?: string;
@@ -51,7 +52,7 @@
 
 {#if !safe}
 	<button type="button" onclick={openExternal} class="chat-image-fallback">
-		<Icon icon="lucide:external-link" class="h-3.5 w-3.5" />
+		<IconExternalLink class="h-3.5 w-3.5" />
 		<span>{caption || href || 'Image link'}</span>
 	</button>
 {:else}
@@ -63,7 +64,7 @@
 		{/if}
 		{#if failed}
 			<div class="chat-image-error">
-				<Icon icon="lucide:image-off" class="h-6 w-6 opacity-60" />
+				<IconImageOff class="h-6 w-6 opacity-60" />
 				<p>{caption || 'Image unavailable'}</p>
 				<button type="button" onclick={openExternal} class="chat-image-link-button"
 					>Open source</button

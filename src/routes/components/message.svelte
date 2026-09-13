@@ -10,8 +10,14 @@
 	import TableBlock from './TableBlock.svelte';
 	import CodeBlock from './CodeBlock.svelte';
 	import ImageBlock from './ImageBlock.svelte';
+	import IconCircleAlert from '~icons/lucide/circle-alert';
+	import IconX from '~icons/lucide/x';
+	import IconRotateCcw from '~icons/lucide/rotate-ccw';
+	import IconVolume2 from '~icons/lucide/volume-2';
+	import IconPause from '~icons/lucide/pause';
+	import IconSquare from '~icons/lucide/square';
+	import IconPlay from '~icons/lucide/play';
 	import type { RendererComponent, Renderers } from '@humanspeak/svelte-markdown';
-	import Icon from '@iconify/svelte';
 
 	type SpeakStatus = 'idle' | 'loading' | 'playing' | 'paused';
 	interface props {
@@ -177,7 +183,7 @@
 				<div
 					class="flex items-center gap-3 rounded-lg border border-error/30 bg-error/10 px-4 py-3 text-sm text-error"
 				>
-					<Icon icon="lucide:alert-circle" class="h-4 w-4 shrink-0" />
+					<IconCircleAlert class="h-4 w-4 shrink-0" />
 					<span class="flex-1">There was an error</span>
 					{#if onRetry}
 						<button
@@ -193,7 +199,7 @@
 							class="shrink-0 rounded-md p-1 transition-colors hover:bg-error/20"
 							aria-label="Dismiss error"
 						>
-							<Icon icon="lucide:x" class="h-3.5 w-3.5" />
+							<IconX class="h-3.5 w-3.5" />
 						</button>
 					{/if}
 				</div>
@@ -222,7 +228,7 @@
 							disabled={busy}
 							title="Resend"
 						>
-							<Icon icon="lucide:rotate-ccw" class="h-3.5 w-3.5" />
+							<IconRotateCcw class="h-3.5 w-3.5" />
 						</button>
 					{/if}
 					{#if status === 'idle'}
@@ -231,23 +237,23 @@
 							onclick={() => speak(content)}
 							title="Read aloud"
 						>
-							<Icon icon="lucide:volume-2" class="h-3.5 w-3.5" />
+							<IconVolume2 class="h-3.5 w-3.5" />
 						</button>
 					{:else if status === 'loading'}
 						<span class="loading loading-sm loading-dots"></span>
 					{:else if status === 'playing'}
 						<button class="btn rounded px-1 btn-ghost btn-xs" onclick={pause} title="Pause">
-							<Icon icon="lucide:pause" class="h-3.5 w-3.5" />
+							<IconPause class="h-3.5 w-3.5" />
 						</button>
 						<button class="btn rounded px-1 btn-ghost btn-xs" onclick={stop} title="Stop">
-							<Icon icon="lucide:square" class="h-3.5 w-3.5" />
+							<IconSquare class="h-3.5 w-3.5" />
 						</button>
 					{:else if status === 'paused'}
 						<button class="btn rounded px-1 btn-ghost btn-xs" onclick={resume} title="Resume">
-							<Icon icon="lucide:play" class="h-3.5 w-3.5" />
+							<IconPlay class="h-3.5 w-3.5" />
 						</button>
 						<button class="btn rounded px-1 btn-ghost btn-xs" onclick={stop} title="Stop">
-							<Icon icon="lucide:square" class="h-3.5 w-3.5" />
+							<IconSquare class="h-3.5 w-3.5" />
 						</button>
 					{/if}
 				</div>

@@ -1,5 +1,9 @@
 <script lang="ts">
-	import Icon from '@iconify/svelte';
+	import IconChevronLeft from '~icons/lucide/chevron-left';
+	import IconPlus from '~icons/lucide/plus';
+	import IconMessageSquare from '~icons/lucide/message-square';
+	import IconX from '~icons/lucide/x';
+	import IconEdit from '~icons/lucide/square-pen';
 	import type { Thread } from '$lib/types';
 	import { isAuthenticated, sidebarStatus, userData } from '$lib/stores/store.svelte';
 
@@ -145,7 +149,7 @@
 			class="z-50 rounded-full bg-secondary p-2 transition-colors hover:bg-secondary/80"
 			aria-label="Collapse sidebar"
 		>
-			<Icon icon="lucide:chevron-left" class="w-4" />
+			<IconChevronLeft class="w-4" />
 		</button>
 	</div>
 
@@ -158,7 +162,7 @@
 				if (isMobile) sidebarStatus.value = false;
 			}}
 		>
-			<Icon icon="lucide:plus" class="h-4 w-4" />
+			<IconPlus class="h-4 w-4" />
 			<span>New Chat</span>
 		</a>
 	</div>
@@ -172,10 +176,7 @@
 		</h2>
 		{#if threads.values.length === 0}
 			<div class="px-3 py-8 text-center">
-				<Icon
-					icon="lucide:message-square"
-					class="mx-auto mb-3 h-8 w-8 text-sidebar-accent-foreground/20"
-				/>
+				<IconMessageSquare class="mx-auto mb-3 h-8 w-8 text-sidebar-accent-foreground/20" />
 				<p class="text-sm text-sidebar-accent-foreground/40">No conversations yet</p>
 			</div>
 		{:else}
@@ -198,7 +199,7 @@
 					class={`group relative w-full cursor-pointer rounded-xl px-3 py-3 text-left text-sm transition-all ${selectedThread?.id === thread.id ? 'bg-sidebar-accent text-sidebar-accent-foreground' : 'text-sidebar-foreground hover:bg-sidebar-accent/50'}`}
 				>
 					<div class="flex items-center gap-3">
-						<Icon icon="lucide:message-square" class="h-4 w-4 shrink-0 opacity-50" />
+						<IconMessageSquare class="h-4 w-4 shrink-0 opacity-50" />
 						<span class="truncate">
 							{thread.title}
 						</span>
@@ -210,7 +211,7 @@
 							confirmDelete(thread.id);
 						}}
 					>
-						<Icon icon="lucide:x" class="h-3.5 w-3.5" />
+						<IconX class="h-3.5 w-3.5" />
 					</button>
 				</div>
 			{/each}
@@ -274,7 +275,7 @@
 					editAcademicLevel = !editAcademicLevel;
 				}}
 			>
-				<Icon icon="lucide:edit" class="h-4 w-4" />
+				<IconEdit class="h-4 w-4" />
 			</button>
 		</span>
 		{#if editAcademicLevel}

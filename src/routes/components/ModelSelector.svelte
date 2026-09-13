@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Icon from '@iconify/svelte';
+	import IconChevronDown from '~icons/lucide/chevron-down';
 	import { currentModel, modelList } from '$lib/stores/store.svelte';
 
 	let isOpen: boolean = $state(false);
@@ -37,14 +37,14 @@
 		onclick={toggle}
 	>
 		{currentModel.value}
-		<Icon icon="lucide:chevron-down" class="h-3 w-3" />
+		<IconChevronDown class="h-3 w-3" />
 	</button>
 
 	<button
 		class="model-selector-toggle flex items-center rounded-lg bg-secondary p-2 text-muted-foreground transition-colors hover:bg-secondary/80 hover:text-foreground sm:hidden"
 		onclick={toggle}
 	>
-		<Icon icon="lucide:chevron-down" class="h-5 w-5" />
+		<IconChevronDown class="h-5 w-5" />
 	</button>
 
 	{#if isOpen}

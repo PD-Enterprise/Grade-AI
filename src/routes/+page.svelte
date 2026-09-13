@@ -1,5 +1,7 @@
 <script lang="ts">
-	import Icon from '@iconify/svelte';
+	import IconArrowRight from '~icons/lucide/arrow-right';
+	import IconZap from '~icons/lucide/zap';
+	import IconSparkles from '~icons/lucide/sparkles';
 	import { onMount } from 'svelte';
 
 	import {
@@ -97,7 +99,7 @@
 					onclick={sendMessage}
 					id="send-message-button"
 				>
-					<Icon icon="lucide:arrow-right" class="h-4 w-4" />
+					<IconArrowRight class="h-4 w-4" />
 				</button>
 			</div>
 
@@ -141,12 +143,12 @@
 			class={`mt-16 grid grid-cols-2 gap-4 transition-all delay-200 duration-700 ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
 		>
 			<div class="rounded-xl border border-border/50 bg-card/50 p-4">
-				<Icon icon="lucide:zap" class="mb-2 h-5 w-5 text-primary" />
+				<IconZap class="mb-2 h-5 w-5 text-primary" />
 				<div class="text-sm font-medium">Direct Answers</div>
 				<div class="mt-1 text-xs text-muted-foreground">Get instant responses from AI models</div>
 			</div>
 			<div class="rounded-xl border border-border/50 bg-card/50 p-4">
-				<Icon icon="lucide:sparkles" class="mb-2 h-5 w-5 text-primary" />
+				<IconSparkles class="mb-2 h-5 w-5 text-primary" />
 				<div class="text-sm font-medium">Socratic Learning</div>
 				<div class="mt-1 text-xs text-muted-foreground">Learn through guided questions</div>
 			</div>

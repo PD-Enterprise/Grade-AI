@@ -13,7 +13,7 @@
 	import './layout.css';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import Icon from '@iconify/svelte';
+	import IconMenu from '~icons/lucide/menu';
 	import NotLoggedIn from './components/notLoggedIn.svelte';
 	import Loader from './components/loader.svelte';
 	import { onMount } from 'svelte';
@@ -128,7 +128,9 @@
 {/if}
 
 <div
-	class="flex h-dvh overflow-hidden bg-background text-foreground {isLoaded && !pageLoading.value ? 'opacity-100' : 'opacity-0'} transition-opacity duration-400"
+	class="flex h-dvh overflow-hidden bg-background text-foreground {isLoaded && !pageLoading.value
+		? 'opacity-100'
+		: 'opacity-0'} transition-opacity duration-400"
 >
 	{#if !isAuthenticated.value}
 		<NotLoggedIn />
@@ -163,7 +165,7 @@
 			class="fixed top-4 left-4 z-50 rounded-full bg-secondary p-3 transition-colors hover:bg-secondary/80"
 			aria-label="Open sidebar"
 		>
-			<Icon icon="lucide:menu" class="h-4 w-4" />
+			<IconMenu class="h-4 w-4" />
 		</button>
 	{/if}
 
