@@ -29,6 +29,7 @@
 		onResend?: () => void;
 		activity?: string[];
 		error?: boolean;
+		warning?: string | string[];
 		onRetry?: () => void;
 		onDismiss?: () => void;
 	}
@@ -46,9 +47,13 @@
 		onResend,
 		activity = [],
 		error = false,
+		warning = undefined,
 		onRetry,
 		onDismiss
 	}: props = $props();
+	const warnings = $derived(
+		typeof warning === 'string' ? [warning] : (warning ?? [])
+	);
 	const renderers: Partial<KatexRenderers> = {
 		inlineKatex: KatexRenderer,
 		blockKatex: KatexBlock,
@@ -182,8 +187,7 @@
 			{#if error}
 				<div
 					class="flex items-center gap-3 rounded-lg border border-error/30 bg-error/10 px-4 py-3 text-sm text-error"
-				>
-					<IconCircleAlert class="h-4 w-4 shrink-0" />
+				>					<IconCircleAlert class="h-4 w-4 shrink-0" />
 					<span class="flex-1">There was an error</span>
 					{#if onRetry}
 						<button
@@ -256,6 +260,18 @@
 							<IconSquare class="h-3.5 w-3.5" />
 						</button>
 					{/if}
+				</div>
+			{/if}
+			{#if warnings.length > 0}
+				<div class="mt-3 space-y-1.5">
+					{#each warnings as w, i (i)}
+						<div
+							class="flex items-center gap-3 rounded-lg border border-warning/30 bg-warning/10 px-4 py-2.5 text-xs text-warning"
+						>
+							<IconCircleAlert class="h-4 w-4 shrink-0" />
+							<span class="flex-1">{w}</span>
+						</div>
+					{/each}
 				</div>
 			{/if}
 		</div>

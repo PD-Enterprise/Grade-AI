@@ -42,6 +42,9 @@
 	let streamingContent = $state<string | null>(null);
 	let streamingMessageId = $state<string | null>(null);
 	let streamActivities = $state<string[]>([]);
+	let streamWarnings = $state<string[]>([]);
+	// Warnings (cut-off / context notices) kept per assistant message id
+	let messageWarnings = $state<Record<string, string[]>>({});
 	// Error feedback
 	let failedMessageId = $state<string | null>(null);
 	// Auto-send
@@ -84,7 +87,17 @@
 				const seen = new Set(messages.map((m) => m.id));
 				const local: ChatMessage[] = [];
 				for (const m of result.data.messages) {
-					if (seen.has(m.clientUUID)) continue;
+					const serverWarning = m.warning ?? undefined;
+					if (seen.has(m.clientUUID)) {
+						const cached = messages.find((lm) => lm.id === m.clientUUID);
+						if (cached && cached.warning !== serverWarning) {
+							updateMessage(m.clientUUID, { warning: serverWarning });
+							messages = messages.map((lm) =>
+								lm.id === m.clientUUID ? { ...lm, warning: serverWarning } : lm
+							);
+						}
+						continue;
+					}
 					const msg: ChatMessage = {
 						id: m.clientUUID,
 						conversationId: threadId,
@@ -93,6 +106,7 @@
 						model: m.model,
 						provider: m.provider,
 						previousVersions: m.previousVersions,
+						warning: serverWarning,
 						timestamp: m.createdAt
 					};
 					local.push(msg);
@@ -158,6 +172,7 @@
 		streamingMessageId = aiMsg.id;
 		failedMessageId = null;
 		streamActivities = [];
+		streamWarnings = [];
 		let receivedDone = false;
 		setThreadStatus(thread, 'loading');
 		const controller = new AbortController();
@@ -230,16 +245,32 @@
 
 						if (json.type === 'done') {
 							receivedDone = true;
-							updateMessage(aiMsg.id, { content: streamingContent || '' });
+							const latestWarning =
+								streamWarnings.length > 0
+									? streamWarnings[streamWarnings.length - 1]
+									: undefined;
+							updateMessage(aiMsg.id, {
+								content: streamingContent || '',
+								warning: latestWarning
+							});
 							messages = messages.map((m) =>
-								m.id === aiMsg.id ? { ...m, content: streamingContent || '' } : m
+								m.id === aiMsg.id
+									? { ...m, content: streamingContent || '', warning: latestWarning }
+									: m
 							);
+							messageWarnings = { ...messageWarnings, [aiMsg.id]: [...streamWarnings] };
 							streamingContent = null;
 							streamingMessageId = null;
 							threads.values = threads.values.map((t) => {
 								if (t.id !== slug) return t;
 								return { ...t, status: 'success' as const };
 							});
+						}
+
+						if (json.type === 'warning' && json.message) {
+							if (!streamWarnings.includes(json.message)) {
+								streamWarnings = [...streamWarnings, json.message];
+							}
 						}
 
 						if (json.type === 'error') {
@@ -311,9 +342,18 @@
 		failedMessageId = null;
 		const previousVersions = [...(message.previousVersions ?? []), message.content];
 		const retriedAt = Date.now();
-		updateMessage(message.id, { content: '', previousVersions, timestamp: retriedAt });
+		const { [message.id]: _droppedWarnings, ...restWarnings } = messageWarnings;
+		messageWarnings = restWarnings;
+		updateMessage(message.id, {
+			content: '',
+			previousVersions,
+			timestamp: retriedAt,
+			warning: undefined
+		});
 		messages = messages.map((m) =>
-			m.id === message.id ? { ...m, content: '', previousVersions, timestamp: retriedAt } : m
+			m.id === message.id
+				? { ...m, content: '', previousVersions, timestamp: retriedAt, warning: undefined }
+				: m
 		);
 
 		await streamResponse(userMsg, { ...message, content: '', previousVersions }, model);
@@ -517,6 +557,7 @@
 						model={message.model}
 						busy={streamingContent !== null}
 						error={message.id === failedMessageId}
+						warning={messageWarnings[message.id] ?? message.warning}
 						onRetry={message.id === failedMessageId ? () => resendMessage(message) : undefined}
 						onDismiss={message.id === failedMessageId
 							? () => {
@@ -535,6 +576,7 @@
 							role="assistant"
 							content={streamingContent}
 							activity={streamActivities}
+							warning={streamWarnings}
 						/>
 					</div>
 				{/if}

@@ -8,6 +8,7 @@ export interface ChatMessage {
 	model?: string;
 	provider?: 'groq' | 'gemini';
 	previousVersions?: string[];
+	warning?: string;
 	timestamp: number;
 }
 
