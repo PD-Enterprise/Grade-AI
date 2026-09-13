@@ -93,8 +93,13 @@
 		}
 	});
 
-	onNavigate(() => {
-		pageLoading.value = true;
+	onNavigate((navigation) => {
+		const from = navigation.from?.url;
+		const to = navigation.to?.url;
+		if (!from || !to) return;
+		if (from.pathname + from.search !== to.pathname + to.search) {
+			pageLoading.value = true;
+		}
 	});
 
 	$effect(() => {

@@ -183,10 +183,11 @@
 				<div
 					onclick={() => {
 						if (isMobile) sidebarStatus.value = false;
+						if (slug === thread.id) return;
 						goto(resolve(`/chat/${thread.id}`));
 					}}
 					onkeydown={(e) => {
-						if (e.key === 'Enter') goto(resolve(`/chat/${thread.id}`));
+						if (e.key === 'Enter' && slug !== thread.id) goto(resolve(`/chat/${thread.id}`));
 					}}
 					onmouseenter={() => {
 						preloadCode(resolve(`/chat/${thread.id}`));
