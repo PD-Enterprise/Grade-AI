@@ -9,6 +9,7 @@
 	import KatexBlock from './KatexBlock.svelte';
 	import TableBlock from './TableBlock.svelte';
 	import CodeBlock from './CodeBlock.svelte';
+	import ImageBlock from './ImageBlock.svelte';
 	import type { RendererComponent, Renderers } from '@humanspeak/svelte-markdown';
 	import Icon from '@iconify/svelte';
 
@@ -46,7 +47,8 @@
 		inlineKatex: KatexRenderer,
 		blockKatex: KatexBlock,
 		table: TableBlock,
-		code: CodeBlock
+		code: CodeBlock,
+		image: ImageBlock
 	};
 	const highlightExtension = markedHighlight({
 		langPrefix: 'hljs language-',
