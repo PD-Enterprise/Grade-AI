@@ -304,6 +304,7 @@
 								onkeydown={(e) => {
 									if (e.key === 'Escape') closeMenu();
 								}}
+								tabindex="-1"
 							>
 								<button
 									role="menuitem"
