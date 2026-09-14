@@ -57,9 +57,6 @@
 	onMount(async () => {
 		mounted = true;
 		pageLoading.value = false;
-
-		const inputElement = document.getElementById('input-element') as HTMLInputElement;
-		inputElement.focus();
 	});
 </script>
 
@@ -84,6 +81,7 @@
 			class={`relative z-10 transition-all delay-100 duration-700 ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
 		>
 			<div class="relative flex items-center">
+				<!-- svelte-ignore a11y_autofocus -->
 				<textarea
 					bind:value={prompt}
 					use:grow={{ value: prompt }}
@@ -92,6 +90,7 @@
 					rows="1"
 					class="w-full resize-none overflow-y-auto rounded-xl border border-border bg-card px-5 py-4 pr-14 text-foreground transition-all placeholder:text-muted-foreground/50 focus:border-primary/50 focus:outline-none"
 					id="input-element"
+					autofocus
 				></textarea>
 				<button
 					disabled={!prompt.trim()}
