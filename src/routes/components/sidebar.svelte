@@ -202,9 +202,9 @@
 	}}
 />
 
-<div class="relative flex h-full w-72 shrink-0 flex-col border-r border-border bg-sidebar">
+<div class="relative flex h-full w-60 shrink-0 flex-col border-r border-border bg-sidebar">
 	<!-- Header -->
-	<div class="flex justify-between border-b border-border p-5">
+	<div class="flex justify-between border-b border-border p-2">
 		<a
 			href={resolve('/')}
 			onclick={() => {
@@ -220,7 +220,7 @@
 			onclick={() => {
 				sidebarStatus.value = !sidebarStatus.value;
 			}}
-			class="z-50 rounded-full bg-secondary p-2 transition-colors hover:bg-secondary/80"
+			class="z-50 rounded-full bg-secondary px-2.5 py-2 transition-colors hover:bg-secondary/80"
 			aria-label="Collapse sidebar"
 		>
 			<IconChevronLeft class="w-4" />
@@ -228,9 +228,9 @@
 	</div>
 
 	<!-- New Chat Button -->
-	<div class="p-4">
+	<div class="p-2">
 		<a
-			class="text-primary-foreground flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-medium transition-colors hover:bg-primary/90"
+			class="text-primary-foreground flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-3 py-3 text-sm font-medium transition-colors hover:bg-primary/90"
 			href={resolve('/')}
 			onclick={() => {
 				if (isMobile) sidebarStatus.value = false;
@@ -242,7 +242,7 @@
 	</div>
 
 	<!-- Chat History -->
-	<div class="flex-1 overflow-y-auto px-3 py-2">
+	<div class="flex-1 overflow-y-auto p-0">
 		<h2
 			class="px-3 py-2 text-xs font-medium tracking-wider text-sidebar-accent-foreground/50 uppercase"
 		>
@@ -340,10 +340,10 @@
 	</div>
 
 	<!-- Footer -->
-	<div class="border-t border-border p-4">
+	<div class="border-t border-border p-2">
 		{#if isAuthenticated.value}
 			<button
-				class="w-full rounded-xl border border-border px-4 py-2.5 text-sm text-sidebar-accent-foreground/60 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+				class="flex w-full items-center justify-center gap-1 rounded-xl border border-border px-2 py-2.5 text-sm text-sidebar-accent-foreground/60 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
 				onclick={() => {
 					const user_profile_modal = document.getElementById(
 						'user-profile-modal'
@@ -353,14 +353,14 @@
 			>
 				{#if image}
 					<div class="avatar">
-						<div class="w-5 rounded">
+						<div class="flex w-6 items-center rounded bg-base-300">
 							<img src={image} alt="PFP" />
 						</div>
 					</div>
 				{:else}
 					<div class="avatar avatar-placeholder">
-						<div class="w-5 rounded-full bg-neutral text-neutral-content">
-							<span class="text-3xl">{userData.value.name.split('')[0]}</span>
+						<div class="w-5 rounded-full text-neutral-content">
+							<span class=" text-3xl">{userData.value.name.split('')[0]}</span>
 						</div>
 					</div>
 				{/if}
@@ -371,7 +371,7 @@
 		{:else}
 			<a href={resolve('/login')}>
 				<button
-					class="w-full rounded-xl border border-border px-4 py-2.5 text-sm text-sidebar-accent-foreground/60 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+					class="w-full rounded-xl border border-border px-3 py-2.5 text-sm text-sidebar-accent-foreground/60 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
 				>
 					Login
 				</button>
