@@ -246,9 +246,7 @@
 						if (json.type === 'done') {
 							receivedDone = true;
 							const latestWarning =
-								streamWarnings.length > 0
-									? streamWarnings[streamWarnings.length - 1]
-									: undefined;
+								streamWarnings.length > 0 ? streamWarnings[streamWarnings.length - 1] : undefined;
 							updateMessage(aiMsg.id, {
 								content: streamingContent || '',
 								warning: latestWarning
@@ -586,22 +584,20 @@
 
 	<!-- Input -->
 	<div class="input-field border-t border-border bg-card/30 px-4 py-4">
-		<div class="flex items-center gap-3">
-			<div class="flex-1">
-				<textarea
-					bind:value={inputValue}
-					use:grow={{ value: inputValue }}
-					onkeydown={(e) => handleKeyDown(e, sendMessage)}
-					placeholder="Continue the conversation..."
-					rows="1"
-					class="w-full resize-none overflow-hidden border border-border bg-card px-4 py-4 text-base text-foreground transition-colors placeholder:text-muted-foreground/40 focus:border-primary/50 focus:outline-none"
-					id="input-element"
-				></textarea>
-			</div>
+		<div class="relative flex items-center">
+			<textarea
+				bind:value={inputValue}
+				use:grow={{ value: inputValue }}
+				onkeydown={(e) => handleKeyDown(e, sendMessage)}
+				placeholder="Continue the conversation..."
+				rows="1"
+				class="w-full resize-none overflow-hidden border border-border bg-card px-4 py-4 text-base text-foreground transition-colors placeholder:text-muted-foreground/40 focus:border-primary/50 focus:outline-none"
+				id="input-element"
+			></textarea>
 			<button
 				onclick={sendMessage}
 				disabled={!inputValue.trim() || streamingContent !== null}
-				class="text-primary-foreground flex h-[60px] w-[60px] shrink-0 items-center justify-center rounded-[1.25rem] bg-primary p-0 transition-all hover:bg-primary/90 disabled:cursor-not-allowed disabled:border-primary-content/50 disabled:bg-primary/20 disabled:opacity-50"
+				class="text-primary-foreground absolute right-2 flex shrink-0 items-center justify-center rounded-[1.25rem] bg-primary p-4 transition-all hover:bg-primary/90 disabled:cursor-not-allowed disabled:border-primary-content/50 disabled:bg-primary/20 disabled:opacity-50"
 			>
 				<IconArrowRight class="h-4 w-4" />
 			</button>
