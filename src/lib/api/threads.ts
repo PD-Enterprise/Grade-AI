@@ -24,7 +24,8 @@ export async function createNewThread(
 	});
 	const data = await response.json();
 
-	if (data.status !== 200) {
+	// Thread creation responds with 201 (Created); treat any 2xx as success.
+	if (data.status < 200 || data.status >= 300) {
 		return functionReturn(false, true, data.message, null, data.error);
 	} else {
 		return functionReturn(true, false, data.message, data.data, null);
