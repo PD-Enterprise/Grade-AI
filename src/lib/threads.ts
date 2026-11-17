@@ -1,4 +1,4 @@
-import type { ChatMessage, Thread, ThreadStatus } from '$lib/types';
+import type { ChatMessage, ChatProvider, Thread, ThreadStatus } from '$lib/types';
 
 const STORAGE_PREFIX = 'thread:';
 const MESSAGE_STORAGE_PREFIX = 'message:';
@@ -53,7 +53,7 @@ export function createUserMessage(
 	conversationId: string,
 	content: string,
 	model?: string,
-	provider?: 'groq' | 'gemini'
+	provider?: ChatProvider
 ): ChatMessage {
 	return {
 		id: crypto.randomUUID(),
@@ -69,7 +69,7 @@ export function createUserMessage(
 export function createAssistantMessage(
 	conversationId: string,
 	model?: string,
-	provider?: 'groq' | 'gemini'
+	provider?: ChatProvider
 ): ChatMessage {
 	return {
 		id: crypto.randomUUID(),

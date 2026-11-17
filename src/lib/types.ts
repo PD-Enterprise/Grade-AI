@@ -1,3 +1,5 @@
+export type ChatProvider = 'groq' | 'gemini' | 'cloudflare';
+
 export type ChatRole = 'user' | 'assistant' | 'system';
 
 export interface ChatMessage {
@@ -6,7 +8,7 @@ export interface ChatMessage {
 	role: ChatRole;
 	content: string;
 	model?: string;
-	provider?: 'groq' | 'gemini';
+	provider?: ChatProvider;
 	previousVersions?: string[];
 	warning?: string;
 	timestamp: number;
@@ -32,13 +34,18 @@ export type UserData = {
 };
 
 export type ModelList = {
-	providerName: 'groq' | 'gemini';
+	providerName: ChatProvider;
 	modelName: string;
 	modelString: string;
 	description: string;
 };
 
 export type promptBody = {
+	prompt: string;
+	provider: ChatProvider;
+	model: string;
+	mode: 'socratic' | 'direct';
+	history?: { role: ChatRole; content: string }[];
 	conversationId: Thread['id'];
 	messageClientId: string;
 	assistantClientId: string;
