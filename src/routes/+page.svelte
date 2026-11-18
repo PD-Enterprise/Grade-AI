@@ -1,8 +1,8 @@
 <script lang="ts">
-	import IconArrowUp from '~icons/lucide/arrow-up';
-	import IconMenu from '~icons/lucide/menu';
-	import IconZap from '~icons/lucide/zap';
-	import IconSparkles from '~icons/lucide/sparkles';
+	import IconArrowUp from '~icons/ic/baseline-arrow-upward';
+	import IconPanelLeft from '~icons/lucide/panel-left';
+	import IconZap from '~icons/ic/baseline-bolt';
+	import IconSparkles from '~icons/ic/baseline-auto-awesome';
 	import { onMount } from 'svelte';
 
 	import {
@@ -74,7 +74,7 @@
 				class="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
 				aria-label="Open sidebar"
 			>
-				<IconMenu class="h-4 w-4" />
+				<IconPanelLeft class="h-4 w-4" />
 			</button>
 		{/if}
 		{#if modelsLoading.value}

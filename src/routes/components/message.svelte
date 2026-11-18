@@ -10,13 +10,13 @@
 	import TableBlock from './TableBlock.svelte';
 	import CodeBlock from './CodeBlock.svelte';
 	import ImageBlock from './ImageBlock.svelte';
-	import IconCircleAlert from '~icons/lucide/circle-alert';
-	import IconX from '~icons/lucide/x';
-	import IconRotateCcw from '~icons/lucide/rotate-ccw';
-	import IconVolume2 from '~icons/lucide/volume-2';
-	import IconPause from '~icons/lucide/pause';
-	import IconSquare from '~icons/lucide/square';
-	import IconPlay from '~icons/lucide/play';
+	import IconCircleAlert from '~icons/ic/baseline-error-outline';
+	import IconX from '~icons/ic/baseline-close';
+	import IconRotateCcw from '~icons/ic/baseline-replay';
+	import IconVolume2 from '~icons/ic/baseline-volume-up';
+	import IconPause from '~icons/ic/baseline-pause';
+	import IconSquare from '~icons/ic/baseline-stop';
+	import IconPlay from '~icons/ic/baseline-play-arrow';
 	import type { RendererComponent, Renderers } from '@humanspeak/svelte-markdown';
 
 	type SpeakStatus = 'idle' | 'loading' | 'playing' | 'paused';

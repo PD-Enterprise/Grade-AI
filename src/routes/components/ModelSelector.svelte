@@ -1,5 +1,5 @@
 <script lang="ts">
-	import IconChevronDown from '~icons/lucide/chevron-down';
+	import IconChevronDown from '~icons/ic/baseline-expand-more';
 	import { currentModel, modelList } from '$lib/stores/store.svelte';
 
 	let { align = 'left', class: className = '' }: { align?: 'left' | 'right'; class?: string } =

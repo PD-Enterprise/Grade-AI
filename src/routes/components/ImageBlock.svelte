@@ -1,6 +1,6 @@
 <script lang="ts">
-	import IconExternalLink from '~icons/lucide/external-link';
-	import IconImageOff from '~icons/lucide/image-off';
+	import IconExternalLink from '~icons/ic/baseline-open-in-new';
+	import IconImageOff from '~icons/ic/baseline-broken-image';
 
 	interface Props {
 		href?: string;

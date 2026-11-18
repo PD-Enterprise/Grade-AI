@@ -1,7 +1,7 @@
 <script lang="ts">
-	import IconMenu from '~icons/lucide/menu';
-	import IconSparkles from '~icons/lucide/sparkles';
-	import IconArrowUp from '~icons/lucide/arrow-up';
+	import IconPanelLeft from '~icons/lucide/panel-left';
+	import IconSparkles from '~icons/ic/baseline-auto-awesome';
+	import IconArrowUp from '~icons/ic/baseline-arrow-upward';
 	import { page } from '$app/state';
 	import {
 		threads,
@@ -534,7 +534,7 @@
 					class="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
 					aria-label="Open sidebar"
 				>
-					<IconMenu class="h-4 w-4" />
+					<IconPanelLeft class="h-4 w-4" />
 				</button>
 			{/if}
 			<div>

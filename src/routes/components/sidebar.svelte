@@ -1,11 +1,11 @@
 <script lang="ts">
-	import IconChevronLeft from '~icons/lucide/chevron-left';
-	import IconPlus from '~icons/lucide/plus';
-	import IconMessageSquare from '~icons/lucide/message-square';
-	import IconEllipsis from '~icons/lucide/ellipsis';
-	import IconRefreshCw from '~icons/lucide/refresh-cw';
-	import IconTrash2 from '~icons/lucide/trash-2';
-	import IconEdit from '~icons/lucide/square-pen';
+	import IconPanelLeft from '~icons/lucide/panel-left';
+	import IconPlus from '~icons/ic/baseline-add';
+	import IconMessageSquare from '~icons/ic/baseline-chat-bubble-outline';
+	import IconEllipsis from '~icons/ic/baseline-more-horiz';
+	import IconRefreshCw from '~icons/ic/baseline-refresh';
+	import IconTrash2 from '~icons/ic/baseline-delete-outline';
+	import IconEdit from '~icons/ic/baseline-edit';
 	import type { Thread } from '$lib/types';
 	import { isAuthenticated, sidebarStatus, userData } from '$lib/stores/store.svelte';
 
@@ -205,26 +205,26 @@
 <div class="relative flex h-full w-60 shrink-0 flex-col border-r border-border bg-sidebar">
 	<!-- Header -->
 	<div class="flex justify-between border-b border-border px-2 py-1">
-		<a
-			href={resolve('/')}
-			onclick={() => {
-				if (isMobile) sidebarStatus.value = false;
-			}}
-		>
-			<div class="flex items-center gap-3">
-				<h1 class="text-sm font-semibold text-sidebar-foreground sm:text-lg">Grade AI</h1>
-			</div>
-		</a>
-
 		<button
 			onclick={() => {
 				sidebarStatus.value = !sidebarStatus.value;
 			}}
-			class="z-50 rounded-full bg-secondary p-2 transition-colors hover:bg-secondary/80"
+			class="z-50 flex h-8 w-8 items-center justify-center rounded-full text-sidebar-foreground/70 transition-colors hover:bg-secondary/80 hover:text-sidebar-foreground"
 			aria-label="Collapse sidebar"
 		>
-			<IconChevronLeft class="h-4 w-4" />
+			<IconPanelLeft class="h-4 w-4" />
 		</button>
+
+		<div class="flex grow items-center justify-center gap-3">
+			<a
+				href={resolve('/')}
+				onclick={() => {
+					if (isMobile) sidebarStatus.value = false;
+				}}
+			>
+				<h1 class="text-sm font-semibold text-sidebar-foreground sm:text-lg">Grade AI</h1>
+			</a>
+		</div>
 	</div>
 
 	<!-- New Chat Button -->
