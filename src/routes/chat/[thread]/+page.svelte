@@ -323,7 +323,7 @@
 		await streamResponse(userMsg, aiMsg, model);
 	}
 
-	async function resendMessage(message: ChatMessage) {
+	async function resendMessage(message: ChatMessage, opts?: { useCurrentModel?: boolean }) {
 		if (!thread || streamingContent !== null || message.role !== 'assistant') return;
 		const index = sortedMessages.findIndex((m) => m.id === message.id);
 		if (index < 1) return;
@@ -331,30 +331,50 @@
 		if (userMsg.role !== 'user' || userMsg.content === '') return;
 
 		const current = getCurrentModel();
-		const model = {
-			providerName: message.provider ?? current?.providerName ?? 'groq',
-			modelString: message.model ?? current?.modelString ?? ''
-		};
-		if (!model.modelString) return;
+		const model = opts?.useCurrentModel
+			? current
+				? { providerName: current.providerName, modelString: current.modelString }
+				: null
+			: {
+					providerName: message.provider ?? current?.providerName ?? 'groq',
+					modelString: message.model ?? current?.modelString ?? ''
+				};
+		if (!model?.modelString) return;
 
 		failedMessageId = null;
 		const previousVersions = [...(message.previousVersions ?? []), message.content];
 		const retriedAt = Date.now();
 		const { [message.id]: _droppedWarnings, ...restWarnings } = messageWarnings;
 		messageWarnings = restWarnings;
+		const updatedModel =
+			opts?.useCurrentModel && model
+				? { model: model.modelString, provider: model.providerName }
+				: {};
 		updateMessage(message.id, {
 			content: '',
 			previousVersions,
 			timestamp: retriedAt,
-			warning: undefined
+			warning: undefined,
+			...updatedModel
 		});
 		messages = messages.map((m) =>
 			m.id === message.id
-				? { ...m, content: '', previousVersions, timestamp: retriedAt, warning: undefined }
+				? {
+						...m,
+						content: '',
+						previousVersions,
+						timestamp: retriedAt,
+						warning: undefined,
+						...updatedModel
+					}
 				: m
 		);
 
-		await streamResponse(userMsg, { ...message, content: '', previousVersions }, model);
+		await streamResponse(
+			userMsg,
+			{ ...message, content: '', previousVersions, ...updatedModel },
+			model
+		);
 	}
 
 	async function tryAutoSend() {
@@ -556,7 +576,9 @@
 						busy={streamingContent !== null}
 						error={message.id === failedMessageId}
 						warning={messageWarnings[message.id] ?? message.warning}
-						onRetry={message.id === failedMessageId ? () => resendMessage(message) : undefined}
+						onRetry={message.id === failedMessageId
+							? () => resendMessage(message, { useCurrentModel: true })
+							: undefined}
 						onDismiss={message.id === failedMessageId
 							? () => {
 									failedMessageId = null;
