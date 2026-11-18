@@ -150,22 +150,23 @@
 						</div>
 					</div>
 				</div>
-				<div class="mt-1.5 text-center text-xs text-muted-foreground/60">
-					Press Enter to send, Shift + Enter for new line
-				</div>
 			</div>
 
 			<div
 				class={`grid grid-cols-2 gap-4 transition-all delay-200 duration-700 ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
 			>
 				<div class="rounded-xl border border-border/50 bg-card/50 p-4">
-					<IconZap class="mb-2 h-5 w-5 text-primary" />
-					<div class="text-sm font-medium">Direct Answers</div>
+					<div class="flex gap-2">
+						<IconZap class="mb-2 h-5 w-5 text-primary" />
+						<div class="text-sm font-medium">Direct Answers</div>
+					</div>
 					<div class="mt-1 text-xs text-muted-foreground">Get instant responses from AI models</div>
 				</div>
 				<div class="rounded-xl border border-border/50 bg-card/50 p-4">
-					<IconSparkles class="mb-2 h-5 w-5 text-primary" />
-					<div class="text-sm font-medium">Socratic Learning</div>
+					<div class="flex gap-2">
+						<IconSparkles class="mb-2 h-5 w-5 text-primary" />
+						<div class="text-sm font-medium">Socratic Learning</div>
+					</div>
 					<div class="mt-1 text-xs text-muted-foreground">Learn through guided questions</div>
 				</div>
 			</div>
