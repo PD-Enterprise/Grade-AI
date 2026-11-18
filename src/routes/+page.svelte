@@ -98,7 +98,7 @@
 				class={`relative z-10 transition-all delay-100 duration-700 ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
 			>
 				<div
-					class="flex flex-col gap-1 rounded-2xl border border-border bg-card/80 p-2.5 shadow-lg shadow-black/20 backdrop-blur-md transition-colors focus-within:border-primary/50"
+					class="flex flex-col gap-1 rounded-2xl border border-border bg-card/80 p-2.5 shadow-[0_10px_15px_rgb(0,0,0)] backdrop-blur-md transition-colors focus-within:border-primary/50"
 				>
 					<!-- svelte-ignore a11y_autofocus -->
 					<textarea

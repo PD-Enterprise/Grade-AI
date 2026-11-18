@@ -36,7 +36,7 @@
 
 <div bind:this={menuRef} class="relative {className}">
 	<button
-		class="flex items-center gap-1.5 rounded-full px-2 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
+		class="flex items-center gap-1.5 rounded-full px-2 py-1.5 text-xs font-medium transition-colors hover:bg-muted/40 hover:text-foreground"
 		onclick={toggle}
 		type="button"
 	>

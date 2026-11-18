@@ -1,6 +1,5 @@
 <script lang="ts">
 	import IconPanelLeft from '~icons/lucide/panel-left';
-	import IconPlus from '~icons/ic/baseline-add';
 	import IconMessageSquare from '~icons/ic/baseline-chat-bubble-outline';
 	import IconEllipsis from '~icons/ic/baseline-more-horiz';
 	import IconRefreshCw from '~icons/ic/baseline-refresh';
@@ -225,6 +224,7 @@
 				<h1 class="text-sm font-semibold text-sidebar-foreground sm:text-lg">Grade AI</h1>
 			</a>
 		</div>
+		<div class="h-8 w-8"></div>
 	</div>
 
 	<!-- New Chat Button -->
@@ -236,106 +236,103 @@
 				if (isMobile) sidebarStatus.value = false;
 			}}
 		>
-			<IconPlus class="h-4 w-4" />
 			<span>New Chat</span>
 		</a>
 	</div>
 
 	<!-- Chat History -->
-	<div class="grow overflow-y-auto p-0">
-		<h2
-			class="px-3 py-2 text-xs font-medium tracking-wider text-sidebar-accent-foreground/50 uppercase"
-		>
-			Conversations
-		</h2>
+	<div class="grow overflow-y-auto p-2">
 		{#if threads.values.length === 0}
 			<div class="px-3 py-8 text-center">
 				<IconMessageSquare class="mx-auto mb-3 h-8 w-8 text-sidebar-accent-foreground/20" />
 				<p class="text-sm text-sidebar-accent-foreground/40">No conversations yet</p>
 			</div>
 		{:else}
-			{#each threads.values as thread (thread.id)}
-				<div
-					onclick={() => {
-						if (isMobile) sidebarStatus.value = false;
-						if (slug === thread.id) return;
-						goto(resolve(`/chat/${thread.id}`));
-					}}
-					onkeydown={(e) => {
-						if (e.key === 'Enter' && slug !== thread.id) goto(resolve(`/chat/${thread.id}`));
-					}}
-					onmouseenter={() => {
-						preloadCode(resolve(`/chat/${thread.id}`));
-						preloadThreadMessages(thread.id);
-					}}
-					role="button"
-					tabindex="0"
-					class={`group relative w-full cursor-pointer rounded-xl px-3 py-3 text-left text-sm transition-all ${openMenuId === thread.id ? 'z-20' : ''} ${selectedThread?.id === thread.id ? 'bg-sidebar-accent text-sidebar-accent-foreground' : 'text-sidebar-foreground hover:bg-sidebar-accent/50'}`}
-				>
+			<div class="flex flex-col gap-0.5">
+				{#each threads.values as thread (thread.id)}
 					<div
-						class="flex items-center gap-3 pr-0 transition-[padding] duration-200 group-hover:pr-8"
+						onclick={() => {
+							if (isMobile) sidebarStatus.value = false;
+							if (slug === thread.id) return;
+							goto(resolve(`/chat/${thread.id}`));
+						}}
+						onkeydown={(e) => {
+							if (e.key === 'Enter' && slug !== thread.id) goto(resolve(`/chat/${thread.id}`));
+						}}
+						onmouseenter={() => {
+							preloadCode(resolve(`/chat/${thread.id}`));
+							preloadThreadMessages(thread.id);
+						}}
+						role="button"
+						tabindex="0"
+						class={`group relative w-full cursor-pointer rounded-sm px-1.5 py-1.5 text-left text-sm transition-all ${openMenuId === thread.id ? 'z-20' : ''} ${selectedThread?.id === thread.id ? 'bg-sidebar-accent text-sidebar-accent-foreground' : 'text-sidebar-foreground hover:bg-sidebar-accent/50'}`}
 					>
-						<IconMessageSquare class="h-4 w-4 shrink-0 opacity-50" />
-						<span class="truncate">
-							{thread.title}
-						</span>
-						{#if regeneratingId === thread.id}
-							<span class="loading loading-xs shrink-0 loading-spinner"></span>
-						{/if}
-					</div>
-					<div class="absolute top-1/2 right-2 -translate-y-1/2" data-thread-menu>
-						<button
-							class={`rounded-lg p-1.5 text-sidebar-accent-foreground/50 transition-colors hover:bg-sidebar-accent-foreground/10 hover:text-sidebar-accent-foreground ${openMenuId === thread.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100'}`}
-							onclick={(e) => {
-								e.stopPropagation();
-								toggleMenu(thread.id);
-							}}
-							aria-label="Thread options"
-							aria-haspopup="menu"
-							aria-expanded={openMenuId === thread.id}
+						<div
+							class="flex items-center gap-2 pr-0 transition-[padding] duration-200 group-hover:pr-8"
 						>
-							<IconEllipsis class="h-3.5 w-3.5" />
-						</button>
-						{#if openMenuId === thread.id}
-							<div
-								role="menu"
-								class="absolute top-full right-0 z-50 mt-2 w-52 overflow-hidden rounded-lg border border-border bg-card shadow-xl"
-								onclick={(e) => e.stopPropagation()}
-								onkeydown={(e) => {
-									if (e.key === 'Escape') closeMenu();
+							<IconMessageSquare class="h-4 w-4 shrink-0 opacity-50" />
+							<span class="truncate">
+								{thread.title}
+							</span>
+							{#if regeneratingId === thread.id}
+								<span class="loading loading-xs shrink-0 loading-spinner"></span>
+							{/if}
+						</div>
+
+						<div class="absolute top-1/2 right-2 -translate-y-1/2" data-thread-menu>
+							<button
+								class={`rounded-lg p-1 text-sidebar-accent-foreground/50 transition-colors hover:bg-sidebar-accent-foreground/10 hover:text-sidebar-accent-foreground ${openMenuId === thread.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100'}`}
+								onclick={(e) => {
+									e.stopPropagation();
+									toggleMenu(thread.id);
 								}}
-								tabindex="-1"
+								aria-label="Thread options"
+								aria-haspopup="menu"
+								aria-expanded={openMenuId === thread.id}
 							>
-								<button
-									role="menuitem"
-									class="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-sidebar-foreground transition-colors hover:bg-sidebar-accent disabled:cursor-not-allowed disabled:opacity-50"
-									disabled={regeneratingId !== null}
-									onclick={() => regenerateTitle(thread.id)}
-								>
-									{#if regeneratingId === thread.id}
-										<span class="loading loading-xs loading-spinner"></span>
-										<span>Regenerating…</span>
-									{:else}
-										<IconRefreshCw class="h-3.5 w-3.5 shrink-0" />
-										<span>Regenerate title</span>
-									{/if}
-								</button>
-								<button
-									role="menuitem"
-									class="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-error transition-colors hover:bg-error/10"
-									onclick={() => {
-										closeMenu();
-										confirmDelete(thread.id);
+								<IconEllipsis class="h-3.5 w-3.5" />
+							</button>
+							{#if openMenuId === thread.id}
+								<div
+									role="menu"
+									class="absolute top-full right-0 z-50 mt-2 w-52 overflow-hidden rounded-lg border border-border bg-card shadow-xl"
+									onclick={(e) => e.stopPropagation()}
+									onkeydown={(e) => {
+										if (e.key === 'Escape') closeMenu();
 									}}
+									tabindex="-1"
 								>
-									<IconTrash2 class="h-3.5 w-3.5 shrink-0" />
-									<span>Delete thread</span>
-								</button>
-							</div>
-						{/if}
+									<button
+										role="menuitem"
+										class="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-sidebar-foreground transition-colors hover:bg-sidebar-accent disabled:cursor-not-allowed disabled:opacity-50"
+										disabled={regeneratingId !== null}
+										onclick={() => regenerateTitle(thread.id)}
+									>
+										{#if regeneratingId === thread.id}
+											<span class="loading loading-xs loading-spinner"></span>
+											<span>Regenerating…</span>
+										{:else}
+											<IconRefreshCw class="h-3.5 w-3.5 shrink-0" />
+											<span>Regenerate title</span>
+										{/if}
+									</button>
+									<button
+										role="menuitem"
+										class="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-error transition-colors hover:bg-error/10"
+										onclick={() => {
+											closeMenu();
+											confirmDelete(thread.id);
+										}}
+									>
+										<IconTrash2 class="h-3.5 w-3.5 shrink-0" />
+										<span>Delete thread</span>
+									</button>
+								</div>
+							{/if}
+						</div>
 					</div>
-				</div>
-			{/each}
+				{/each}
+			</div>
 		{/if}
 	</div>
 

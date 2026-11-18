@@ -151,7 +151,7 @@
 		{/if}
 	{:else}
 		<div
-			class={`transition-all duration-300 ease-out ${sidebarStatus.value ? 'w-60' : 'w-0'} overflow-hidden`}
+			class={`relative z-20 transition-all duration-300 ease-out ${sidebarStatus.value ? 'w-60' : 'w-0 overflow-hidden'}`}
 		>
 			<Sidebar />
 		</div>

@@ -524,30 +524,25 @@
 	<title>{thread?.title ?? 'Chat'}</title>
 </svelte:head>
 
-<div class="thread-container flex h-full flex-col gap-2 overflow-hidden">
+<div class="thread-container flex h-full flex-col overflow-hidden">
 	<!-- Header -->
-	<div class="flex items-center justify-between border-b border-border bg-card/50 px-6 py-3">
-		<div class="flex items-center gap-3">
-			{#if !sidebarStatus.value}
-				<button
-					onclick={() => (sidebarStatus.value = !sidebarStatus.value)}
-					class="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
-					aria-label="Open sidebar"
-				>
-					<IconPanelLeft class="h-4 w-4" />
-				</button>
-			{/if}
-			<div>
-				<h1 class="text-sm font-medium text-foreground sm:text-base">{thread?.title ?? 'Chat'}</h1>
-			</div>
-		</div>
+	<div class="absolute flex items-center rounded-br-3xl p-2 backdrop-blur-sm">
+		{#if !sidebarStatus.value}
+			<button
+				onclick={() => (sidebarStatus.value = !sidebarStatus.value)}
+				class="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
+				aria-label="Open sidebar"
+			>
+				<IconPanelLeft class="h-4 w-4" />
+			</button>
+		{/if}
 		<ModelSelector align="right" />
 	</div>
 
 	<!-- Messages -->
 	<div
 		bind:this={messagesContainer}
-		class="messages h-[90vh] flex-1 overflow-y-auto px-6 py-8"
+		class="messages h-[90vh] overflow-y-auto px-[2vw] pt-11"
 		onscroll={() => {
 			if (!messagesContainer) return;
 			const { scrollTop, scrollHeight, clientHeight } = messagesContainer;
@@ -602,7 +597,7 @@
 	<div class="input-field p-2">
 		<div class="mx-auto flex max-w-4xl flex-col gap-1.5">
 			<div
-				class="flex flex-col gap-1 rounded-2xl border border-border bg-card/80 p-2.5 shadow-lg shadow-black/20 backdrop-blur-md transition-colors focus-within:border-primary/50"
+				class="flex flex-col gap-1 rounded-2xl border border-border bg-card/80 p-1.5 shadow-lg shadow-black/20 backdrop-blur-md transition-colors focus-within:border-primary/50"
 			>
 				<textarea
 					bind:value={inputValue}
