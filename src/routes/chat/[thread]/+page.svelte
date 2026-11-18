@@ -1,7 +1,7 @@
 <script lang="ts">
 	import IconMenu from '~icons/lucide/menu';
 	import IconSparkles from '~icons/lucide/sparkles';
-	import IconArrowRight from '~icons/lucide/arrow-right';
+	import IconArrowUp from '~icons/lucide/arrow-up';
 	import { page } from '$app/state';
 	import {
 		threads,
@@ -526,28 +526,22 @@
 
 <div class="thread-container flex h-full flex-col gap-2 overflow-hidden">
 	<!-- Header -->
-	<div class="flex items-center justify-between border-b border-border bg-card/50 px-6 py-4">
-		<div class="flex items-center gap-4">
+	<div class="flex items-center justify-between border-b border-border bg-card/50 px-6 py-3">
+		<div class="flex items-center gap-3">
 			{#if !sidebarStatus.value}
 				<button
 					onclick={() => (sidebarStatus.value = !sidebarStatus.value)}
-					class="opacity-60 transition-opacity hover:opacity-100"
+					class="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
 					aria-label="Open sidebar"
 				>
-					<IconMenu class="h-5 w-5" />
+					<IconMenu class="h-4 w-4" />
 				</button>
 			{/if}
 			<div>
-				<h1 class="text-sm font-medium text-foreground sm:text-lg">{thread?.title ?? 'Chat'}</h1>
-				{#if thread?.mode}
-					<p class="text-sm text-muted-foreground">
-						{thread.mode[0].toUpperCase() + thread.mode.slice(1)}
-					</p>
-				{/if}
+				<h1 class="text-sm font-medium text-foreground sm:text-base">{thread?.title ?? 'Chat'}</h1>
 			</div>
 		</div>
-
-		<ModelSelector />
+		<ModelSelector align="right" />
 	</div>
 
 	<!-- Messages -->
@@ -605,24 +599,73 @@
 	</div>
 
 	<!-- Input -->
-	<div class="input-field border-t border-border bg-card/30 px-4 py-4">
-		<div class="relative flex items-center">
-			<textarea
-				bind:value={inputValue}
-				use:grow={{ value: inputValue }}
-				onkeydown={(e) => handleKeyDown(e, sendMessage)}
-				placeholder="Continue the conversation..."
-				rows="1"
-				class="w-full resize-none overflow-hidden border border-border bg-card px-4 py-4 text-base text-foreground transition-colors placeholder:text-muted-foreground/40 focus:border-primary/50 focus:outline-none"
-				id="input-element"
-			></textarea>
-			<button
-				onclick={sendMessage}
-				disabled={!inputValue.trim() || streamingContent !== null}
-				class="text-primary-foreground absolute right-2 flex shrink-0 items-center justify-center rounded-[1.25rem] bg-primary p-4 transition-all hover:bg-primary/90 disabled:cursor-not-allowed disabled:border-primary-content/50 disabled:bg-primary/20 disabled:opacity-50"
+	<div class="input-field p-2">
+		<div class="mx-auto flex max-w-4xl flex-col gap-1.5">
+			<div
+				class="flex flex-col gap-1 rounded-2xl border border-border bg-card/80 p-2.5 shadow-lg shadow-black/20 backdrop-blur-md transition-colors focus-within:border-primary/50"
 			>
-				<IconArrowRight class="h-4 w-4" />
-			</button>
+				<textarea
+					bind:value={inputValue}
+					use:grow={{ value: inputValue }}
+					onkeydown={(e) => handleKeyDown(e, sendMessage)}
+					placeholder="Continue the conversation..."
+					rows="1"
+					class="max-h-[200px] min-h-[24px] w-full resize-none overflow-hidden border-none bg-transparent px-1 py-1 text-base leading-relaxed text-foreground placeholder:text-muted-foreground/40 focus:ring-0 focus:outline-none"
+					id="input-element"
+				></textarea>
+				<div class="flex items-center justify-between">
+					<div class="flex items-center gap-1.5"></div>
+					<div class="flex items-center gap-1.5">
+						{#if thread}
+							<div class="relative flex rounded-full bg-secondary p-0.5">
+								<div
+									class="absolute top-0.5 bottom-0.5 w-[calc(50%-2px)] rounded-full bg-card-foreground/10 transition-all duration-300 ease-in-out"
+									style="left: {thread.mode === 'direct' ? '2px' : 'calc(50%)'}"
+								></div>
+								<button
+									class="relative z-10 rounded-full px-2.5 py-1 text-xs font-medium whitespace-nowrap transition-colors duration-200"
+									class:text-foreground={thread.mode === 'direct'}
+									class:text-muted-foreground={thread.mode !== 'direct'}
+									onclick={() => {
+										if (thread) {
+											thread.mode = 'direct';
+											threads.values = threads.values.map((t) =>
+												t.id === thread.id ? { ...t, mode: 'direct' } : t
+											);
+											saveThread(thread);
+										}
+									}}>Direct</button
+								>
+								<button
+									class="relative z-10 rounded-full px-2.5 py-1 text-xs font-medium whitespace-nowrap transition-colors duration-200"
+									class:text-foreground={thread.mode === 'socratic'}
+									class:text-muted-foreground={thread.mode !== 'socratic'}
+									onclick={() => {
+										if (thread) {
+											thread.mode = 'socratic';
+											threads.values = threads.values.map((t) =>
+												t.id === thread.id ? { ...t, mode: 'socratic' } : t
+											);
+											saveThread(thread);
+										}
+									}}>Socratic</button
+								>
+							</div>
+						{/if}
+						<button
+							onclick={sendMessage}
+							disabled={!inputValue.trim() || streamingContent !== null}
+							class="text-primary-foreground flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary transition-all hover:bg-primary/90 active:scale-95 disabled:cursor-not-allowed disabled:bg-primary/20 disabled:opacity-50"
+							aria-label="Send message"
+						>
+							<IconArrowUp class="h-4 w-4" />
+						</button>
+					</div>
+				</div>
+			</div>
+			<div class="text-center text-xs text-muted-foreground/60">
+				Press Enter to send, Shift + Enter for new line
+			</div>
 		</div>
 	</div>
 </div>
@@ -632,8 +675,6 @@
 		textarea {
 			-ms-overflow-style: none;
 			scrollbar-width: none;
-			border-radius: 1.5rem;
-			min-height: 60px;
 		}
 	}
 	.animate-enter {

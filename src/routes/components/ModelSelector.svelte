@@ -2,6 +2,9 @@
 	import IconChevronDown from '~icons/lucide/chevron-down';
 	import { currentModel, modelList } from '$lib/stores/store.svelte';
 
+	let { align = 'left', class: className = '' }: { align?: 'left' | 'right'; class?: string } =
+		$props();
+
 	let isOpen: boolean = $state(false);
 	let menuRef: HTMLDivElement | undefined = $state();
 
@@ -31,25 +34,19 @@
 
 <svelte:window onclick={handleClickOutside} />
 
-<div bind:this={menuRef} class="relative">
+<div bind:this={menuRef} class="relative {className}">
 	<button
-		class="model-selector-toggle hidden items-center gap-1.5 rounded-lg bg-secondary px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-secondary/80 hover:text-foreground sm:inline-flex"
+		class="flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
 		onclick={toggle}
+		type="button"
 	>
-		{currentModel.value}
-		<IconChevronDown class="h-3 w-3" />
-	</button>
-
-	<button
-		class="model-selector-toggle flex items-center rounded-lg bg-secondary p-2 text-muted-foreground transition-colors hover:bg-secondary/80 hover:text-foreground sm:hidden"
-		onclick={toggle}
-	>
-		<IconChevronDown class="h-5 w-5" />
+		<span class="max-w-[120px] truncate sm:max-w-none">{currentModel.value}</span>
+		<IconChevronDown class="h-3.5 w-3.5 shrink-0 opacity-60" />
 	</button>
 
 	{#if isOpen}
 		<div
-			class="absolute top-full right-0 z-50 mt-2 max-h-60 min-w-48 overflow-y-auto rounded-lg border border-border bg-card shadow-xl"
+			class={`absolute top-full z-50 mt-2 max-h-60 min-w-48 overflow-y-auto rounded-lg border border-border bg-card shadow-xl ${align === 'right' ? 'right-0' : 'left-0'}`}
 		>
 			{#each sortedModels as model (model)}
 				<button
