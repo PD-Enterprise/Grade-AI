@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { ChatRole } from '$lib/types';
+	import type { ChatProvider, ChatRole } from '$lib/types';
 	import 'katex/dist/katex.min.css';
 	import 'highlight.js/styles/github-dark.css';
 	import SvelteMarkdown from '@humanspeak/svelte-markdown';
@@ -25,6 +25,7 @@
 		role: ChatRole;
 		content: string;
 		model?: string;
+		provider?: ChatProvider;
 		busy?: boolean;
 		onResend?: () => void;
 		activity?: string[];
@@ -43,6 +44,7 @@
 		role,
 		content,
 		model = undefined,
+		provider = undefined,
 		busy = false,
 		onResend,
 		activity = [],
@@ -51,9 +53,15 @@
 		onRetry,
 		onDismiss
 	}: props = $props();
-	const warnings = $derived(
-		typeof warning === 'string' ? [warning] : (warning ?? [])
-	);
+	const warnings = $derived(typeof warning === 'string' ? [warning] : (warning ?? []));
+	function formatModelName(model?: string, provider?: ChatProvider) {
+		if (!model) return undefined;
+		if (provider === 'cloudflare' || model.startsWith('@cf/')) {
+			return model.replace(/^@cf\//, '');
+		}
+		return model;
+	}
+	const displayModel = $derived(formatModelName(model, provider));
 	const renderers: Partial<KatexRenderers> = {
 		inlineKatex: KatexRenderer,
 		blockKatex: KatexBlock,
@@ -187,7 +195,8 @@
 			{#if error}
 				<div
 					class="flex items-center gap-3 rounded-lg border border-error/30 bg-error/10 px-4 py-3 text-sm text-error"
-				>					<IconCircleAlert class="h-4 w-4 shrink-0" />
+				>
+					<IconCircleAlert class="h-4 w-4 shrink-0" />
 					<span class="flex-1">There was an error</span>
 					{#if onRetry}
 						<button
@@ -222,8 +231,8 @@
 						? 'opacity-0 group-hover:opacity-100'
 						: ''}"
 				>
-					{#if model}
-						<span>{model}</span>
+					{#if displayModel}
+						<span>{displayModel}</span>
 					{/if}
 					{#if onResend}
 						<button
